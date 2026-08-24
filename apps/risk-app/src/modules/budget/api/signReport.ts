@@ -15,6 +15,7 @@ export interface SignReport {
   reportNo: string // 签报号（必填，示例：签报〔2026〕69号）
   title: string // 签报标题（必填）
   totalAmount: number // 签报总金额（必填）
+  initialRemainingAmount?: number // 初始剩余金额（非必填，默认等于签报总金额）
   reportDate: string // 签报日期（必填，YYYY-MM-DD）
   initiator?: string // 签报发起人（非必填）
   createdAt: string
@@ -30,6 +31,7 @@ const signReportsMock: SignReport[] = [
     reportNo: '签报〔2026〕69号',
     title: '关于采购朴道征信有限公司风控数据服务的签报',
     totalAmount: 500000,
+    initialRemainingAmount: 500000,
     reportDate: '2026-01-15',
     initiator: '张明',
     createdAt: now,
@@ -48,6 +50,7 @@ const signReportsMock: SignReport[] = [
     reportNo: '签报〔2026〕72号',
     title: '关于采购百行征信有限公司与学信网数据服务的签报',
     totalAmount: 800000,
+    initialRemainingAmount: 700000,
     reportDate: '2026-02-20',
     initiator: '李华',
     createdAt: now,
@@ -73,6 +76,7 @@ const signReportsMock: SignReport[] = [
     reportNo: '签报〔2026〕85号',
     title: '关于采购钱塘征信有限公司风控数据服务的签报',
     totalAmount: 350000,
+    initialRemainingAmount: 350000,
     reportDate: '2026-03-10',
     initiator: '王芳',
     createdAt: now,

@@ -30,17 +30,21 @@
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item field="initiator" label="签报发起人">
-                  <a-input v-model="createForm.initiator" placeholder="非必填" />
+                <a-form-item field="initialRemainingAmount" label="初始剩余金额（元）">
+                  <a-input-number v-model="createForm.initialRemainingAmount" :min="0" :step="1000" style="width: 100%" placeholder="签报初始可用金额，默认等于签报金额" />
                 </a-form-item>
               </a-col>
             </a-row>
+            <a-form-item field="initiator" label="签报发起人">
+              <a-input v-model="createForm.initiator" placeholder="非必填" />
+            </a-form-item>
           </a-form>
           <!-- 编辑模式：只读展示（R18: 签报号自动填充，不可编辑） -->
           <a-descriptions v-else :column="3" :data="[
             { label: '签报号', value: report?.reportNo || '—' },
             { label: '签报标题', value: report?.title || '—' },
             { label: '签报金额（元）', value: formatAmount(report?.totalAmount) },
+            { label: '初始剩余金额（元）', value: formatAmount(report?.initialRemainingAmount) },
             { label: '签报日期', value: report?.reportDate || '—' },
             { label: '签报发起人', value: report?.initiator || '—' },
             { label: '创建时间', value: formatDate(report?.createdAt) }
@@ -54,6 +58,7 @@
               <span style="color: var(--color-text-3); font-size: 12px;">
                 分摊金额合计：{{ formatAmount(sumNoticeAmount) }}
                 <template v-if="report || isCreate"> / 签报金额：{{ formatAmount(isCreate ? createForm.totalAmount : report?.totalAmount) }}</template>
+                <template v-if="partnerOrgs.length > 0"> / 签报剩余金额合计：{{ formatAmount(sumRemainingAmount) }}</template>
               </span>
               <a-button type="primary" size="small" @click="addPartnerOrg">添加合作机构</a-button>
             </a-space>
@@ -81,6 +86,13 @@
               <a-table-column title="签报初始占用金额（元）" :width="200">
                 <template #cell="{ record }">
                   <a-input-number v-model="record.initialOccupiedAmount" :min="0" :step="1000" style="width: 100%" placeholder="默认0" />
+                </template>
+              </a-table-column>
+              <a-table-column title="签报剩余金额（元）" :width="180">
+                <template #cell="{ record }">
+                  <span :style="{ color: (Number(record.noticeAmount) || 0) - (Number(record.initialOccupiedAmount) || 0) < 0 ? 'var(--color-danger-6)' : 'var(--color-text-1)' }">
+                    {{ formatAmount((Number(record.noticeAmount) || 0) - (Number(record.initialOccupiedAmount) || 0)) }}
+                  </span>
                 </template>
               </a-table-column>
               <a-table-column title="附件" :width="240">
@@ -147,8 +159,8 @@ const report = computed(() => store.detail)
 
 // 创建模式表单
 const baseFormRef = ref()
-const createForm = reactive<{ reportNo: string; title: string; totalAmount: number | undefined; reportDate: string; initiator: string }>({
-  reportNo: '', title: '', totalAmount: undefined, reportDate: '', initiator: ''
+const createForm = reactive<{ reportNo: string; title: string; totalAmount: number | undefined; initialRemainingAmount: number | undefined; reportDate: string; initiator: string }>({
+  reportNo: '', title: '', totalAmount: undefined, initialRemainingAmount: undefined, reportDate: '', initiator: ''
 })
 const createRules = {
   reportNo: [{ required: true, message: '请输入签报号' }],
@@ -163,6 +175,9 @@ const partnerOrgs = reactive<any[]>([])
 const currentTotalAmount = computed(() => isCreate.value ? Number(createForm.totalAmount || 0) : Number(report.value?.totalAmount || 0))
 const sumNoticeAmount = computed(() =>
   partnerOrgs.reduce((sum, r) => sum + (Number(r.noticeAmount) || 0), 0)
+)
+const sumRemainingAmount = computed(() =>
+  partnerOrgs.reduce((sum, r) => sum + ((Number(r.noticeAmount) || 0) - (Number(r.initialOccupiedAmount) || 0)), 0)
 )
 // R7: V2 签报校验 - partnerOrgs 为空但签报金额>0 时应阻断
 const amountValid = computed(() => {
@@ -256,6 +271,7 @@ const saveDetail = async () => {
         reportNo: createForm.reportNo,
         title: createForm.title,
         totalAmount: Number(createForm.totalAmount),
+        initialRemainingAmount: createForm.initialRemainingAmount !== undefined ? Number(createForm.initialRemainingAmount) : Number(createForm.totalAmount),
         reportDate: createForm.reportDate,
         initiator: createForm.initiator,
         partnerOrgs: payload

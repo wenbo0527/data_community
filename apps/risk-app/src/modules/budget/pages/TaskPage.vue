@@ -27,22 +27,19 @@
           <a-descriptions-item label="合作机构">{{ supplierName }}</a-descriptions-item>
           <a-descriptions-item label="账期">{{ month }}</a-descriptions-item>
         </a-descriptions>
-        <!-- PRD R34: 4步流程：外部对账 → 费用核算（保留但跳过） → 确认核销 → 待报销 -->
+        <!-- 4步流程：外部对账 → 费用核算 → 确认核销 → 待报销 -->
         <a-steps :current="currentIndex" style="margin-bottom:12px">
           <a-step title="外部对账" />
-          <!-- PRD R34: 费用核算步骤保留展示，但灰色禁用、系统自动跳过 -->
-          <a-step title="费用核算（自动跳过）" disabled />
+          <a-step title="费用核算" />
           <a-step title="确认核销" />
           <a-step title="待报销" />
         </a-steps>
-        <a-alert v-if="currentIndex === 0" type="info" show-icon style="margin-bottom: 12px" message="第1步费用核算已自动跳过，系统将直接从「外部对账」进入「确认核销」。" />
         <component :is="currentPanel" :supplierId="supplierId" :month="month" :embedded="true" ref="panelRef" />
         <div style="margin-top:12px; display:flex; justify-content:flex-end">
           <a-space>
             <a-button @click="prev" :disabled="currentIndex===0">上一步</a-button>
             <a-button type="outline" @click="save">保存</a-button>
-            <!-- PRD R34: 跳过费用核算后，从 step=0（外部对账）直接到 step=2（确认核销） -->
-            <a-button type="primary" @click="nextToWriteoff" :disabled="currentIndex===3">下一步</a-button>
+            <a-button type="primary" @click="next" :disabled="currentIndex===3">下一步</a-button>
           </a-space>
         </div>
       </a-card>
@@ -56,8 +53,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useSettlementFlowStore } from '../stores/settlementFlow'
 import { useContractStore } from '../stores/contract'
-// PRD R34: 4步流程 - 费用核算已禁用，仅保留 外部对账/确认核销/待报销 三步的 Panel 组件
+// 4步流程 Panel 组件
 import ReconcilePanel from './settlement/ReconcilePanel.vue'
+import CostingPanel from './settlement/CostingPanel.vue'
 import WriteoffPanel from './settlement/WriteoffPanel.vue'
 import ReimbursementPanel from './settlement/ReimbursementPanel.vue'
 
@@ -70,12 +68,11 @@ const id = computed(() => String(route.params.id || ''))
 const taskName = computed(() => String(route.query.taskName || route.params.id || ''))
 const supplierId = computed(() => String(route.query.supplierId || ''))
 const month = computed(() => String(route.query.month || ''))
-// PRD R34: 4步流程：0=外部对账，1=费用核算，2=确认核销，3=待报销
+// 4步流程：0=外部对账，1=费用核算，2=确认核销，3=待报销
 const currentIndex = computed(() => flow.currentStepIndex)
 const currentPanel = computed(() => {
   if (currentIndex.value === 0) return ReconcilePanel
-  // PRD R34: 费用核算步骤已禁用，currentIndex 不会出现 1；若出现则回落到外部对账
-  if (currentIndex.value === 1) return ReconcilePanel
+  if (currentIndex.value === 1) return CostingPanel
   if (currentIndex.value === 2) return WriteoffPanel
   if (currentIndex.value === 3) return ReimbursementPanel
   return ReconcilePanel
@@ -141,38 +138,9 @@ const next = async () => {
     Message.error('推进失败，请稍后重试')
   }
 }
-// PRD R34: 跳过费用核算 - 外部对账(step=0)完成后直接跳到确认核销(step=2)
-const nextToWriteoff = async () => {
-  if (currentIndex.value === 0) {
-    let ok = false
-    if (panelRef.value && typeof panelRef.value.complete === 'function') {
-      ok = Boolean(await panelRef.value.complete())
-    } else {
-      ok = true
-    }
-    if (ok) {
-      // 跳过 step=1（费用核算）直接到 step=2
-      flow.next()
-      flow.next()
-      router.replace({ path: route.path, query: { ...route.query, step: String(flow.currentStepIndex) } })
-      Message.success('已跳过费用核算，进入确认核销')
-    } else {
-      Message.warning('请先完成外部对账')
-    }
-    return
-  }
-  // 其它步骤走原 next
-  await next()
-}
 const prev = () => {
-  // PRD R34: 上一步也需要跳过费用核算。step=2 时回退应回到 step=0
-  if (currentIndex.value === 2) {
-    flow.prev()
-    flow.prev()
-    router.replace({ path: route.path, query: { ...route.query, step: String(flow.currentStepIndex) } })
-    return
-  }
   flow.prev()
+  router.replace({ path: route.path, query: { ...route.query, step: String(flow.currentStepIndex) } })
 }
 const goBack = () => router.push('/budget/settlement')
 const save = async () => {
@@ -191,7 +159,7 @@ const submitCreate = () => {
 }
 
 onMounted(async () => { await store.fetchContractList({ page: 1, pageSize: 100 }) })
-// PRD R34: 默认从step=0（外部对账）开始，费用核算步骤已删除
+// 默认从step=0（外部对账）开始
 const stepParam = computed(() => {
   const v = Number(route.query.step)
   return Number.isNaN(v) ? 0 : Math.max(0, v)
