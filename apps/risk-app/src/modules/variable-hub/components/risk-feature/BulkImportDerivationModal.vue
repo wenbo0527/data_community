@@ -1,89 +1,145 @@
 <!--
-  批量导入衍生需求 · 文档 A1 R19
-  - 下载 Excel 模板（CSV 格式）
-  - 上传文件后预览解析
-  - 批量创建
+  批量导入需求
+  - 不限定模板：解析 Excel/CSV 中匹配"变量英文名""中文名"的列
+  - 支持手动添加需求行
+  - 挂载统一附件（所有需求共享同一附件）
 -->
 <template>
   <a-modal
     :visible="visible"
-    title="批量导入衍生需求（A1 R19）"
-    :width="840"
+    title="批量导入需求"
+    :width="900"
     :ok-loading="submitting"
-    :ok-text="okText"
+    :ok-text="`导入（${rows.length} 条）`"
     :cancel-text="cancelText || '取消'"
     :mask-closable="false"
     @ok="onOk"
     @cancel="onCancel"
   >
     <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-      支持批量导入衍生需求，先下载 Excel 模板填写，然后上传 CSV 文件。导入前可在下方预览表格。
+      上传 Excel/CSV 文件自动解析"变量英文名"和"中文名"列（不限定模板格式），也可手动添加行。统一附件将挂载到所有需求。
     </a-alert>
 
-    <a-tabs :active-key="activeTab" @change="activeTab = $event as string">
-      <!-- ============ Tab 1: 下载模板 ============ -->
-      <a-tab-pane key="template" title="1. 下载模板">
-        <div class="template-section">
-          <p>点击下方按钮下载 Excel 模板（CSV 格式，可用 Excel 打开）。</p>
-          <a-space>
-            <a-button type="primary" @click="handleDownloadTemplate">
-              <template #icon><icon-download /></template>
-              下载 Excel 模板
-            </a-button>
-            <a-tag color="gray">共 19 个必填列</a-tag>
-          </a-space>
-          <a-divider />
-          <p style="color: var(--color-text-3); font-size: 13px">模板字段说明：</p>
-          <a-table
-            :data="templateFields"
-            :columns="templateFieldColumns"
-            :pagination="false"
-            size="small"
-          />
-        </div>
-      </a-tab-pane>
+    <!-- 统一附件 -->
+    <div class="attachment-section">
+      <span class="section-label">统一附件</span>
+      <a-upload
+        :custom-request="handleAttachmentUpload"
+        :show-file-list="false"
+        :before-upload="beforeAttachmentUpload"
+        accept=".xlsx,.xls,.csv,.pdf,.doc,.docx,.zip"
+      >
+        <a-button>
+          <template #icon><icon-upload /></template>
+          {{ sharedAttachment ? sharedAttachment.name : '上传统一附件' }}
+        </a-button>
+      </a-upload>
+      <span v-if="sharedAttachment" class="attachment-info">
+        <icon-file /> {{ sharedAttachment.name }}（{{ formatSize(sharedAttachment.size) }}）
+        <a-link style="margin-left: 8px" @click="sharedAttachment = null">移除</a-link>
+      </span>
+      <span v-else class="attachment-hint">（选填，将挂载到本次所有需求）</span>
+    </div>
 
-      <!-- ============ Tab 2: 上传文件 ============ -->
-      <a-tab-pane key="upload" title="2. 上传文件">
+    <a-divider />
+
+    <!-- 操作栏 -->
+    <div class="toolbar">
+      <a-space>
         <a-upload
-          :custom-request="handleUpload"
+          :custom-request="handleFileUpload"
           :show-file-list="false"
-          accept=".csv,.txt"
-          :auto-upload="true"
+          accept=".xlsx,.xls,.csv"
         >
-          <template #upload-button>
-            <a-button type="primary">
-              <template #icon><icon-upload /></template>
-              选择 CSV 文件
-            </a-button>
-          </template>
+          <a-button type="primary">
+            <template #icon><icon-upload /></template>
+            上传 Excel/CSV 解析
+          </a-button>
         </a-upload>
-        <a-alert v-if="parsedRows.length > 0" type="success" :show-icon="false" style="margin: 16px 0">
-          已解析 {{ parsedRows.length }} 条记录，下面是预览
-        </a-alert>
-        <a-alert v-if="parseError" type="error" :show-icon="false" style="margin: 16px 0">
-          {{ parseError }}
-        </a-alert>
-      </a-tab-pane>
+        <a-button @click="addRow">
+          <template #icon><icon-plus /></template>
+          手动添加一行
+        </a-button>
+      </a-space>
+      <span class="row-count">共 {{ rows.length }} 条</span>
+    </div>
 
-      <!-- ============ Tab 3: 预览数据 ============ -->
-      <a-tab-pane key="preview" :title="`3. 预览（${parsedRows.length} 条）`" :disabled="parsedRows.length === 0">
-        <a-empty v-if="parsedRows.length === 0" description="请先上传 CSV 文件" />
-        <a-table
-          v-else
-          :data="parsedRows"
-          :columns="previewColumns"
-          :pagination="{ pageSize: 5 }"
-          size="small"
-        />
-      </a-tab-pane>
-    </a-tabs>
+    <a-alert v-if="parseError" type="error" :show-icon="false" style="margin: 12px 0">
+      {{ parseError }}
+    </a-alert>
+    <a-alert v-if="parseSuccess" type="success" :show-icon="false" style="margin: 12px 0">
+      {{ parseSuccess }}
+    </a-alert>
+
+    <!-- 数据行表格 -->
+    <a-table
+      v-if="rows.length > 0"
+      :data="rows"
+      :columns="tableColumns"
+      :pagination="{ pageSize: 8 }"
+      :scroll="{ x: 2000 }"
+      size="small"
+      style="margin-top: 12px"
+    >
+      <template #variableEnName="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].variableEnName" placeholder="变量英文名" size="small" />
+      </template>
+      <template #variableCnName="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].variableCnName" placeholder="中文名" size="small" />
+      </template>
+      <template #fieldType="{ rowIndex }">
+        <a-select v-model="rows[rowIndex].fieldType" size="small" style="width: 100%">
+          <a-option value="Integer">Integer</a-option>
+          <a-option value="Double">Double</a-option>
+          <a-option value="Boolean">Boolean</a-option>
+          <a-option value="String">String</a-option>
+        </a-select>
+      </template>
+      <template #variableMeaning="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].variableMeaning" placeholder="变量含义" size="small" />
+      </template>
+      <template #processingLogic="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].processingLogic" placeholder="取数逻辑" size="small" />
+      </template>
+      <template #dimension="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].dimension" placeholder="维度" size="small" />
+      </template>
+      <template #dataFreshness="{ rowIndex }">
+        <a-select v-model="rows[rowIndex].dataFreshness" size="small" style="width: 100%">
+          <a-option value="实时">实时</a-option>
+          <a-option value="离线T-1">离线T-1</a-option>
+          <a-option value="离线T-2">离线T-2</a-option>
+        </a-select>
+      </template>
+      <template #defaultValue="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].defaultValue" placeholder="默认值" size="small" />
+      </template>
+      <template #proposer="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].proposer" placeholder="需求人" size="small" />
+      </template>
+      <template #backtrackPeriod="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].backtrackPeriod" placeholder="回溯时间段" size="small" />
+      </template>
+      <template #expectedLaunchDate="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].expectedLaunchDate" placeholder="逾期上线时间" size="small" />
+      </template>
+      <template #expectedEffect="{ rowIndex }">
+        <a-input v-model="rows[rowIndex].expectedEffect" placeholder="效果字段" size="small" />
+      </template>
+      <template #operation="{ rowIndex }">
+        <a-button type="text" size="small" status="danger" @click="removeRow(rowIndex)">
+          <template #icon><icon-delete /></template>
+        </a-button>
+      </template>
+    </a-table>
+    <a-empty v-else description="暂无数据，请上传文件或手动添加" style="margin: 24px 0" />
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import * as XLSX from 'xlsx'
 
 interface Props {
   visible: boolean
@@ -102,87 +158,147 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const activeTab = ref('template')
 const submitting = ref(false)
-const parsedRows = ref<any[]>([])
 const parseError = ref('')
+const parseSuccess = ref('')
 
-// 模板字段（19 列）
-const templateFields = [
-  { field: 'name', label: '需求名称', required: true, example: '近30日大额交易次数' },
-  { field: 'businessScene', label: '业务场景', required: true, example: '贷中' },
-  { field: 'featureEnName', label: '特征英文名', required: true, example: 'MIDLOAN_BIGTXN_CNT_30D' },
-  { field: 'featureCnName', label: '特征中文名', required: true, example: '近30日大额交易次数' },
-  { field: 'fieldType', label: '字段类型', required: true, example: 'Integer' },
-  { field: 'processingLogic', label: '加工逻辑', required: true, example: '从 dwd_trade_detail 过滤 amount >= 5000' },
-  { field: 'defaultValue', label: '默认值', required: false, example: '0' },
-  { field: 'l1Category', label: '一级分类', required: true, example: 'credit_grant' },
-  { field: 'l2Category', label: '二级分类', required: true, example: 'credit_grant_amount' },
-  { field: 'sourceTableAfter', label: '源表(后)', required: true, example: 'ads_midloan_bigtxn_30d' },
-  { field: 'sourceTableBefore', label: '源表(前)', required: true, example: 'dwd_trade_detail' },
-  { field: 'dataSource', label: '数据源', required: true, example: 'Hbase' },
-  { field: 'dataFreshness', label: '数据时效', required: true, example: 'offline_t1' },
-  { field: 'developer', label: '开发人员', required: true, example: '王数仓' },
-  { field: 'expectedEffect', label: '预期效果', required: false, example: '识别异常消费模式' },
-  { field: 'productScope', label: '产品范围', required: true, example: '现金贷' },
-  { field: 'listType', label: '名单类型', required: false, example: 'none' },
-  { field: 'batch', label: '批次', required: false, example: '2026Q3' },
-  { field: 'acceptor', label: '验收人', required: false, example: '小李' }
-]
+// ============ 统一附件 ============
+const sharedAttachment = ref<{ name: string; size: number; uploadedAt: string } | null>(null)
 
-const templateFieldColumns = [
-  { title: '字段名', dataIndex: 'field' },
-  { title: '中文名', dataIndex: 'label' },
-  { title: '必填', slotName: 'required' },
-  { title: '示例', dataIndex: 'example' }
-]
-
-const previewColumns = [
-  { title: '需求名称', dataIndex: 'name', width: 180 },
-  { title: '业务场景', dataIndex: 'businessScene', width: 80 },
-  { title: '特征英文名', dataIndex: 'featureEnName', width: 180 },
-  { title: '字段类型', dataIndex: 'fieldType', width: 80 },
-  { title: '数据源', dataIndex: 'dataSource', width: 80 },
-  { title: '数据时效', dataIndex: 'dataFreshness', width: 100 }
-]
-
-// 下载 CSV 模板
-function handleDownloadTemplate() {
-  const headers = templateFields.map(f => f.field).join(',')
-  const exampleRow = templateFields.map(f => f.example).join(',')
-  const csv = `${headers}\n${exampleRow}`
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `衍生需求批量导入模板_${new Date().toISOString().slice(0, 10)}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
-  Message.success('模板已下载')
+function formatSize(bytes: number) {
+  if (!bytes) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
 }
 
-// 上传文件解析
-const handleUpload = (options: any) => {
-  const { fileItem } = options
-  const file = fileItem.file
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+
+function beforeAttachmentUpload(file: any) {
+  if (file.size > MAX_FILE_SIZE) {
+    Message.error('文件超过 10MB 上限')
+    return false
+  }
+  return true
+}
+
+function handleAttachmentUpload(option: any) {
+  const file = option.fileItem?.file
+  if (!file) return
+  sharedAttachment.value = {
+    name: file.name,
+    size: file.size,
+    uploadedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+  option.onSuccess?.(file)
+}
+
+// ============ 数据行 ============
+interface DataRow {
+  variableEnName: string
+  variableCnName: string
+  fieldType: string
+  variableMeaning: string
+  processingLogic: string
+  dimension: string
+  dataFreshness: string
+  defaultValue: string
+  proposer: string
+  backtrackPeriod: string
+  expectedLaunchDate: string
+  expectedEffect: string
+}
+
+function createEmptyRow(): DataRow {
+  return {
+    variableEnName: '', variableCnName: '', fieldType: 'Integer',
+    variableMeaning: '', processingLogic: '', dimension: '用户维度',
+    dataFreshness: '离线T-1', defaultValue: '0', proposer: '',
+    backtrackPeriod: '', expectedLaunchDate: '', expectedEffect: ''
+  }
+}
+
+const rows = reactive<DataRow[]>([])
+
+const tableColumns = [
+  { title: '变量英文名', slotName: 'variableEnName', width: 200 },
+  { title: '中文名', slotName: 'variableCnName', width: 160 },
+  { title: '字段类型', slotName: 'fieldType', width: 120 },
+  { title: '变量含义', slotName: 'variableMeaning', width: 200 },
+  { title: '取数逻辑', slotName: 'processingLogic', width: 240 },
+  { title: '维度', slotName: 'dimension', width: 120 },
+  { title: '时效性', slotName: 'dataFreshness', width: 120 },
+  { title: '默认值', slotName: 'defaultValue', width: 100 },
+  { title: '需求人', slotName: 'proposer', width: 120 },
+  { title: '回溯时间段', slotName: 'backtrackPeriod', width: 180 },
+  { title: '逾期上线时间', slotName: 'expectedLaunchDate', width: 140 },
+  { title: '效果字段', slotName: 'expectedEffect', width: 200 },
+  { title: '操作', slotName: 'operation', width: 70, align: 'center' as const, fixed: 'right' as const }
+]
+
+function addRow() {
+  rows.push(createEmptyRow())
+}
+
+function removeRow(idx: number) {
+  rows.splice(idx, 1)
+}
+
+// ============ 文件解析（不限定模板） ============
+/** 在表头中查找匹配关键词的列索引 */
+function findColumnIndex(headers: string[], keywords: string[]): number {
+  for (const keyword of keywords) {
+    const idx = headers.findIndex(h => h.toLowerCase().includes(keyword.toLowerCase()))
+    if (idx >= 0) return idx
+  }
+  return -1
+}
+
+function handleFileUpload(option: any) {
+  const file = option.fileItem?.file
   if (!file) {
     parseError.value = '文件读取失败'
     return
   }
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const text = e.target?.result as string
-    parseCSV(text)
+
+  const isCSV = /\.csv$/i.test(file.name)
+  if (isCSV) {
+    // CSV 用文本方式读取
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result as string
+      parseCSVText(text)
+    }
+    reader.onerror = () => { parseError.value = '文件读取失败' }
+    reader.readAsText(file, 'UTF-8')
+  } else {
+    // Excel 用 XLSX 解析
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const sheetName = workbook.SheetNames[0]
+        if (!sheetName) {
+          parseError.value = 'Excel 文件无有效工作表'
+          return
+        }
+        const sheet = workbook.Sheets[sheetName]
+        const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '' })
+        parseJsonRows(json)
+      } catch (err) {
+        parseError.value = 'Excel 解析失败：' + (err as Error).message
+      }
+    }
+    reader.onerror = () => { parseError.value = '文件读取失败' }
+    reader.readAsArrayBuffer(file)
   }
-  reader.onerror = () => {
-    parseError.value = '文件读取失败'
-  }
-  reader.readAsText(file, 'UTF-8')
+  option.onSuccess?.(file)
 }
 
-function parseCSV(text: string) {
+function parseCSVText(text: string) {
   parseError.value = ''
-  parsedRows.value = []
+  parseSuccess.value = ''
   try {
     const lines = text.split(/\r?\n/).filter(line => line.trim())
     if (lines.length < 2) {
@@ -190,37 +306,128 @@ function parseCSV(text: string) {
       return
     }
     const headers = lines[0].split(',').map(h => h.trim())
-    const rows: any[] = []
+    const json: Record<string, any>[] = []
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim())
-      const row: any = {}
-      headers.forEach((h, idx) => {
-        row[h] = values[idx] || ''
-      })
-      // 必填字段校验
-      if (!row.name || !row.featureEnName) {
-        parseError.value = `第 ${i + 1} 行：需求名称和特征英文名为必填`
-        parsedRows.value = []
-        return
-      }
-      rows.push(row)
+      const row: Record<string, any> = {}
+      headers.forEach((h, idx) => { row[h] = values[idx] || '' })
+      json.push(row)
     }
-    parsedRows.value = rows
-    activeTab.value = 'preview'
-    Message.success(`成功解析 ${rows.length} 条记录`)
+    parseJsonRows(json)
   } catch (err) {
     parseError.value = 'CSV 解析失败：' + (err as Error).message
   }
 }
 
-function onOk() {
-  if (parsedRows.value.length === 0) {
-    Message.warning('请先上传并解析 CSV 文件')
+/** 从 JSON 行数组中提取各字段（不限定模板，按关键词匹配列名） */
+function parseJsonRows(json: Record<string, any>[]) {
+  if (!json.length) {
+    parseError.value = '未解析到有效数据行'
     return
   }
+
+  const allKeys = Object.keys(json[0])
+
+  // 按关键词匹配各列
+  const findKey = (patterns: RegExp): string | undefined =>
+    allKeys.find(k => patterns.test(k))
+
+  const enNameKey = findKey(/英文名|english.?name|variable.?en.?name|变量名/i)
+  const cnNameKey = findKey(/中文名|chinese.?name|cn.?name|特征名/i)
+  const fieldTypeKey = findKey(/字段类型|类型|field.?type|data.?type/i)
+  const meaningKey = findKey(/含义|变量含义|描述|description|meaning|备注/i)
+  const logicKey = findKey(/取数逻辑|加工逻辑|逻辑|processing|logic/i)
+  const dimensionKey = findKey(/维度|dimension|粒度/i)
+  const freshnessKey = findKey(/时效|时效性|freshness|实时|离线/i)
+  const defaultKey = findKey(/默认值|default/i)
+  const proposerKey = findKey(/需求人|提出人|proposer|申请人/i)
+  const backtrackKey = findKey(/回溯|追溯|backtrack/i)
+  const launchKey = findKey(/上线|逾期|launch|deadline|预期时间/i)
+  const effectKey = findKey(/效果|预期效果|effect|expected/i)
+
+  if (!enNameKey && !cnNameKey) {
+    parseError.value = `未找到"变量英文名"或"中文名"列，请检查文件列名。当前列：${allKeys.join('、')}`
+    return
+  }
+
+  const getVal = (r: Record<string, any>, key?: string) => key ? String(r[key] ?? '').trim() : ''
+
+  const parsed: DataRow[] = json.map((r) => ({
+    variableEnName: getVal(r, enNameKey),
+    variableCnName: getVal(r, cnNameKey),
+    fieldType: getVal(r, fieldTypeKey) || 'Integer',
+    variableMeaning: getVal(r, meaningKey),
+    processingLogic: getVal(r, logicKey),
+    dimension: getVal(r, dimensionKey) || '用户维度',
+    dataFreshness: getVal(r, freshnessKey) || '离线T-1',
+    defaultValue: getVal(r, defaultKey) || '0',
+    proposer: getVal(r, proposerKey),
+    backtrackPeriod: getVal(r, backtrackKey),
+    expectedLaunchDate: getVal(r, launchKey),
+    expectedEffect: getVal(r, effectKey)
+  })).filter(r => r.variableEnName || r.variableCnName)
+
+  if (!parsed.length) {
+    parseError.value = '解析到的行均为空数据'
+    return
+  }
+
+  rows.splice(rows.length, 0, ...parsed)
+  parseError.value = ''
+  const matched = [enNameKey, cnNameKey, fieldTypeKey, meaningKey, logicKey].filter(Boolean)
+  parseSuccess.value = `成功解析 ${parsed.length} 条（匹配列：${matched.join('、')}）`
+  Message.success(`已添加 ${parsed.length} 条数据`)
+}
+
+// ============ 提交 ============
+function onOk() {
+  if (rows.length === 0) {
+    Message.warning('请至少添加一条需求')
+    return
+  }
+  // 校验：每行至少有变量英文名或中文名
+  const invalid = rows.findIndex(r => !r.variableEnName.trim() && !r.variableCnName.trim())
+  if (invalid >= 0) {
+    Message.warning(`第 ${invalid + 1} 行：变量英文名和中文名不能同时为空`)
+    return
+  }
+
   submitting.value = true
   try {
-    emit('ok', parsedRows.value)
+    // 所有解析行作为 Excel 原始数据快照，挂载到每条需求
+    const excelSnapshot = rows.map((r) => ({
+      variableEnName: r.variableEnName,
+      variableCnName: r.variableCnName,
+      fieldType: r.fieldType,
+      variableMeaning: r.variableMeaning,
+      processingLogic: r.processingLogic,
+      dimension: r.dimension,
+      dataFreshness: r.dataFreshness,
+      defaultValue: r.defaultValue,
+      proposer: r.proposer,
+      backtrackPeriod: r.backtrackPeriod,
+      expectedLaunchDate: r.expectedLaunchDate,
+      expectedEffect: r.expectedEffect
+    }))
+    const payloads = rows.map((r) => ({
+      name: r.variableCnName || r.variableEnName,
+      featureEnName: r.variableEnName,
+      featureCnName: r.variableCnName,
+      fieldType: r.fieldType,
+      processingLogic: r.processingLogic,
+      defaultValue: r.defaultValue,
+      dataFreshness: r.dataFreshness,
+      expectedEffect: r.expectedEffect,
+      requirementDescription: r.variableMeaning,
+      handler: r.proposer,
+      attachment: sharedAttachment.value,
+      excelData: excelSnapshot,
+      // 保留默认值，确保 store 正常工作
+      businessScene: '贷中',
+      category: 'midloan_behavior',
+      dataSource: 'Hbase'
+    }))
+    emit('ok', payloads)
   } finally {
     submitting.value = false
   }
@@ -229,10 +436,49 @@ function onOk() {
 function onCancel() {
   emit('cancel')
 }
+
+// 打开时重置
+watch(
+  () => props.visible,
+  (v) => {
+    if (v) {
+      rows.splice(0, rows.length)
+      sharedAttachment.value = null
+      parseError.value = ''
+      parseSuccess.value = ''
+    }
+  }
+)
 </script>
 
 <style scoped>
-.template-section {
-  padding: 8px 0;
+.attachment-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.section-label {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.attachment-info {
+  color: var(--color-text-3);
+  font-size: 13px;
+}
+.attachment-hint {
+  color: var(--color-text-4);
+  font-size: 13px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.row-count {
+  color: var(--color-text-3);
+  font-size: 13px;
 }
 </style>

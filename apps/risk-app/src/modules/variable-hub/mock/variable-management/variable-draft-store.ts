@@ -71,22 +71,12 @@ export interface RegisterFormPayload {
  * 需求提出表单字段（A1 R01 · 文档 v2.1 模块 A0/A1）
  */
 export interface RequirementProposalPayload {
-  /** 需求名称（必填，≤30字）*/
+  /** 变量名称（必填，≤50字）*/
   requirementName: string
-  /** 业务场景（必填，描述业务用途）*/
-  businessScenario: string
-  /** 预期效果（选填，描述预期效果/提升度预期）*/
-  expectedEffect?: string
-  /** 加工逻辑（选填，描述大致加工思路）*/
-  processingLogic?: string
-  /** 默认值（选填，如 "0" / "false"）*/
-  defaultValue?: string
-  /** 特征粒度：identity_only（仅身份证号）/ identity_plus_product（身份证号+产品号）*/
-  featureGranularity?: 'identity_only' | 'identity_plus_product'
-  /** Excel 评估报告附件（文件名/大小）*/
+  /** 需求描述（选填，详细描述需求内容）*/
+  requirementDescription?: string
+  /** 附件（文件名/大小）*/
   excelAttachment?: { name: string; size: number; uploadedAt: string }
-  /** 批量导入的记录（选填）*/
-  batchImportedRecords?: Array<Record<string, any>>
   /** 创建人（业务方角色，自动带入）*/
   creator?: string
 }
@@ -290,7 +280,7 @@ export const VariableDraftStore = {
       status: 'requirement_proposal',
       midloanStatus: 'requirement_proposal',
       midloanFeatureId: id,
-      description: payload.businessScenario,
+      description: payload.requirementDescription || '',
       dataSource: 'internal',
       dataSourceName: '待补充（需求提出阶段）',
       creator,
@@ -299,9 +289,9 @@ export const VariableDraftStore = {
       sourceType: 'internal',
       category: 'midloan_behavior',
       fieldType: 'String',
-      processingLogic: payload.processingLogic || '',
-      defaultValue: payload.defaultValue || '',
-      featureGranularity: payload.featureGranularity || 'identity_only',
+      processingLogic: payload.requirementDescription || '',
+      defaultValue: '',
+      featureGranularity: 'identity_only',
       // 需求提出阶段专属字段
       requirementProposalAt: now,
       requirementProposer: creator,
@@ -313,13 +303,8 @@ export const VariableDraftStore = {
       upstreamTable: '',
       profile: {
         requirementName: payload.requirementName,
-        businessScenario: payload.businessScenario,
-        expectedEffect: payload.expectedEffect,
-        processingLogic: payload.processingLogic,
-        defaultValue: payload.defaultValue,
-        featureGranularity: payload.featureGranularity || 'identity_only',
+        requirementDescription: payload.requirementDescription,
         excelAttachment: payload.excelAttachment,
-        batchImportedRecords: payload.batchImportedRecords,
         role: 'risk_data_member',
         registeredAt: now
       }
@@ -348,7 +333,7 @@ export const VariableDraftStore = {
         status: 'requirement_proposal',
         midloanStatus: 'requirement_proposal',
         midloanFeatureId: id,
-        description: payload.businessScenario,
+        description: payload.requirementDescription || '',
         dataSource: 'internal',
         dataSourceName: '待补充（需求提出阶段）',
         creator,
@@ -357,9 +342,9 @@ export const VariableDraftStore = {
         sourceType: 'internal',
         category: 'midloan_behavior',
         fieldType: 'String',
-        processingLogic: payload.processingLogic || '',
-        defaultValue: payload.defaultValue || '',
-        featureGranularity: payload.featureGranularity || 'identity_only',
+        processingLogic: payload.requirementDescription || '',
+        defaultValue: '',
+        featureGranularity: 'identity_only',
         requirementProposalAt: now,
         requirementProposer: creator,
         standardizedAttachment: false,
@@ -370,11 +355,8 @@ export const VariableDraftStore = {
         upstreamTable: '',
         profile: {
           requirementName: payload.requirementName,
-          businessScenario: payload.businessScenario,
-          expectedEffect: payload.expectedEffect,
-          processingLogic: payload.processingLogic,
-          defaultValue: payload.defaultValue,
-          featureGranularity: payload.featureGranularity || 'identity_only',
+          requirementDescription: payload.requirementDescription,
+          excelAttachment: payload.excelAttachment,
           role: 'risk_data_member',
           registeredAt: now
         }

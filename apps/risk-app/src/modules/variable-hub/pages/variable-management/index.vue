@@ -708,18 +708,98 @@
       <!-- 需求详情抽屉 -->
       <a-drawer
         :visible="derivationDetailVisible"
-        :width="720"
+        :width="820"
         :title="derivationDetail ? `需求详情 · ${derivationDetail.id}` : '需求详情'"
         @cancel="derivationDetailVisible = false"
       >
         <template v-if="derivationDetail">
-          <a-descriptions :column="2" :data="derivationDetailDesc" title="基础信息" />
-          <a-divider />
-          <a-descriptions :column="1" :data="derivationDetailFeatureDesc" title="特征核心属性" />
-          <a-divider />
-          <a-descriptions :column="2" :data="derivationDetailRegisterDesc" title="注册信息（B1）" />
-          <a-divider />
-          <a-descriptions :column="1" :data="derivationDetailTimeline" title="状态时间轴" />
+          <!-- 状态横幅 -->
+          <div class="detail-status-banner">
+            <a-tag :color="derivationDetailStatusColor" size="large">
+              {{ getDerivationStatusLabel(derivationDetail.status) }}
+            </a-tag>
+            <span class="detail-status-name">{{ derivationDetail.name }}</span>
+            <span class="detail-status-id">{{ derivationDetail.id }}</span>
+          </div>
+
+          <!-- 1. 需求信息 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>需求信息</template>
+            <a-descriptions :column="2" :data="derivationDetailBaseDesc" />
+          </a-card>
+
+          <!-- 2. 人员信息 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>人员信息</template>
+            <a-descriptions :column="2" :data="derivationDetailPeopleDesc" />
+          </a-card>
+
+          <!-- 3. 需求内容 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>需求内容</template>
+            <a-descriptions :column="1" :data="derivationDetailContentDesc" />
+          </a-card>
+
+          <!-- 4. 上传的 Excel 预览 -->
+          <a-card
+            v-if="derivationDetail.attachment || derivationDetail.excelData"
+            size="small"
+            :bordered="true"
+            class="detail-card"
+          >
+            <template #title>
+              <span>上传的 Excel</span>
+              <a-link v-if="derivationDetail.attachment" style="margin-left: 12px; font-size: 12px" @click="previewAttachment(derivationDetail.attachment)">
+                <icon-download />
+                {{ derivationDetail.attachment.name }}
+                <span class="attachment-meta">
+                  （{{ formatAttachmentSize(derivationDetail.attachment.size) }}，{{ derivationDetail.attachment.uploadedAt }}）
+                </span>
+              </a-link>
+            </template>
+            <a-table
+              v-if="derivationDetail.excelData && derivationDetail.excelData.length"
+              :data="derivationDetail.excelData"
+              :columns="excelPreviewColumns"
+              :pagination="{ pageSize: 5, simple: true }"
+              :scroll="{ x: 1800 }"
+              size="small"
+            >
+              <template #variableEnName="{ record }">
+                <span style="font-family: monospace">{{ record.variableEnName }}</span>
+              </template>
+              <template #expectedEffect="{ record }">
+                <span style="color: var(--color-text-2)">{{ record.expectedEffect || '—' }}</span>
+              </template>
+            </a-table>
+            <a-empty v-else description="无 Excel 行数据" style="padding: 12px 0" />
+          </a-card>
+
+          <!-- 5. 特征属性 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>特征属性</template>
+            <a-descriptions :column="2" :data="derivationDetailFeatureDesc" />
+            <a-divider style="margin: 8px 0" />
+            <a-descriptions :column="1" :data="derivationDetailLogicDesc" />
+          </a-card>
+
+          <!-- 6. 来源与分类 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>来源与分类</template>
+            <a-descriptions :column="2" :data="derivationDetailSourceDesc" />
+          </a-card>
+
+          <!-- 7. 注册信息（仅已注册时展示） -->
+          <a-card v-if="derivationDetailIsRegistered" size="small" :bordered="true" class="detail-card">
+            <template #title>注册信息（B1）</template>
+            <a-descriptions :column="2" :data="derivationDetailRegisterDesc" />
+          </a-card>
+
+          <!-- 8. 状态时间轴 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>状态时间轴</template>
+            <a-descriptions :column="1" :data="derivationDetailTimeline" />
+          </a-card>
         </template>
       </a-drawer>
 
@@ -2142,10 +2222,27 @@ function onBulkImport(rows) {
   // 刷新列表（如有）
   fetchVariableList()
 }
-function onDerivationCreated(payload) {
-  const rec = DerivationStore.create(payload, '小李')
-  Message.success(`已创建需求 ${rec.id}，状态：需求受理`)
+function onDerivationCreated(payloads) {
+  if (!payloads || !payloads.length) {
+    Message.warning('没有可提交的数据')
+    return
+  }
+  let successCount = 0
+  let failedCount = 0
+  payloads.forEach((payload) => {
+    try {
+      DerivationStore.create(payload, '小李')
+      successCount++
+    } catch (err) {
+      failedCount++
+    }
+  })
   derivationCreateVisible.value = false
+  if (successCount > 0) {
+    Message.success(`成功创建 ${successCount} 条需求${failedCount > 0 ? `，失败 ${failedCount} 条` : ''}`)
+  } else {
+    Message.error('创建失败')
+  }
   refreshDerivations()
 }
 
@@ -2156,31 +2253,65 @@ const derivationRegisterTarget = ref(null)
 // 详情抽屉
 const derivationDetailVisible = ref(false)
 const derivationDetail = ref(null)
-const derivationDetailDesc = computed(() => derivationDetail.value ? [
-  { label: '需求ID', value: derivationDetail.value.id },
-  { label: '需求名称', value: derivationDetail.value.name },
-  { label: '业务场景', value: derivationDetail.value.businessScene },
-  { label: '预期效果', value: derivationDetail.value.expectedEffect },
+
+// 状态颜色映射
+const derivationStatusColorMap = {
+  requirement_accepted: 'green',
+  rejected: 'red'
+}
+const derivationDetailStatusColor = computed(() => {
+  if (!derivationDetail.value) return 'gray'
+  return derivationStatusColorMap[derivationDetail.value.status] || 'gray'
+})
+
+// 1. 需求信息（2 列）
+const derivationDetailBaseDesc = computed(() => derivationDetail.value ? [
+  { label: '需求ID', value: derivationDetail.value.id || '—' },
+  { label: '需求名称', value: derivationDetail.value.name || '—' },
+  { label: '业务场景', value: derivationDetail.value.businessScene || '—' },
   { label: '品类', value: '贷中行为' },
-  { label: '数据源', value: derivationDetail.value.dataSource },
-  { label: '开发人员', value: derivationDetail.value.developer },
-  { label: '提出人', value: derivationDetail.value.proposer },
-  { label: '处理人', value: derivationDetail.value.handler || '—' },
   { label: '业务同步等级', value: derivationDetail.value.syncLevel ? derivationDetail.value.syncLevel + '级' : '—' },
-  { label: '创建时间', value: derivationDetail.value.createdAt }
+  { label: '创建时间', value: derivationDetail.value.createdAt || '—' }
 ] : [])
+
+// 2. 人员信息（2 列）
+const derivationDetailPeopleDesc = computed(() => derivationDetail.value ? [
+  { label: '提出人', value: derivationDetail.value.proposer || '—' },
+  { label: '处理人', value: derivationDetail.value.handler || '—' },
+  { label: '开发人员', value: derivationDetail.value.developer || '—' },
+  { label: '数据源', value: derivationDetail.value.dataSource || '—' }
+] : [])
+
+// 3. 需求内容（1 列，长文本）
+const derivationDetailContentDesc = computed(() => derivationDetail.value ? [
+  { label: '需求描述', value: derivationDetail.value.requirementDescription || '—' },
+  { label: '预期效果', value: derivationDetail.value.expectedEffect || '—' }
+] : [])
+
+// 4. 特征属性（2 列）
 const derivationDetailFeatureDesc = computed(() => derivationDetail.value ? [
-  { label: '特征英文名', value: derivationDetail.value.featureEnName },
-  { label: '中文名', value: derivationDetail.value.featureCnName },
-  { label: '字段类型', value: derivationDetail.value.fieldType },
+  { label: '特征英文名', value: derivationDetail.value.featureEnName || '—' },
+  { label: '中文名', value: derivationDetail.value.featureCnName || '—' },
+  { label: '字段类型', value: derivationDetail.value.fieldType || '—' },
   { label: '默认值', value: derivationDetail.value.defaultValue || '—' },
-  { label: '加工逻辑', value: derivationDetail.value.processingLogic },
-  { label: '一级分类', value: derivationDetail.value.l1Category },
-  { label: '二级分类', value: derivationDetail.value.l2Category },
   { label: '数据时效', value: derivationDetail.value.dataFreshness || '—' },
-  { label: '标准化后来源表', value: derivationDetail.value.sourceTableAfter || '—' },
-  { label: '标准化前来源表', value: derivationDetail.value.sourceTableBefore || '—' }
+  { label: '原特征英文名', value: derivationDetail.value.originFeatureEnName || '—' }
 ] : [])
+
+// 4b. 加工逻辑（1 列，长文本）
+const derivationDetailLogicDesc = computed(() => derivationDetail.value ? [
+  { label: '加工逻辑', value: derivationDetail.value.processingLogic || '—' }
+] : [])
+
+// 5. 来源与分类（2 列）
+const derivationDetailSourceDesc = computed(() => derivationDetail.value ? [
+  { label: '一级分类', value: derivationDetail.value.l1Category || '—' },
+  { label: '二级分类', value: derivationDetail.value.l2Category || '—' },
+  { label: '标准化前来源表', value: derivationDetail.value.sourceTableBefore || '—' },
+  { label: '标准化后来源表', value: derivationDetail.value.sourceTableAfter || '—' }
+] : [])
+
+// 6. 注册信息（2 列，仅注册后展示）
 const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '数据底表名称', value: derivationDetail.value.dataTableName || '暂未补充' },
   { label: '数仓任务ID', value: derivationDetail.value.dwTaskId || '—' },
@@ -2191,6 +2322,11 @@ const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '备注', value: derivationDetail.value.remark || '—' },
   { label: '关联特征ID', value: derivationDetail.value.featureId || '尚未注册' }
 ] : [])
+
+// 是否已注册
+const derivationDetailIsRegistered = computed(() => {
+  return derivationDetail.value && (derivationDetail.value.featureId || derivationDetail.value.dataTableName)
+})
 const derivationDetailTimeline = computed(() => {
   if (!derivationDetail.value) return []
   const items = [
@@ -2211,6 +2347,36 @@ const derivationDetailTimeline = computed(() => {
 function openDerivationDetail(record) {
   derivationDetail.value = DerivationStore.get(record.id)
   derivationDetailVisible.value = true
+}
+
+// Excel 预览表格列定义
+const excelPreviewColumns = [
+  { title: '变量英文名', slotName: 'variableEnName', width: 200, ellipsis: true, tooltip: true },
+  { title: '中文名', dataIndex: 'variableCnName', width: 160, ellipsis: true, tooltip: true },
+  { title: '字段类型', dataIndex: 'fieldType', width: 100 },
+  { title: '变量含义', dataIndex: 'variableMeaning', width: 180, ellipsis: true, tooltip: true },
+  { title: '取数逻辑', dataIndex: 'processingLogic', width: 220, ellipsis: true, tooltip: true },
+  { title: '维度', dataIndex: 'dimension', width: 100 },
+  { title: '时效性', dataIndex: 'dataFreshness', width: 100 },
+  { title: '默认值', dataIndex: 'defaultValue', width: 80 },
+  { title: '需求人', dataIndex: 'proposer', width: 110, ellipsis: true, tooltip: true },
+  { title: '回溯时间段', dataIndex: 'backtrackPeriod', width: 160, ellipsis: true, tooltip: true },
+  { title: '逾期上线时间', dataIndex: 'expectedLaunchDate', width: 120 },
+  { title: '效果字段', slotName: 'expectedEffect', width: 180, ellipsis: true, tooltip: true }
+]
+
+// 需求附件预览
+function formatAttachmentSize(bytes) {
+  if (!bytes) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
+
+function previewAttachment(attachment) {
+  if (attachment?.name) {
+    Message.info(`附件：${attachment.name}（mock 环境，暂不支持下载）`)
+  }
 }
 
 // ============ 需求驳回 ============
@@ -2516,5 +2682,37 @@ refreshDerivations()
 .status-pending {
   color: var(--color-text-4, #c9cdd4);
   font-size: 12px;
+}
+
+.detail-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: var(--color-fill-1, #f7f8fa);
+  border-radius: 6px;
+}
+.detail-status-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--color-text-1);
+}
+.detail-status-id {
+  color: var(--color-text-4);
+  font-size: 13px;
+  margin-left: auto;
+  font-family: monospace;
+}
+.detail-card {
+  margin-bottom: 12px;
+}
+.detail-card :deep(.arco-card-body) {
+  padding: 12px 16px;
+}
+.attachment-meta {
+  color: var(--color-text-4);
+  font-size: 12px;
+  margin-left: 4px;
 }
 </style>

@@ -17,6 +17,7 @@ export interface DerivationRecord {
   name: string                        // 需求名称
   businessScene: string               // 业务场景：贷前/贷中/贷后
   expectedEffect: string              // 预期效果
+  requirementDescription?: string      // 需求描述
   category: 'midloan_behavior'        // 品类（锁定为贷中行为）
   dataSource: string                  // 关联数据源（默认 Hbase）
   /** 特征核心属性 */
@@ -33,6 +34,22 @@ export interface DerivationRecord {
   dataFreshness: string               // 实时/离线T-1/离线T-2
   developer: string                   // 开发人员（数仓团队成员）
   excelReport?: string                // Excel 评估报告文件名
+  attachment?: { name: string; size: number; uploadedAt: string }  // 需求附件
+  /** 批量导入时解析的 Excel 原始行数据（用于详情页预览） */
+  excelData?: Array<{
+    variableEnName: string      // 变量英文名
+    variableCnName: string      // 中文名
+    fieldType: string           // 字段类型
+    variableMeaning: string    // 变量含义
+    processingLogic: string    // 取数逻辑
+    dimension: string          // 维度
+    dataFreshness: string      // 时效性
+    defaultValue: string       // 默认值
+    proposer: string           // 需求人
+    backtrackPeriod: string    // 回溯时间段
+    expectedLaunchDate: string  // 逾期上线时间
+    expectedEffect: string     // 效果字段
+  }>
   /** 提出人 & 处理人 */
   proposer: string                    // 提出人（需求发起方）
   handler?: string                    // 处理人（负责跟进/处理的业务方）
@@ -60,7 +77,7 @@ export interface DerivationRecord {
 // localStorage 持久化（带版本号，版本变更时自动清除旧缓存）
 const STORAGE_KEY = 'variable.management.derivations'
 const STORAGE_VERSION_KEY = 'variable.management.derivations.version'
-const STORAGE_VERSION = '4' // v1: 4态 → v2: 3态 → v3: proposer/handler → v4: 2态(requirement_accepted/rejected)
+const STORAGE_VERSION = '6' // v5: excelData/attachment → v6: 丰富 Excel 字段
 
 function safeParse(raw: string | null): DerivationRecord[] {
   if (!raw) return []
@@ -108,6 +125,65 @@ const SEED_DATA: DerivationRecord[] = [
     proposer: '小李',
     handler: '业务方-张三',
     syncLevel: 'S',
+    attachment: { name: '贷中行为特征需求批次_202607.xlsx', size: 245760, uploadedAt: '2026-07-25 09:50:00' },
+    excelData: [
+      {
+        variableEnName: 'MIDLOAN_BIGTXN_CNT_30D',
+        variableCnName: '近30日大额交易次数',
+        fieldType: 'Integer',
+        variableMeaning: '统计用户近30日大额交易频次，识别异常消费',
+        processingLogic: '从 dwd_trade_detail 过滤 amount≥5000 的成功记录，按 user_id 统计 30 天滚动窗口',
+        dimension: '用户维度',
+        dataFreshness: '离线T-1',
+        defaultValue: '0',
+        proposer: '业务方-张三',
+        backtrackPeriod: '2026-06-25 ~ 2026-07-25',
+        expectedLaunchDate: '2026-08-15',
+        expectedEffect: 'IV≥0.05，高风险识别 recall 提升 10%'
+      },
+      {
+        variableEnName: 'MIDLOAN_REPAY_VOL_7D',
+        variableCnName: '近7日还款波动率',
+        fieldType: 'Double',
+        variableMeaning: '衡量用户还款金额的波动情况，预警风险',
+        processingLogic: '计算近7日还款金额序列的标准差/均值',
+        dimension: '用户维度',
+        dataFreshness: '实时',
+        defaultValue: '0.0',
+        proposer: '业务方-李四',
+        backtrackPeriod: '2026-07-19 ~ 2026-07-25',
+        expectedLaunchDate: '2026-08-20',
+        expectedEffect: '波动率>0.3 的人群逾期率提升 15%'
+      },
+      {
+        variableEnName: 'MIDLOAN_COLLECT_RESP_HRS',
+        variableCnName: '催收响应时效',
+        fieldType: 'Double',
+        variableMeaning: '衡量催收触达效率，识别高响应客户',
+        processingLogic: '从催收工单 join 用户触达日志，avg(respond_time-send_time)/3600',
+        dimension: '用户维度',
+        dataFreshness: '实时',
+        defaultValue: '24.0',
+        proposer: '业务方-张三',
+        backtrackPeriod: '2026-07-01 ~ 2026-07-25',
+        expectedLaunchDate: '2026-08-25',
+        expectedEffect: '响应<2h 的客户回款率提升 20%'
+      },
+      {
+        variableEnName: 'MIDLOAN_LOGIN_DEVICE_CHG_30D',
+        variableCnName: '近30日登录设备变更次数',
+        fieldType: 'Integer',
+        variableMeaning: '统计设备变更频次，识别账号被盗风险',
+        processingLogic: '统计 user_id 近30日的不同 device_id 数量',
+        dimension: '用户维度',
+        dataFreshness: '实时',
+        defaultValue: '0',
+        proposer: '业务方-赵六',
+        backtrackPeriod: '2026-06-25 ~ 2026-07-25',
+        expectedLaunchDate: '2026-08-30',
+        expectedEffect: '设备变更≥3 次的欺诈命中率提升 25%'
+      }
+    ],
     createdAt: '2026-07-25 10:00:00',
     updatedAt: '2026-08-01 09:30:00'
   },
@@ -271,6 +347,51 @@ const SEED_DATA: DerivationRecord[] = [
     proposer: '数据应用团队',
     handler: '业务方-张三',
     syncLevel: 'C',
+    attachment: { name: '内数变量迁移清单_202608.xlsx', size: 184320, uploadedAt: '2026-08-03 11:10:00' },
+    excelData: [
+      {
+        variableEnName: 'IN_TXN_CNT_30D',
+        variableCnName: '近30日交易次数',
+        fieldType: 'Integer',
+        variableMeaning: '统计用户近30日交易频次',
+        processingLogic: '按 user_id 维度统计近30日交易成功记录数',
+        dimension: '用户维度',
+        dataFreshness: '离线T-1',
+        defaultValue: '0',
+        proposer: '数据应用团队',
+        backtrackPeriod: '2026-07-04 ~ 2026-08-03',
+        expectedLaunchDate: '2026-08-20',
+        expectedEffect: 'IV≥0.03，交易频次<5 的用户风险提升 8%'
+      },
+      {
+        variableEnName: 'IN_REPAY_AMT_30D',
+        variableCnName: '近30日还款金额',
+        fieldType: 'Double',
+        variableMeaning: '汇总用户近30日还款总额',
+        processingLogic: '按 user_id 汇总近30日还款金额 sum(amount)',
+        dimension: '用户维度',
+        dataFreshness: '离线T-1',
+        defaultValue: '0.0',
+        proposer: '数据应用团队',
+        backtrackPeriod: '2026-07-04 ~ 2026-08-03',
+        expectedLaunchDate: '2026-08-20',
+        expectedEffect: '还款金额环比下降>50% 的用户逾期率提升 12%'
+      },
+      {
+        variableEnName: 'IN_OVERDUE_CNT_30D',
+        variableCnName: '近30日逾期次数',
+        fieldType: 'Integer',
+        variableMeaning: '统计用户近30日逾期记录条数',
+        processingLogic: '从 dwd_overdue_detail 按 user_id 统计近30日逾期记录 count',
+        dimension: '用户维度',
+        dataFreshness: '离线T-1',
+        defaultValue: '0',
+        proposer: '数据应用团队',
+        backtrackPeriod: '2026-07-04 ~ 2026-08-03',
+        expectedLaunchDate: '2026-08-25',
+        expectedEffect: '逾期≥2 次的客户坏账率提升 18%'
+      }
+    ],
     createdAt: '2026-08-03 11:20:00',
     updatedAt: '2026-08-04 09:15:00'
   },
@@ -388,11 +509,32 @@ export const DerivationStore = {
   create(payload: any, proposer: string = 'Demo 用户') {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
     const record: DerivationRecord = {
+      // 必填字段默认值（payload 中有则覆盖）
+      name: payload.name || '',
+      businessScene: payload.businessScene || '贷中',
+      expectedEffect: payload.expectedEffect || '—',
+      requirementDescription: payload.requirementDescription || '',
+      category: payload.category || 'midloan_behavior',
+      dataSource: payload.dataSource || 'Hbase',
+      featureEnName: payload.featureEnName || '',
+      featureCnName: payload.featureCnName || payload.name || '',
+      fieldType: payload.fieldType || 'String',
+      processingLogic: payload.processingLogic || '',
+      defaultValue: payload.defaultValue ?? '',
+      l1Category: payload.l1Category || '',
+      l2Category: payload.l2Category || '',
+      sourceTableAfter: payload.sourceTableAfter || '',
+      sourceTableBefore: payload.sourceTableBefore || '',
+      originFeatureEnName: payload.originFeatureEnName || '',
+      dataFreshness: payload.dataFreshness || '',
+      developer: payload.developer || '',
+      // 系统字段
       id: nextId(),
       status: 'requirement_accepted',
       proposer,
       createdAt: now,
       updatedAt: now,
+      // payload 覆盖以上默认值
       ...payload
     }
     store.unshift(record)
