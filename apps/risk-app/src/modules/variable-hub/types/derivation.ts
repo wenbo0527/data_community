@@ -64,7 +64,6 @@ export interface DerivationRecord {
   syncLevel?: string
   featureId?: string
   status: DerivationStatus
-  creator?: string
   createdAt: string
   updatedAt: string
 }

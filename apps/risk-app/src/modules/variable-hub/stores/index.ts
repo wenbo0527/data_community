@@ -4,5 +4,4 @@
  */
 export { useVariableStore } from '@/modules/variable-hub/store/variable'
 export { usePermissionStore } from '@/modules/variable-hub/stores/permissionStore'
-export { useDerivationStore } from '@/modules/variable-hub/stores/derivationStore'
 export { useExploreStore } from '@/modules/variable-hub/stores/exploreStore'
