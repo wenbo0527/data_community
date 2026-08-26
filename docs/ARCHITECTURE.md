@@ -73,12 +73,17 @@ router/        9    路由模块
 
 ## 5. 分支管理
 
+### 5.0 命名规约 + 清理 SOP（详见子文档）
+
+- 📋 **命名规约**：见 [`docs/BRANCH_NAMING.md`](BRANCH_NAMING.md)（6 个标准前缀 + 命名格式 + 废弃命名清单）
+- 🧹 **清理 SOP**：见 [`docs/BRANCH_CLEANUP.md`](BRANCH_CLEANUP.md)（清理时机 + 5 步流程 + 巡检建议）
+
 | 类型 | 数量 | 备注 |
 |---|---|---|
 | 主干 | 2 | `main` / `develop` |
 | feat | 8 | 含 2 个 customer360 v3.3、6 个 dmt/dfd |
-| chain | 2 | 活跃合并分支 |
-| pr | 3 | `pr-a/dmt-exploration` / `pr-b/lineage-graph` / `pr-c/risk-offline-model` |
+| chain | 2 | 活跃合并分支（**已废止新分支使用**） |
+| pr | 3 | `pr-a/dmt-exploration` / `pr-b/lineage-graph` / `pr-c/risk-offline-model`（**已废止新分支使用**） |
 | gh-pages | 1 | CI 部署 |
 | backup/version | 8 | **建议归档**（见 `docs/BRANCH_RETIREMENT_PLAN.md`） |
 
@@ -152,7 +157,9 @@ packages/shared-api  (仅 packages 内部使用)
 ## 10. 文档索引
 
 - [`apps/mkt-app/src/mock/MOCK_STANDARD.md`](apps/mkt-app/src/mock/MOCK_STANDARD.md) — Mock 数据标准
-- [`docs/BRANCH_RETIREMENT_PLAN.md`](docs/BRANCH_RETIREMENT_PLAN.md) — 分支归档建议
+- [`docs/BRANCH_NAMING.md`](docs/BRANCH_NAMING.md) — 分支命名规约（v1.0 · 2026-08-10 拍板）
+- [`docs/BRANCH_CLEANUP.md`](docs/BRANCH_CLEANUP.md) — 分支清理 SOP（v1.0 · 2026-08-10 拍板）
+- [`docs/BRANCH_RETIREMENT_PLAN.md`](docs/BRANCH_RETIREMENT_PLAN.md) — 分支归档建议（具体清单）
 - `apps/mkt-app/scripts/check-mock-purity.mjs` — Mock 纯净度 CI
 - `apps/horizontal-canvas/scripts/test-routes.sh` — 路由测试
 - `apps/horizontal-canvas/scripts/lint-any.mjs` — TypeScript `: any` 检查
