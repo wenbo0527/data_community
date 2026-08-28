@@ -279,7 +279,7 @@ const saveEdit = async () => {
     const totalAmount = Number(form.amount || 0)
     const initialOccupied = Number(form.initialOccupiedAmount || 0)
     const writtenOff = Number(form.writtenOffAmount || 0)
-    if (form.contractType === 'framework' && totalAmount < initialOccupied + writtenOff) {
+    if (totalAmount < initialOccupied + writtenOff) {
       const diff = (initialOccupied + writtenOff) - totalAmount
       Message.error(`合同总金额不足，差额${diff.toLocaleString('zh-CN')}元`)
       saving.value = false
@@ -287,7 +287,7 @@ const saveEdit = async () => {
     }
 
     // PRD V3: 签报/成交通知书金额 ≥ 合同总金额（跨层级校验）
-    if (form.signReportNo && form.supplier && form.contractType === 'framework') {
+    if (form.signReportNo && form.supplier) {
       const signReport = signReportStore.list.find((r: any) => r.reportNo === form.signReportNo)
       if (signReport) {
         const partnerOrgData = signReport.partnerOrgs?.find((p: any) => p.partnerOrg === form.supplier)

@@ -1,6 +1,6 @@
 /**
  * 模板引擎工具类
- * 用于处理通知模板中的变量替换，支持 {{variable}} 语法
+ * 用于处理通知模板中的特征替换，支持 {{variable}} 语法
  */
 
 class TemplateEngine {
@@ -13,7 +13,7 @@ class TemplateEngine {
   /**
    * 渲染模板
    * @param {string} template - 模板字符串
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @param {Object} options - 渲染选项
    * @returns {string} 渲染后的字符串
    */
@@ -31,7 +31,7 @@ class TemplateEngine {
       // 处理循环语句
       result = this.processLoops(result, variables)
       
-      // 处理变量替换
+      // 处理特征替换
       result = this.processVariables(result, variables)
       
       // 清理多余的空白
@@ -47,9 +47,9 @@ class TemplateEngine {
   }
 
   /**
-   * 处理变量替换
+   * 处理特征替换
    * @param {string} template - 模板字符串
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @returns {string} 处理后的字符串
    */
   processVariables(template, variables) {
@@ -62,7 +62,7 @@ class TemplateEngine {
   /**
    * 处理条件语句
    * @param {string} template - 模板字符串
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @returns {string} 处理后的字符串
    */
   processConditionals(template, variables) {
@@ -76,7 +76,7 @@ class TemplateEngine {
   /**
    * 处理循环语句
    * @param {string} template - 模板字符串
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @returns {string} 处理后的字符串
    */
   processLoops(template, variables) {
@@ -101,10 +101,10 @@ class TemplateEngine {
   }
 
   /**
-   * 获取变量值
-   * @param {Object} variables - 变量对象
-   * @param {string} path - 变量路径（支持点语法）
-   * @returns {*} 变量值
+   * 获取特征值
+   * @param {Object} variables - 特征对象
+   * @param {string} path - 特征路径（支持点语法）
+   * @returns {*} 特征值
    */
   getVariableValue(variables, path) {
     if (!path || typeof path !== 'string') {
@@ -172,9 +172,9 @@ class TemplateEngine {
   }
 
   /**
-   * 提取模板中的变量
+   * 提取模板中的特征
    * @param {string} template - 模板字符串
-   * @returns {Array} 变量名称数组
+   * @returns {Array} 特征名称数组
    */
   extractVariables(template) {
     if (!template || typeof template !== 'string') {
@@ -183,18 +183,18 @@ class TemplateEngine {
 
     const variables = new Set()
     
-    // 提取普通变量
+    // 提取普通特征
     let match
     while ((match = this.variablePattern.exec(template)) !== null) {
       variables.add(match[1])
     }
 
-    // 提取条件变量
+    // 提取条件特征
     while ((match = this.conditionalPattern.exec(template)) !== null) {
       variables.add(match[1])
     }
 
-    // 提取循环变量
+    // 提取循环特征
     while ((match = this.loopPattern.exec(template)) !== null) {
       variables.add(match[1])
     }
@@ -203,9 +203,9 @@ class TemplateEngine {
   }
 
   /**
-   * 验证模板变量
+   * 验证模板特征
    * @param {string} template - 模板字符串
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @returns {Object} 验证结果
    */
   validateVariables(template, variables) {
@@ -246,7 +246,7 @@ class TemplateEngine {
   /**
    * 批量渲染模板
    * @param {Array} templates - 模板数组
-   * @param {Object} variables - 变量对象
+   * @param {Object} variables - 特征对象
    * @param {Object} options - 渲染选项
    * @returns {Array} 渲染结果数组
    */
@@ -263,9 +263,9 @@ class TemplateEngine {
   }
 
   /**
-   * 获取默认变量
+   * 获取默认特征
    * @param {string} type - 监控类型（inventory, expiry, failure_rate）
-   * @returns {Object} 默认变量对象
+   * @returns {Object} 默认特征对象
    */
   getDefaultVariables(type) {
     const baseVariables = {

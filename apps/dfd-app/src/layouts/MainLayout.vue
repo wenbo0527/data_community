@@ -59,14 +59,14 @@ const assetMenus = [
 const dataMapMenus = [
   { key: '/data-map', title: '数据地图' },
   { key: '/metrics-map', title: '指标地图' },
-  { key: '/variable-map', title: '变量地图' },
+  { key: '/variable-map', title: '特征地图' },
   { key: '/feature-map', title: '特征地图' },
   {
     key: 'dict-group',
     title: '数据字典',
     children: [
       { key: '/indicator-dict', title: '指标字典' },
-      { key: '/variable-dict', title: '变量字典' },
+      { key: '/variable-dict', title: '特征字典' },
       { key: '/feature-dict', title: '特征字典' }
     ]
   }

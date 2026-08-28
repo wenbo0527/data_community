@@ -105,7 +105,7 @@
             <a-form-item label="分区条件（选填）" field="source.partition">
               <a-input
                 v-model="formData.source.partition"
-                placeholder="支持变量，如 ${dt}，非分区表留空"
+                placeholder="支持特征，如 ${dt}，非分区表留空"
                 :disabled="!formData.source.table"
               />
               <template #extra>
@@ -167,7 +167,7 @@
             <a-form-item label="分区条件（选填）" field="target.partition">
               <a-input
                 v-model="formData.target.partition"
-                placeholder="支持变量，如 ${dt}，非分区表留空"
+                placeholder="支持特征，如 ${dt}，非分区表留空"
                 :disabled="!formData.target.table"
               />
             </a-form-item>

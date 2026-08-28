@@ -28,7 +28,7 @@
           </a-col>
           <a-col :span="12">
             <div class="demo-row">
-              <span>变量中心</span>
+              <span>特征中心</span>
               <a-switch v-model="flags.variableDown" size="small" />
             </div>
           </a-col>
@@ -133,7 +133,7 @@ onMounted(() => {
       const v = window.__midloanVariableList && window.__midloanVariableList.find(x => x.id === fid)
       if (v) {
         v.midloanStatus = 'offline_failed'
-        v.syncFailedReason = '变量中心批次同步超时'
+        v.syncFailedReason = '特征中心批次同步超时'
         v.syncFailedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
       }
     }

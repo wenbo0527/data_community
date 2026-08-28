@@ -222,11 +222,11 @@ const discoveryMenus = [
     { key: 'discovery/asset-catalog', title: '资产目录' },
   ]},
 
-  // 数据要素(高价值业务形态 — 指标 / 变量 / 特征 / 外数 4 个核心入口)
+  // 数据要素(高价值业务形态 — 指标 / 特征 / 特征 / 外数 4 个核心入口)
   // 其它能力(征信查询 / 统一指标 / 指标看板 / 地铁图)已并入相应字典页或工作台快捷入口
   { key: 'discovery-group-element', title: '✨ 数据要素', children: [
     { key: 'discovery/indicator-dict', title: '指标字典' },
-    { key: 'discovery/variable-dict', title: '变量字典' },
+    { key: 'discovery/variable-dict', title: '特征字典' },
     { key: 'discovery/feature-dict', title: '特征字典' },
     { key: 'discovery/external', title: '外部数据' },
   ]},
@@ -251,7 +251,7 @@ const managementMenus = [
   // 上下架管理与「数据发现」三分法对应:
   //   数据资源 ↔ 业务系统/文件/日志/实时 (discovery/data-resources)
   //   数据资产 ↔ 资产目录/数据表 (discovery/asset-catalog)
-  //   数据要素 ↔ 指标/变量/特征/外数/API (discovery/indicator-dict 等)
+  //   数据要素 ↔ 指标/特征/特征/外数/API (discovery/indicator-dict 等)
   { key: 'management-group-metadata', title: '元数据管理', children: [
     { key: 'management/metadata-sub-basic', title: '元数据基础', children: [
       { key: 'management/metadata', title: '元数据总览' },
@@ -266,7 +266,7 @@ const managementMenus = [
       { key: 'management/asset-management/listing-management/data-source', title: '数据资源上下架' },
       // ↔ 数据发现·数据资产(资产目录/数据表)
       { key: 'management/asset-management/listing-management/asset-management', title: '数据资产上下架' },
-      // ↔ 数据发现·数据要素(指标/变量/特征/外数/API)
+      // ↔ 数据发现·数据要素(指标/特征/特征/外数/API)
       { key: 'management/shelf/element-shelf', title: '数据要素上下架' },
       // 指标管理属于数据要素范畴,归入上下架管理
       { key: 'management/asset-management/listing-management/metric-management', title: '指标管理' },
@@ -490,8 +490,7 @@ function updateMenuState(path: string) {
 function handleTopMenuClick(key: string) {
   activeTopMenu.value = key
   const target = topMenuDefaultPath[key] || '/'
-  const path = target.startsWith('/') ? target.substring(1) : target
-  router.push(path || 'workbench')
+  router.push(target)
 }
 
 function handleSideMenuClick(key: string) {

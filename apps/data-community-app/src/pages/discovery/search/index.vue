@@ -1,6 +1,6 @@
 <template>
   <div class="search-page">
-    <a-page-header title="全局搜索" sub-title="数据资产 · 指标 · 变量 · API · 文档" :back="false">
+    <a-page-header title="全局搜索" sub-title="数据资产 · 指标 · 特征 · API · 文档" :back="false">
       <template #extra>
         <a-button @click="goBack">
           <template #icon><icon-left /></template>

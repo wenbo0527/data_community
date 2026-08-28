@@ -11,7 +11,7 @@
     @cancel="onCancel"
   >
     <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-      填写变量名称、需求描述（可上传附件），支持一次提交多条需求。每条生成独立需求 ID（DRV-{{ todayYmd }}-NNNN）。
+      填写特征名称、需求描述（可上传附件），支持一次提交多条需求。每条生成独立需求 ID（DRV-{{ todayYmd }}-NNNN）。
     </a-alert>
 
     <div v-for="(row, idx) in rows" :key="idx" class="batch-row">
@@ -30,13 +30,13 @@
       </div>
 
       <a-form layout="vertical">
-        <a-form-item label="变量名称" required>
+        <a-form-item label="特征名称" required>
           <a-input
             v-model="row.variableName"
             :max-length="50"
             show-word-limit
             size="large"
-            placeholder="≤50字，输入变量名称"
+            placeholder="≤50字，输入特征名称"
           />
         </a-form-item>
 
@@ -145,14 +145,14 @@ function handleUpload(option, idx) {
 
 // ============ 提交 ============
 function onOk() {
-  // 校验：至少有一条，且每条变量名称必填
+  // 校验：至少有一条，且每条特征名称必填
   if (rows.length === 0) {
     Message.warning('请至少添加一条需求')
     return
   }
   const invalid = rows.findIndex((r) => !r.variableName || !r.variableName.trim())
   if (invalid >= 0) {
-    Message.warning(`第 ${invalid + 1} 条：变量名称必填`)
+    Message.warning(`第 ${invalid + 1} 条：特征名称必填`)
     return
   }
 

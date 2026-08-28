@@ -238,7 +238,7 @@ export const mockTables: MockTable[] = [
     status: 'onShelf',
     onShelfTime: '2026-02-12 09:30:00',
     publisher: '孙丽',
-    description: '变量字典表'
+    description: '特征字典表'
   },
   {
     tableName: 't_legacy_user_profile',

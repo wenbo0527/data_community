@@ -110,7 +110,7 @@ export default {
         description: '从外部合作伙伴获取的数据源'
       }
     ];
-    console.log(mockResources) // 使用变量避免 lint 报错
+    console.log(mockResources) // 使用特征避免 lint 报错
 
     // 模拟最近申请
     const mockApplications = [

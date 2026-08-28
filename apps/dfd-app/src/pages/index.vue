@@ -49,7 +49,7 @@ const features = [
   
   // 数据要素字典
   { path: '/feature-dict', title: '特征字典列表', category: '要素字典', description: '管理特征元数据', color: 'orange' },
-  { path: '/variable-dict', title: '变量字典列表', category: '要素字典', description: '管理变量元数据', color: 'orange' },
+  { path: '/variable-dict', title: '特征字典列表', category: '要素字典', description: '管理特征元数据', color: 'orange' },
   { path: '/indicator-dict', title: '指标字典列表', category: '要素字典', description: '管理指标元数据', color: 'orange' },
   
   // 数据资源字典

@@ -16,7 +16,7 @@ export interface MetadataTask {
   id: string
   taskName: string
   dataSourceType: 'Doris' | 'Hive' | 'Oracle' | 'MySQL'
-  assetType: '指标' | 'API' | '变量' | '表'
+  assetType: '指标' | 'API' | '特征' | '表'
   status: 'pending' | 'running' | 'success' | 'failed'
   createdAt: string
   finishedAt?: string
@@ -48,7 +48,7 @@ const loadTasks = (): MetadataTask[] => {
   const seed: MetadataTask[] = [
     mkTask('T-001', 'Doris 主仓表采集', 'Doris', '表', 'running', '2026-07-21 09:30', 'user'),
     mkTask('T-002', 'Hive 数仓指标采集', 'Hive', '指标', 'success', '2026-07-21 08:15', 'user'),
-    mkTask('T-003', 'Oracle 核心系统变量采集', 'Oracle', '变量', 'failed', '2026-07-21 07:00', 'user'),
+    mkTask('T-003', 'Oracle 核心系统特征采集', 'Oracle', '特征', 'failed', '2026-07-21 07:00', 'user'),
     mkTask('T-004', 'Doris 风控 API 采集', 'Doris', 'API', 'success', '2026-07-20 22:00', 'user'),
     mkTask('T-005', 'Hive 用户中心画像采集', 'Hive', '表', 'pending', '2026-07-20 18:30', 'user'),
     mkTask('T-006', 'Doris 数仓指标增量采集', 'Doris', '指标', 'running', '2026-07-20 14:20', 'user')
@@ -239,7 +239,7 @@ const PRODUCT_POOL = {
     { category: 'API', systemId: 'core', clusterType: 'MySQL' },
     { category: 'API', systemId: 'service', clusterType: 'MySQL' }
   ],
-  '变量': [
+  '特征': [
     { category: '数据要素', systemId: 'hive', clusterType: 'HIVE' }
   ]
 }
@@ -274,7 +274,7 @@ function hashString(s: string): number {
  * 把产物注册到 listing-store：
  *   - 「表」 → 追加到 mockTables
  *   - 「指标」 → 追加到 listingStore.metrics
- *   - 「API」「变量」 → 暂以「指标」形态落到 listingStore.metrics（mock 单入口简化）
+ *   - 「API」「特征」 → 暂以「指标」形态落到 listingStore.metrics（mock 单入口简化）
  */
 function registerListingProduct(
   assetType: MetadataTask['assetType'],
@@ -297,7 +297,7 @@ function registerListingProduct(
       publisher: '元数据采集',
       description: `采集任务自动登记 · ${p.category}`
     } as any)
-  } else if (assetType === '指标' || assetType === 'API' || assetType === '变量') {
+  } else if (assetType === '指标' || assetType === 'API' || assetType === '特征') {
     if (listingStore.metrics.some((m: MockMetric) => m.metricName === p.name)) return
     listingStore.metrics.push({
       metricName: p.name,

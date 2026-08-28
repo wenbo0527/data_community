@@ -11,7 +11,8 @@ export const useUserStore = defineStore('user', () => {
     avatar: null,
     email: null,
     phone: null,
-    joinDate: null
+    joinDate: null,
+    token: 'mock-token-123456'
   })
 
   // 是否为新用户

@@ -330,7 +330,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconEye, IconList, IconCopy, IconExclamationCircle, IconIdcard } from '@arco-design/web-vue/es/icon'
 import DisbursementDrawer from './DisbursementDrawer.vue'
 import CompleteLoanDetailDrawer from './CompleteLoanDetailDrawer.vue'
-import { copyToClipboard } from '../../../utils/copy'
+import { copyToClipboard } from '@app/shared-utils'
 import { formatAmount } from '../../../utils/formatUtils'
 
 interface Props {

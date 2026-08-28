@@ -5,7 +5,7 @@ export const getMetadataTaskDetail = (id: string) => Promise.resolve({ id })
 const MOCK_TASKS = [
   { id: 'T-001', taskName: 'Doris 主仓表采集', dataSourceType: 'Doris', assetType: '表', status: 'running', createdAt: '2026-07-21 09:30' },
   { id: 'T-002', taskName: 'Hive 数仓指标采集', dataSourceType: 'Hive', assetType: '指标', status: 'success', createdAt: '2026-07-21 08:15' },
-  { id: 'T-003', taskName: 'Oracle 核心系统变量采集', dataSourceType: 'Oracle', assetType: '变量', status: 'failed', createdAt: '2026-07-21 07:00' },
+  { id: 'T-003', taskName: 'Oracle 核心系统特征采集', dataSourceType: 'Oracle', assetType: '特征', status: 'failed', createdAt: '2026-07-21 07:00' },
   { id: 'T-004', taskName: 'Doris 风控 API 采集', dataSourceType: 'Doris', assetType: 'API', status: 'success', createdAt: '2026-07-20 22:00' },
   { id: 'T-005', taskName: 'Hive 用户中心画像采集', dataSourceType: 'Hive', assetType: '表', status: 'pending', createdAt: '2026-07-20 18:30' },
   { id: 'T-006', taskName: 'Doris 数仓指标增量采集', dataSourceType: 'Doris', assetType: '指标', status: 'running', createdAt: '2026-07-20 14:20' }

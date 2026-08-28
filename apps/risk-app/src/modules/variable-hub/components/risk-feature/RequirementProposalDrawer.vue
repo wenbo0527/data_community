@@ -1,6 +1,6 @@
 <!--
   需求提出表单（批量注册）
-  - 每行：变量名称 + 需求描述 + 附件
+  - 每行：特征名称 + 需求描述 + 附件
   - 支持多行增删，一次批量提交
   - 提交后状态=需求提出（requirement_proposal），生成 DRV-YYYYMMDD-NNNN，通知管理员审核
 -->
@@ -12,7 +12,7 @@
     @cancel="handleCancel"
   >
     <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-      填写变量名称、需求描述（可上传附件），支持一次提交多条需求。每条生成独立需求 ID（DRV-YYYYMMDD-NNNN）。
+      填写特征名称、需求描述（可上传附件），支持一次提交多条需求。每条生成独立需求 ID（DRV-YYYYMMDD-NNNN）。
     </a-alert>
 
     <div v-for="(row, idx) in rows" :key="idx" class="batch-row">
@@ -31,13 +31,13 @@
       </div>
 
       <a-form layout="vertical">
-        <a-form-item label="变量名称" required>
+        <a-form-item label="特征名称" required>
           <a-input
             v-model="row.variableName"
             :max-length="50"
             show-word-limit
             size="large"
-            placeholder="≤50字，输入变量名称"
+            placeholder="≤50字，输入特征名称"
           />
         </a-form-item>
 
@@ -174,7 +174,7 @@ function handleSubmit() {
   }
   const invalid = rows.findIndex((r) => !r.variableName || !r.variableName.trim())
   if (invalid >= 0) {
-    Message.warning(`第 ${invalid + 1} 条：变量名称必填`)
+    Message.warning(`第 ${invalid + 1} 条：特征名称必填`)
     return
   }
 

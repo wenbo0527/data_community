@@ -188,36 +188,59 @@ const currentMessage = ref({})
 // 图表实例
 let chartInstance = null
 
+// 基于字符串的确定性哈希
+function hashStr(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash = hash & hash
+  }
+  return Math.abs(hash)
+}
+
+// 基于种子的确定性字符串（保证长度）
+const seededStr = (seed, len) => {
+  let s = ''
+  let n = 0
+  while (s.length < len) {
+    s += hashStr(seed + '_p' + n).toString(36)
+    n++
+  }
+  return s.substr(0, len)
+}
+
 // 模拟数据生成
 const generateSampleData = () => {
   const data = []
   const now = new Date()
+  const baseSeed = eventId.value || 'event'
   
   for (let i = 0; i < 50; i++) {
-    const timestamp = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+    const seed = baseSeed + '_' + i
+    const timestamp = new Date(now.getTime() - hashStr(seed + '_ts') / 2147483647 * 7 * 24 * 60 * 60 * 1000)
     data.push({
-      id: `EVT${Math.random().toString(36).substr(2, 9)}`,
+      id: `EVT${seededStr(seed + '_id', 9)}`,
       eventId: eventId.value,
-      userId: `USER${Math.random().toString(36).substr(2, 6)}`,
+      userId: `USER${seededStr(seed + '_uid', 6)}`,
       timestamp: timestamp.toISOString().replace('T', ' ').substr(0, 19),
-      eventType: ['登录', '购买', '浏览', '收藏', '分享'][Math.floor(Math.random() * 5)],
-      status: ['成功', '失败'][Math.floor(Math.random() * 2)],
+      eventType: ['登录', '购买', '浏览', '收藏', '分享'][hashStr(seed + '_et') % 5],
+      status: ['成功', '失败'][hashStr(seed + '_st') % 2],
       rawData: {
         eventId: eventId.value,
-        userId: `USER${Math.random().toString(36).substr(2, 6)}`,
+        userId: `USER${seededStr(seed + '_ruid', 6)}`,
         timestamp: timestamp.toISOString(),
         eventType: 'user_action',
         properties: {
-          action: ['login', 'purchase', 'browse', 'favorite', 'share'][Math.floor(Math.random() * 5)],
-          platform: ['web', 'mobile', 'app'][Math.floor(Math.random() * 3)],
-          ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+          action: ['login', 'purchase', 'browse', 'favorite', 'share'][hashStr(seed + '_act') % 5],
+          platform: ['web', 'mobile', 'app'][hashStr(seed + '_plt') % 3],
+          ip: `192.168.${hashStr(seed + '_ip1') % 255}.${hashStr(seed + '_ip2') % 255}`,
           userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          sessionId: Math.random().toString(36).substr(2, 16),
+          sessionId: seededStr(seed + '_sid', 16),
           referrer: 'https://example.com',
           customData: {
-            productId: Math.random().toString(36).substr(2, 8),
+            productId: seededStr(seed + '_pid', 8),
             category: 'electronics',
-            price: Math.floor(Math.random() * 1000) + 100
+            price: hashStr(seed + '_price') % 1000 + 100
           }
         }
       }
@@ -234,7 +257,7 @@ const generateTimeStats = () => {
   
   for (let i = 0; i < 24; i++) {
     hours.push(`${i.toString().padStart(2, '0')}:00`)
-    counts.push(Math.floor(Math.random() * 100) + 10)
+    counts.push(hashStr('timestat_' + i) % 100 + 10)
   }
   
   return { hours, counts }

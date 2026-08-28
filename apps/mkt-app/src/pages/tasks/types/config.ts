@@ -913,7 +913,7 @@ export interface WorkflowConfig {
   // 执行配置
   execution: ExecutionConfig
   
-  // 变量配置
+  // 特征配置
   variables: VariableConfig[]
   
   // 触发器配置
@@ -946,7 +946,7 @@ export interface ExecutionConfig {
 }
 
 /**
- * 变量配置接口
+ * 特征配置接口
  */
 export interface VariableConfig {
   name: string

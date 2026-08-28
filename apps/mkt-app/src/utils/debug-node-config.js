@@ -7,7 +7,7 @@
 window.debugNodeConfig = function(nodeId) {
   console.log('🔍 [调试] 开始检查节点配置:', nodeId)
   
-  // 尝试从全局变量中获取图实例
+  // 尝试从全局特征中获取图实例
   const graph = window.graph || window.taskFlowGraph
   if (!graph) {
     console.error('❌ [调试] 未找到图实例')

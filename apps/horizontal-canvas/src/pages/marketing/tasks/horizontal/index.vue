@@ -287,7 +287,7 @@ import { computeSelectorFromAnchor, computeSelectorCenter, insertNodeAndFinalize
 import { useCanvasMenus } from './composables/useCanvasMenus.js'
 
 
-// 任务基础信息变量
+// 任务基础信息特征
 const router = useRouter()
 const route = useRoute()
 const taskName = ref('')
@@ -308,7 +308,7 @@ watch(taskName, v => { formModel.taskName = v })
 watch(taskDescription, v => { formModel.taskDescription = v })
 watch(taskVersion, v => { formModel.taskVersion = v })
 
-// 编辑模式相关变量
+// 编辑模式相关特征
 const isEditMode = ref(false)
 const editingTaskId = ref(null)
 const editingTaskVersion = ref(null)
@@ -2656,7 +2656,7 @@ const handleAddNode = (payload) => {
   } catch {}
 }
 // ===== 关键函数定义 - 确保模板可以访问 =====
-// 这些函数必须在graph变量定义之后定义
+// 这些函数必须在graph特征定义之后定义
 
 // 返回函数
 const goBack = () => {

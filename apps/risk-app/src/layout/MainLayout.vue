@@ -29,8 +29,8 @@
           <a-sub-menu key="risk-factor-group">
             <template #title>风险要素</template>
             <a-menu-item key="/variable-hub">一体化总览</a-menu-item>
-            <a-menu-item key="/variable-management">变量台账</a-menu-item>
-            <a-menu-item key="/explore/map">变量全景</a-menu-item>
+            <a-menu-item key="/variable-management">特征台账</a-menu-item>
+            <a-menu-item key="/explore/map">特征全景</a-menu-item>
             <a-menu-item key="/evaluation/tasks">评估任务中心</a-menu-item>
           </a-sub-menu>
           <a-sub-menu key="risk-factor-explore">

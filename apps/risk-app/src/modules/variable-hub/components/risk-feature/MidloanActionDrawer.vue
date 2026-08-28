@@ -235,7 +235,7 @@
         <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0 0 4px 0; font-weight: 500;">上线确认</p>
           <p style="margin: 0; font-size: 13px;">
-            提产后将依次完成：OA投产单审批 → 系统自动参数映射+有效性验证 → 内数API注册（INT-01）→ 变量中心注册（INT-03）。
+            提产后将依次完成：OA投产单审批 → 系统自动参数映射+有效性验证 → 内数API注册（INT-01）→ 特征中心注册（INT-03）。
             请确认数据底表/接口字段已准备就绪。
           </p>
         </a-alert>
@@ -256,7 +256,7 @@
       <template v-else-if="actionKey === 'oa_production_approve'">
         <a-alert type="success" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0; font-size: 13px;">
-            审批通过后将依次进入：参数准备 → 内数注册 → 变量中心注册。系统自动完成参数映射+有效性验证。
+            审批通过后将依次进入：参数准备 → 内数注册 → 特征中心注册。系统自动完成参数映射+有效性验证。
           </p>
         </a-alert>
         <a-form-item label="审批意见（可选）">
@@ -303,11 +303,11 @@
         </a-form-item>
       </template>
 
-      <!-- 变量归档（管理员专属 · 仅需求提出 / 已注册阶段）-->
+      <!-- 特征归档（管理员专属 · 仅需求提出 / 已注册阶段）-->
       <template v-else-if="actionKey === 'archive_variable'">
         <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0; font-size: 13px;">
-            归档后变量将进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。归档操作不可恢复，请谨慎填写原因。
+            归档后特征将进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。归档操作不可恢复，请谨慎填写原因。
           </p>
         </a-alert>
         <a-form-item label="当前状态">
@@ -331,7 +331,7 @@
       <template v-else-if="actionKey === 'correct_status'">
         <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0; font-size: 13px;">
-            跨系统状态（内数同步中/变量中心同步中/已上线/已下线）不可手动修正。
+            跨系统状态（内数同步中/特征中心同步中/已上线/已下线）不可手动修正。
             以下为可修正的离线分析阶段状态（管理员专用）。
           </p>
         </a-alert>
@@ -371,7 +371,7 @@ import {
 interface Props {
   visible: boolean
   actionKey: 'submit_requirement' | 'submit_dev_oa' | 'business_verify_pass' | 'admin_confirm_pass' | 'submit_production_order' | 'oa_production_approve' | 'oa_production_reject' | 'retry_sync_supplement_table' | 'archive_variable' | 'correct_status'
-  /** 当前变量数据（用于预览）*/
+  /** 当前特征数据（用于预览）*/
   variableData?: any
 }
 
@@ -453,7 +453,7 @@ const correctableOptions = [
   { value: 'oa_production_reviewing', label: 'OA 投产审批中' },
   { value: 'dw_online_failed', label: '数仓上线失败' },
   { value: 'internal_sync_failed', label: '内数同步失败' },
-  { value: 'variable_sync_failed', label: '变量中心同步失败' },
+  { value: 'variable_sync_failed', label: '特征中心同步失败' },
   { value: 'offline_failed', label: '下线接收失败' }
 ]
 
@@ -539,12 +539,12 @@ const config = computed(() => {
     },
     submit_production_order: {
       title: '提投产单',
-      alert: '上线确认：提产后将依次完成 OA审批→参数映射+验证→内数注册→变量中心注册。',
+      alert: '上线确认：提产后将依次完成 OA审批→参数映射+验证→内数注册→特征中心注册。',
       alertType: 'warning'
     },
     oa_production_approve: {
       title: 'OA 投产审批通过',
-      alert: '审批通过后系统将依次进入参数准备、内数注册、变量中心注册。',
+      alert: '审批通过后系统将依次进入参数准备、内数注册、特征中心注册。',
       alertType: 'success'
     },
     oa_production_reject: {
@@ -558,8 +558,8 @@ const config = computed(() => {
       alertType: 'warning'
     },
     archive_variable: {
-      title: '变量归档',
-      alert: '归档后变量进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。',
+      title: '特征归档',
+      alert: '归档后特征进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。',
       alertType: 'warning'
     },
     correct_status: {

@@ -7,7 +7,7 @@
     <a-card title="数据血缘（来源 · 上游链路）" class="detail-card">
       <LineageGraph
         class="lineage-graph"
-        :table-name="variableCode || variableName || '变量'"
+        :table-name="variableCode || variableName || '特征'"
         :layers="2"
         :data-types="['Variable', 'Table', 'Metric', 'API']"
         :upstream="upstreamLineage"

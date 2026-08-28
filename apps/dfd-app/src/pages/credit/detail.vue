@@ -18,11 +18,11 @@
               </div>
               
               <a-descriptions :column="2" size="large" class="basic-info">
-                <a-descriptions-item label="变量编号">{{ variableDetail.code }}</a-descriptions-item>
-                <a-descriptions-item label="变量类型">{{ variableDetail.type }}</a-descriptions-item>
+                <a-descriptions-item label="特征编号">{{ variableDetail.code }}</a-descriptions-item>
+                <a-descriptions-item label="特征类型">{{ variableDetail.type }}</a-descriptions-item>
                 <a-descriptions-item label="供应商">{{ variableDetail.supplier }}</a-descriptions-item>
                 <a-descriptions-item label="更新时间">{{ variableDetail.updateTime }}</a-descriptions-item>
-                <a-descriptions-item label="变量描述" :span="2">{{ variableDetail.description }}</a-descriptions-item>
+                <a-descriptions-item label="特征描述" :span="2">{{ variableDetail.description }}</a-descriptions-item>
               </a-descriptions>
             </a-space>
           </a-col>
@@ -78,7 +78,7 @@
       width="600px"
     >
       <a-form :model="editForm" ref="editFormRef" :rules="editFormRules">
-        <a-form-item field="type" label="变量类型" required>
+        <a-form-item field="type" label="特征类型" required>
           <a-select v-model="editForm.type">
             <a-option value="基础信息">基础信息</a-option>
             <a-option value="信贷记录">信贷记录</a-option>
@@ -89,8 +89,8 @@
         <a-form-item field="supplier" label="供应商" required>
           <a-input v-model="editForm.supplier" placeholder="请输入供应商" />
         </a-form-item>
-        <a-form-item field="description" label="变量描述">
-          <a-textarea v-model="editForm.description" placeholder="请输入变量描述" />
+        <a-form-item field="description" label="特征描述">
+          <a-textarea v-model="editForm.description" placeholder="请输入特征描述" />
         </a-form-item>
       </a-form>
     </a-drawer>
@@ -107,7 +107,7 @@ import { IconLeft, IconEdit } from '@arco-design/web-vue/es/icon'
 const route = useRoute()
 const router = useRouter()
 
-// 变量详情数据
+// 特征详情数据
 const variableDetail = ref({
   name: '个人基本信息',
   code: 'BASIC_001',
@@ -261,7 +261,7 @@ const editForm = ref({
 
 // 表单校验规则
 const editFormRules = {
-  type: [{ required: true, message: '请选择变量类型' }],
+  type: [{ required: true, message: '请选择特征类型' }],
   supplier: [{ required: true, message: '请输入供应商' }]
 }
 

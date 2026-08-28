@@ -33,20 +33,20 @@
         <a-card :bordered="false" class="panel-card">
           <a-descriptions :column="2" bordered size="small">
             <a-descriptions-item label="业务问题" :span="2">{{ topic?.businessProblem || '—' }}</a-descriptions-item>
-            <a-descriptions-item label="变量假设" :span="2">{{ topic?.hypothesis || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="特征假设" :span="2">{{ topic?.hypothesis || '—' }}</a-descriptions-item>
             <a-descriptions-item label="业务域标签" :span="2">
               <a-space wrap>
                 <a-tag v-for="tag in topic?.domainTags || []" :key="tag" color="arcoblue">{{ tag }}</a-tag>
                 <span v-if="(topic?.domainTags || []).length === 0" class="muted">—</span>
               </a-space>
             </a-descriptions-item>
-            <a-descriptions-item label="变量类型标签" :span="2">
+            <a-descriptions-item label="特征类型标签" :span="2">
               <a-space wrap>
                 <a-tag v-for="tag in topic?.variableTypeTags || []" :key="tag">{{ tag }}</a-tag>
                 <span v-if="(topic?.variableTypeTags || []).length === 0" class="muted">—</span>
               </a-space>
             </a-descriptions-item>
-            <a-descriptions-item label="目标变量类型">{{ variableTypeName || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="目标特征类型">{{ variableTypeName || '—' }}</a-descriptions-item>
             <a-descriptions-item label="探索分类">{{ topic?.exploreCategoryTitle || '—' }}</a-descriptions-item>
             <a-descriptions-item label="关联数据源">{{ topic?.relatedDataSourceName || '—' }}</a-descriptions-item>
             <a-descriptions-item label="可见性">{{ topic ? visibilityLabel(topic.visibility) : '—' }}</a-descriptions-item>
@@ -159,23 +159,23 @@
 
             <a-divider />
 
-            <!-- 采纳后：探索中心只生成草稿，移交变量中心，状态走"待审批→待部署→已上线" -->
+            <!-- 采纳后：探索中心只生成草稿，移交特征中心，状态走"待审批→待部署→已上线" -->
             <a-alert v-if="decision.result === 'adopted' && !topic?.variableSync" type="success" :show-icon="false">
               <div class="adopt-tip">
-                <div>采纳后可生成变量注册草稿，并移交变量中心（§6.5 状态分层）。</div>
+                <div>采纳后可生成特征注册草稿，并移交特征中心（§6.5 状态分层）。</div>
                 <a-button size="mini" type="primary" @click="handleGenerateDraft">生成草稿（待审批）</a-button>
               </div>
             </a-alert>
 
-            <!-- 关联变量同步状态展示（§6.5 探索中心只读展示） -->
+            <!-- 关联特征同步状态展示（§6.5 探索中心只读展示） -->
             <div v-if="topic?.variableSync" class="variable-sync-block">
               <div class="sync-header">
-                <span class="sync-title">关联变量同步状态</span>
+                <span class="sync-title">关联特征同步状态</span>
                 <a-tag size="small" color="arcoblue">只读展示 · 同步延迟 {{ syncDelayLabel }}</a-tag>
               </div>
 
               <div class="sync-row">
-                <span class="sync-label">变量ID：</span>
+                <span class="sync-label">特征ID：</span>
                 <a-link @click="router.push({ name: 'VariableAssetDetail', params: { id: topic.variableSync.variableId, mode: 'view' } })">{{ topic.variableSync.variableId }}</a-link>
               </div>
               <div class="sync-row">
@@ -193,7 +193,7 @@
 
               <!-- 同步事件时间线 -->
               <div class="sync-events">
-                <div class="sync-events-title">同步事件历史（变量中心 → 探索中心）：</div>
+                <div class="sync-events-title">同步事件历史（特征中心 → 探索中心）：</div>
                 <a-timeline size="small">
                   <a-timeline-item v-for="(evt, idx) in topic.variableSync.events" :key="idx">
                     <span class="evt-time">{{ evt.at }}</span>
@@ -205,10 +205,10 @@
                 </a-timeline>
               </div>
 
-              <!-- 演示操作按钮（变量中心事件模拟） -->
+              <!-- 演示操作按钮（特征中心事件模拟） -->
               <a-divider />
               <div class="sync-actions">
-                <div class="sync-actions-title">演示操作（模拟变量中心事件）：</div>
+                <div class="sync-actions-title">演示操作（模拟特征中心事件）：</div>
                 <a-space wrap>
                   <a-button
                     v-if="topic.variableSync.status === 'pending_approval'"
@@ -235,7 +235,7 @@
                   >加速同步（跳过延迟）</a-button>
                 </a-space>
                 <div class="sync-actions-tip">
-                  Demo：实际生产中变量中心状态变更通过消息队列事件推送，探索中心只读订阅。
+                  Demo：实际生产中特征中心状态变更通过消息队列事件推送，探索中心只读订阅。
                 </div>
               </div>
             </div>
@@ -273,15 +273,15 @@
                 <span v-if="(topic?.referencedTopicIds || []).length === 0" class="muted">—</span>
               </a-space>
             </a-descriptions-item>
-            <a-descriptions-item label="衔接到变量（Demo）">
+            <a-descriptions-item label="衔接到特征（Demo）">
               <a-space>
-                <a-button size="mini" @click="router.push('/variable-management')">查看变量台账</a-button>
+                <a-button size="mini" @click="router.push('/variable-management')">查看特征台账</a-button>
                 <a-button
                   v-if="topic?.relatedVariableIds?.[0]"
                   size="mini"
                   type="primary"
                   @click="router.push({ name: 'VariableAssetDetail', params: { id: topic.relatedVariableIds[0] } })"
-                >查看变量详情（含血缘）</a-button>
+                >查看特征详情（含血缘）</a-button>
               </a-space>
             </a-descriptions-item>
           </a-descriptions>
@@ -304,7 +304,7 @@
         <a-form-item label="延伸方案（采纳时）">
           <a-textarea
             v-model="decisionForm.extensionPlan"
-            placeholder="采纳时填写推荐变量（多个用逗号/换行分隔），将作为后续生成草稿的推荐变量名"
+            placeholder="采纳时填写推荐特征（多个用逗号/换行分隔），将作为后续生成草稿的推荐特征名"
             :max-length="200"
             show-word-limit
           />
@@ -323,7 +323,7 @@
         <a-form-item label="样本范围">
           <a-input v-model="experimentForm.sampleScope" placeholder="例如：全量活跃客户" />
         </a-form-item>
-        <a-form-item label="变量构造逻辑">
+        <a-form-item label="特征构造逻辑">
           <a-textarea v-model="experimentForm.transformLogic" placeholder="如 repay_amount_30d_slope" />
         </a-form-item>
         <a-row :gutter="12">
@@ -478,9 +478,9 @@ const recommendColor = (value: 'go' | 'no_go' | 'need_more') => ({
 const decisionResultLabel = (value: ExploreDecisionResult) => ({ adopted: '采纳', rejected: '否决', paused: '暂缓' }[value])
 const decisionResultColor = (value: ExploreDecisionResult) => ({ adopted: 'green', rejected: 'red', paused: 'orange' }[value])
 
-// §6.5 变量同步状态映射
+// §6.5 特征同步状态映射
 const syncStatusLabel = (value: VariableSyncStatus): string => ({
-  none: '无关联变量',
+  none: '无关联特征',
   pending_approval: '待审批',
   pending_deploy: '待部署',
   online: '已上线',
@@ -537,11 +537,11 @@ const handleDecisionSubmit = () => {
     Message.warning('请填写决策依据')
     return
   }
-  // 解析"延伸方案"为推荐变量（采纳时）
+  // 解析"延伸方案"为推荐特征（采纳时）
   const recommendedVariables: Array<{ name: string; bestExperimentId: string }> = []
   if (decisionForm.result === 'adopted') {
     const plan = decisionForm.extensionPlan.trim()
-    // 简单解析：第一行/分隔符/冒号前后的内容作为推荐变量名
+    // 简单解析：第一行/分隔符/冒号前后的内容作为推荐特征名
     const firstExperiment = ExploreStore.listExperimentsByTopic(topicId)[0]
     if (plan) {
       plan
@@ -558,7 +558,7 @@ const handleDecisionSubmit = () => {
     }
     if (recommendedVariables.length === 0 && firstExperiment) {
       recommendedVariables.push({
-        name: `${topic?.name || topicId}_推荐变量`,
+        name: `${topic?.name || topicId}_推荐特征`,
         bestExperimentId: firstExperiment.id
       })
     }
@@ -592,8 +592,8 @@ const openGovernanceDrawer = (tab: 'accompany' | 'evaluation') => {
 }
 
 const handleGenerateDraft = () => {
-  // §6.1 + §6.5：采纳决策只生成草稿并初始化同步状态，移交变量中心
-  // 探索中心不再直接跳转变量中心详情页，仅在台账上只读展示同步状态
+  // §6.1 + §6.5：采纳决策只生成草稿并初始化同步状态，移交特征中心
+  // 探索中心不再直接跳转特征中心详情页，仅在台账上只读展示同步状态
   const topicData = ExploreStore.getTopicById(topicId)
   const decided = decision.value
   if (!decided) {
@@ -605,32 +605,32 @@ const handleGenerateDraft = () => {
     return
   }
   if (topicData?.variableSync) {
-    Message.warning('已生成过变量草稿，请勿重复操作')
+    Message.warning('已生成过特征草稿，请勿重复操作')
     return
   }
   const recommended = decided?.extensionPlan?.recommendedVariables?.[0]
   const firstExperiment = ExploreStore.listExperimentsByTopic(topicId)[0]
   const experimentVariableName = firstExperiment?.conclusion?.match(/[A-Za-z0-9_]+(?:_v\d+)?/)?.[0]
-  const name = recommended?.name || experimentVariableName || `${topicData?.name || topicId}_推荐变量`
+  const name = recommended?.name || experimentVariableName || `${topicData?.name || topicId}_推荐特征`
   const code = `DRAFT-${Date.now().toString().slice(-6)}`
 
-  // 初始化变量同步信息（状态=待审批），不再直接跳转变量中心
+  // 初始化特征同步信息（状态=待审批），不再直接跳转特征中心
   ExploreStore.initVariableSync(topicId, code)
-  Message.success(`已生成变量注册草稿 ${code}，移交变量中心（状态：待审批）`)
+  Message.success(`已生成特征注册草稿 ${code}，移交特征中心（状态：待审批）`)
 }
 
 /**
- * Demo 用：模拟变量中心"审批通过"事件
+ * Demo 用：模拟特征中心"审批通过"事件
  * 演示同步延迟 5 秒后状态变为"待部署"
  */
 const handleMockApprove = () => {
   const ms = ExploreStore.getSyncDelayMs()
-  Message.info(`已模拟变量中心审批通过事件，预计 ${Math.round(ms / 1000)} 秒后同步到探索中心`)
+  Message.info(`已模拟特征中心审批通过事件，预计 ${Math.round(ms / 1000)} 秒后同步到探索中心`)
   ExploreStore.mockSyncApprove(topicId)
 }
 
 /**
- * Demo 用：模拟变量中心"审批驳回"事件
+ * Demo 用：模拟特征中心"审批驳回"事件
  * 探索中心自动回退到"已暂缓"
  */
 const handleMockReject = () => {
@@ -641,11 +641,11 @@ const handleMockReject = () => {
 }
 
 /**
- * Demo 用：模拟变量中心"部署完成"事件
+ * Demo 用：模拟特征中心"部署完成"事件
  */
 const handleMockDeploy = () => {
   const ms = ExploreStore.getSyncDelayMs()
-  Message.info(`已模拟变量中心部署完成事件，预计 ${Math.round(ms / 1000)} 秒后同步`)
+  Message.info(`已模拟特征中心部署完成事件，预计 ${Math.round(ms / 1000)} 秒后同步`)
   ExploreStore.mockSyncDeploy(topicId)
 }
 
@@ -792,7 +792,7 @@ const handleExperimentSubmit = () => {
   gap: 12px;
 }
 
-/* §6.5 变量同步状态区块样式 */
+/* §6.5 特征同步状态区块样式 */
 .variable-sync-block {
   margin-top: 12px;
   padding: 16px;

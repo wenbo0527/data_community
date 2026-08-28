@@ -407,7 +407,7 @@ const moduleTitle = computed(() => ({
 }[props.module]))
 
 const searchPlaceholder = computed(() => ({
-  discovery: '搜索数据表、指标、变量、血缘...',
+  discovery: '搜索数据表、指标、特征、血缘...',
   management: '搜索元数据、标准、权限...',
   exploration: '搜索标签、事件、人群、看板...'
 }[props.module]))

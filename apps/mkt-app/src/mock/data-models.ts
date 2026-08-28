@@ -294,7 +294,7 @@ if __name__ == "__main__":
       manager: '赵六',
       status: DataModelStatus.DRAFT,
       version: 'v0.8.0',
-      description: '从原始数据中提取和构造机器学习所需的特征变量',
+      description: '从原始数据中提取和构造机器学习所需的特征特征',
       code: `-- 特征工程SQL脚本
 WITH user_features AS (
     SELECT 

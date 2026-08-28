@@ -36,6 +36,9 @@
               <a-option value="marketing">营销系统</a-option>
               <a-option value="finance">财务系统</a-option>
             </a-select>
+            <a-button class="action-btn" size="large" @click="showMissingTicket({ assetType: 'table', pageSource: '数据资源目录' })">
+              <template #icon><icon-plus /></template>缺失工单
+            </a-button>
           </div>
         </div>
       </div>
@@ -49,7 +52,7 @@
       <div class="content-section">
         <a-row :gutter="[16, 16]">
           <a-col v-for="sys in filteredBusinessSystems" :key="sys.id" :xs="24" :sm="12" :md="8" :lg="6">
-            <a-card hoverable :bordered="false">
+            <a-card hoverable :bordered="false" class="system-card" @click="goToTables(sys)">
               <template #title>
                 <a-space>
                   <a-tag :color="getDbTypeColor(sys.dbType)">{{ sys.dbType?.toUpperCase() }}</a-tag>
@@ -63,34 +66,42 @@
                 <a-descriptions-item label="负责人">{{ sys.owner }}</a-descriptions-item>
                 <a-descriptions-item label="更新时间">{{ sys.updatedAt }}</a-descriptions-item>
               </a-descriptions>
-              <template #actions>
-                <a-button type="text" size="small" @click="viewDetail(sys)">详情</a-button>
-                <a-button type="text" size="small" @click="syncMeta(sys)">同步元数据</a-button>
-              </template>
             </a-card>
           </a-col>
         </a-row>
         <a-empty v-if="filteredBusinessSystems.length === 0" description="暂无业务系统" />
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Message } from '@arco-design/web-vue'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { useRouter } from 'vue-router'
+import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
 
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
+
+const router = useRouter()
 const search = ref('')
 const systemType = ref<string | undefined>(undefined)
 
 const businessSystems = ref([
-  { id: 'BS001', name: '核心交易系统', dbType: 'mysql', systemType: 'core', systemTypeLabel: '核心交易', database: 'core_trade', tableCount: 320, owner: '李开发', updatedAt: '今天 10:30' },
-  { id: 'BS002', name: '风控决策引擎', dbType: 'doris', systemType: 'risk', systemTypeLabel: '风控系统', database: 'risk_decision', tableCount: 180, owner: '张风控', updatedAt: '今天 09:15' },
-  { id: 'BS003', name: '用户中心', dbType: 'pg', systemType: 'core', systemTypeLabel: '核心交易', database: 'user_center', tableCount: 95, owner: '王运营', updatedAt: '今天 11:20' },
-  { id: 'BS004', name: '营销活动平台', dbType: 'hive', systemType: 'marketing', systemTypeLabel: '营销系统', database: 'mkt_platform', tableCount: 420, owner: '陈营销', updatedAt: '今天 08:45' },
-  { id: 'BS005', name: '财务核算系统', dbType: 'oracle', systemType: 'finance', systemTypeLabel: '财务系统', database: 'fin_acc', tableCount: 220, owner: '吴财务', updatedAt: '昨天 17:30' },
-  { id: 'BS006', name: '数据分析平台', dbType: 'clickhouse', systemType: 'core', systemTypeLabel: '核心交易', database: 'olap', tableCount: 180, owner: '王运营', updatedAt: '今天 14:15' }
+  { id: 'BS001', name: '核心交易系统', dbType: 'mysql', systemType: 'core', systemTypeLabel: '核心交易', database: 'core_trade', tableCount: 320, owner: '李开发', updatedAt: '今天 10:30', classifyId: 'SYS-002' },
+  { id: 'BS002', name: '风控决策引擎', dbType: 'doris', systemType: 'risk', systemTypeLabel: '风控系统', database: 'risk_decision', tableCount: 180, owner: '张风控', updatedAt: '今天 09:15', classifyId: 'SYS-001' },
+  { id: 'BS003', name: '用户中心', dbType: 'pg', systemType: 'core', systemTypeLabel: '核心交易', database: 'user_center', tableCount: 95, owner: '王运营', updatedAt: '今天 11:20', classifyId: 'SYS-002' },
+  { id: 'BS004', name: '营销活动平台', dbType: 'hive', systemType: 'marketing', systemTypeLabel: '营销系统', database: 'mkt_platform', tableCount: 420, owner: '陈营销', updatedAt: '今天 08:45', classifyId: 'SYS-001' },
+  { id: 'BS005', name: '财务核算系统', dbType: 'oracle', systemType: 'finance', systemTypeLabel: '财务系统', database: 'fin_acc', tableCount: 220, owner: '吴财务', updatedAt: '昨天 17:30', classifyId: 'SYS-002' },
+  { id: 'BS006', name: '数据分析平台', dbType: 'clickhouse', systemType: 'core', systemTypeLabel: '核心交易', database: 'olap', tableCount: 180, owner: '王运营', updatedAt: '今天 14:15', classifyId: 'SYS-001' }
 ])
 
 const filteredBusinessSystems = computed(() => {
@@ -109,11 +120,8 @@ const filteredBusinessSystems = computed(() => {
   return result
 })
 
-function viewDetail(s: any) {
-  Message.info(`查看业务系统: ${s.name}`)
-}
-function syncMeta(s: any) {
-  Message.success(`已触发同步: ${s.name}`)
+function goToTables(s: any) {
+  router.push(`/management/metadata/classify/tables/${s.classifyId}`)
 }
 function getDbTypeColor(t: string) {
   return { mysql: 'arcoblue', doris: 'green', pg: 'cyan', hive: 'orange', oracle: 'red', clickhouse: 'purple' }[t] || 'gray'
@@ -242,5 +250,13 @@ function getDbTypeColor(t: string) {
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.system-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.system-card:hover {
+  transform: translateY(-2px);
 }
 </style>

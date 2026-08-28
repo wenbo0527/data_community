@@ -4,16 +4,16 @@ import { getVariableGraph, getVariableLineage, getPathAnalysis, getImpactAnalysi
 
 export const useVariableStore = defineStore('variable', {
   state: () => ({
-    // 变量列表
+    // 特征列表
     variableList: [],
     variableTotal: 0,
     variableLoading: false,
     
-    // 当前变量详情
+    // 当前特征详情
     currentVariable: null,
     variableDetailLoading: false,
     
-    // 变量图谱
+    // 特征图谱
     variableGraph: {
       nodes: [],
       edges: []
@@ -63,7 +63,7 @@ export const useVariableStore = defineStore('variable', {
   }),
 
   getters: {
-    // 获取过滤后的变量列表
+    // 获取过滤后的特征列表
     filteredVariables: (state) => {
       let filtered = [...state.variableList]
       
@@ -91,7 +91,7 @@ export const useVariableStore = defineStore('variable', {
       return filtered
     },
     
-    // 获取变量统计信息
+    // 获取特征统计信息
     variableStats: (state) => {
       const total = state.variableList.length
       const active = state.variableList.filter(item => item.status === 'active').length
@@ -134,7 +134,7 @@ export const useVariableStore = defineStore('variable', {
   },
 
   actions: {
-    // 获取变量列表
+    // 获取特征列表
     async fetchVariableList(params = {}) {
       this.variableLoading = true
       try {
@@ -160,7 +160,7 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 获取变量详情
+    // 获取特征详情
     async fetchVariableDetail(id) {
       this.variableDetailLoading = true
       try {
@@ -177,12 +177,12 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 创建变量
+    // 创建特征
     async createVariable(data) {
       try {
         const response = await createVariable(data)
         if (response.code === 200) {
-          // 刷新变量列表
+          // 刷新特征列表
           await this.fetchVariableList()
         }
         return response
@@ -192,12 +192,12 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 更新变量
+    // 更新特征
     async updateVariable({ id, data }) {
       try {
         const response = await updateVariable(id, data)
         if (response.code === 200) {
-          // 刷新变量列表和详情
+          // 刷新特征列表和详情
           await this.fetchVariableList()
           await this.fetchVariableDetail(id)
         }
@@ -208,12 +208,12 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 删除变量
+    // 删除特征
     async deleteVariable(id) {
       try {
         const response = await deleteVariable(id)
         if (response.code === 200) {
-          // 刷新变量列表
+          // 刷新特征列表
           await this.fetchVariableList()
         }
         return response
@@ -223,7 +223,7 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 获取变量图谱
+    // 获取特征图谱
     async fetchVariableGraph(params = {}) {
       this.graphLoading = true
       try {
@@ -240,7 +240,7 @@ export const useVariableStore = defineStore('variable', {
       }
     },
     
-    // 获取变量血缘分析
+    // 获取特征血缘分析
     async fetchVariableLineage(variableId) {
       this.lineageLoading = true
       try {

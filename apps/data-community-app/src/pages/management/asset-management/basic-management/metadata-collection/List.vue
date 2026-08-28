@@ -37,7 +37,7 @@
           <a-select v-model="assetType" allow-clear placeholder="采集对象类型" @change="fetchList">
             <a-option value="指标">指标</a-option>
             <a-option value="API">API</a-option>
-            <a-option value="变量">变量</a-option>
+            <a-option value="特征">特征</a-option>
             <a-option value="表">表</a-option>
           </a-select>
         </a-col>
@@ -110,7 +110,7 @@
             <a-option value="表">表</a-option>
             <a-option value="指标">指标</a-option>
             <a-option value="API">API</a-option>
-            <a-option value="变量">变量</a-option>
+            <a-option value="特征">特征</a-option>
           </a-select>
         </a-form-item>
       </a-form>
@@ -212,7 +212,7 @@ const quickVisible = ref(false)
 const quickForm = reactive({
   taskName: '',
   dataSourceType: 'Hive' as 'Doris' | 'Hive' | 'Oracle' | 'MySQL',
-  assetType: '表' as '指标' | 'API' | '变量' | '表'
+  assetType: '表' as '指标' | 'API' | '特征' | '表'
 })
 const confirmQuickCreate = async () => {
   if (!quickForm.taskName.trim()) {

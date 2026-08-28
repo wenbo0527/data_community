@@ -1,6 +1,6 @@
 <!--
   批量导入需求
-  - 不限定模板：解析 Excel/CSV 中匹配"变量英文名""中文名"的列
+  - 不限定模板：解析 Excel/CSV 中匹配"特征英文名""中文名"的列
   - 支持手动添加需求行
   - 挂载统一附件（所有需求共享同一附件）
 -->
@@ -17,7 +17,7 @@
     @cancel="onCancel"
   >
     <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-      上传 Excel/CSV 文件自动解析"变量英文名"和"中文名"列（不限定模板格式），也可手动添加行。统一附件将挂载到所有需求。
+      上传 Excel/CSV 文件自动解析"特征英文名"和"中文名"列（不限定模板格式），也可手动添加行。统一附件将挂载到所有需求。
     </a-alert>
 
     <!-- 统一附件 -->
@@ -82,7 +82,7 @@
       style="margin-top: 12px"
     >
       <template #variableEnName="{ rowIndex }">
-        <a-input v-model="rows[rowIndex].variableEnName" placeholder="变量英文名" size="small" />
+        <a-input v-model="rows[rowIndex].variableEnName" placeholder="特征英文名" size="small" />
       </template>
       <template #variableCnName="{ rowIndex }">
         <a-input v-model="rows[rowIndex].variableCnName" placeholder="中文名" size="small" />
@@ -96,7 +96,7 @@
         </a-select>
       </template>
       <template #variableMeaning="{ rowIndex }">
-        <a-input v-model="rows[rowIndex].variableMeaning" placeholder="变量含义" size="small" />
+        <a-input v-model="rows[rowIndex].variableMeaning" placeholder="特征含义" size="small" />
       </template>
       <template #processingLogic="{ rowIndex }">
         <a-input v-model="rows[rowIndex].processingLogic" placeholder="取数逻辑" size="small" />
@@ -221,10 +221,10 @@ function createEmptyRow(): DataRow {
 const rows = reactive<DataRow[]>([])
 
 const tableColumns = [
-  { title: '变量英文名', slotName: 'variableEnName', width: 200 },
+  { title: '特征英文名', slotName: 'variableEnName', width: 200 },
   { title: '中文名', slotName: 'variableCnName', width: 160 },
   { title: '字段类型', slotName: 'fieldType', width: 120 },
-  { title: '变量含义', slotName: 'variableMeaning', width: 200 },
+  { title: '特征含义', slotName: 'variableMeaning', width: 200 },
   { title: '取数逻辑', slotName: 'processingLogic', width: 240 },
   { title: '维度', slotName: 'dimension', width: 120 },
   { title: '时效性', slotName: 'dataFreshness', width: 120 },
@@ -332,10 +332,10 @@ function parseJsonRows(json: Record<string, any>[]) {
   const findKey = (patterns: RegExp): string | undefined =>
     allKeys.find(k => patterns.test(k))
 
-  const enNameKey = findKey(/英文名|english.?name|variable.?en.?name|变量名/i)
+  const enNameKey = findKey(/英文名|english.?name|variable.?en.?name|特征名/i)
   const cnNameKey = findKey(/中文名|chinese.?name|cn.?name|特征名/i)
   const fieldTypeKey = findKey(/字段类型|类型|field.?type|data.?type/i)
-  const meaningKey = findKey(/含义|变量含义|描述|description|meaning|备注/i)
+  const meaningKey = findKey(/含义|特征含义|描述|description|meaning|备注/i)
   const logicKey = findKey(/取数逻辑|加工逻辑|逻辑|processing|logic/i)
   const dimensionKey = findKey(/维度|dimension|粒度/i)
   const freshnessKey = findKey(/时效|时效性|freshness|实时|离线/i)
@@ -346,7 +346,7 @@ function parseJsonRows(json: Record<string, any>[]) {
   const effectKey = findKey(/效果|预期效果|effect|expected/i)
 
   if (!enNameKey && !cnNameKey) {
-    parseError.value = `未找到"变量英文名"或"中文名"列，请检查文件列名。当前列：${allKeys.join('、')}`
+    parseError.value = `未找到"特征英文名"或"中文名"列，请检查文件列名。当前列：${allKeys.join('、')}`
     return
   }
 
@@ -385,10 +385,10 @@ function onOk() {
     Message.warning('请至少添加一条需求')
     return
   }
-  // 校验：每行至少有变量英文名或中文名
+  // 校验：每行至少有特征英文名或中文名
   const invalid = rows.findIndex(r => !r.variableEnName.trim() && !r.variableCnName.trim())
   if (invalid >= 0) {
-    Message.warning(`第 ${invalid + 1} 行：变量英文名和中文名不能同时为空`)
+    Message.warning(`第 ${invalid + 1} 行：特征英文名和中文名不能同时为空`)
     return
   }
 

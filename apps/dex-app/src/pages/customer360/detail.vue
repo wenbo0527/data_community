@@ -221,7 +221,7 @@ import CreditReportList from './components/CreditReportList.vue'
 import HistoryQueryButton from './components/HistoryQueryButton.vue'
 import FieldPermissionConfig from './components/FieldPermissionConfig.vue'
 
-// 基础响应式变量
+// 基础响应式特征
 const route = useRoute()
 const router = useRouter()
 const userInfo = ref(null)
@@ -254,7 +254,7 @@ const currentSelectedProduct = computed(() => {
   return userOwnedProducts.value.find(p => p.productKey === navSelection.value.productKey)
 })
 
-// 移除了调试系统相关的状态变量
+// 移除了调试系统相关的状态特征
 
 // 移除了数据流跟踪相关的函数
 

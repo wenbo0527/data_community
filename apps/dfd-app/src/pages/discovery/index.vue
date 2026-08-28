@@ -224,7 +224,7 @@ const dataAssets = ref([
 const dataElements = ref([
   { name: '核心指标', count: 48 },
   { name: '业务标签', count: 156 },
-  { name: '数据变量', count: 312 },
+  { name: '数据特征', count: 312 },
   { name: '模型特征', count: 89 }
 ])
 

@@ -163,7 +163,7 @@ import FlowOverlay from './FlowOverlay.vue'
 import BaseOverlay from './BaseOverlay.vue'
 import FocusMask from './FocusMask.vue'
 import InfoDock from './InfoDock.vue'
-import { computeAbs } from '../../utils/coords'
+import { computeAbs } from '@app/shared-utils'
 import type { Layer } from '../../data/architecture/layers'
 import type { Node } from '../../data/architecture/nodes'
 const props = defineProps<{ layers: Layer[]; nodes: Node[]; opts?: { hideNodes?: boolean; coord?: boolean; hideBg?: boolean } }>()

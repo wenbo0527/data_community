@@ -37,10 +37,10 @@ export interface DerivationRecord {
   attachment?: { name: string; size: number; uploadedAt: string }  // 需求附件
   /** 批量导入时解析的 Excel 原始行数据（用于详情页预览） */
   excelData?: Array<{
-    variableEnName: string      // 变量英文名
+    variableEnName: string      // 特征英文名
     variableCnName: string      // 中文名
     fieldType: string           // 字段类型
-    variableMeaning: string    // 变量含义
+    variableMeaning: string    // 特征含义
     processingLogic: string    // 取数逻辑
     dimension: string          // 维度
     dataFreshness: string      // 时效性
@@ -342,12 +342,12 @@ const SEED_DATA: DerivationRecord[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '数据应用团队',
-    remark: '由原内数变量迁移为贷中行为品类',
+    remark: '由原内数特征迁移为贷中行为品类',
     status: 'requirement_accepted',
     proposer: '数据应用团队',
     handler: '业务方-张三',
     syncLevel: 'C',
-    attachment: { name: '内数变量迁移清单_202608.xlsx', size: 184320, uploadedAt: '2026-08-03 11:10:00' },
+    attachment: { name: '内数特征迁移清单_202608.xlsx', size: 184320, uploadedAt: '2026-08-03 11:10:00' },
     excelData: [
       {
         variableEnName: 'IN_TXN_CNT_30D',
@@ -553,7 +553,7 @@ export const DerivationStore = {
     d.updatedAt = d.registeredAt
     // 需求状态保持为 requirement_accepted（注册状态由特征台账的 midloanStatus 跟踪）
     persist()
-    // 同步把生成的 featureId / dataTableName 等写回变量表
+    // 同步把生成的 featureId / dataTableName 等写回特征表
     const v = (window as any).__midloanVariableList
     if (v && Array.isArray(v)) {
       const vv = v.find(x => x.id === d.featureId || x.derivationId === d.id)

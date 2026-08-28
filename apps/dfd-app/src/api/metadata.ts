@@ -1,7 +1,7 @@
 import request from './request'
 
 export type DataSourceType = 'Doris' | 'Hive' | 'Oracle'
-export type AssetType = '指标' | 'API' | '变量' | '表'
+export type AssetType = '指标' | 'API' | '特征' | '表'
 
 export interface ConnectionConfig {
   host?: string

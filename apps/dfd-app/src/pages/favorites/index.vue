@@ -97,7 +97,7 @@
         </div>
       </a-tab-pane>
 
-      <a-tab-pane key="variable" title="变量">
+      <a-tab-pane key="variable" title="特征">
         <div class="results-grid">
           <div 
             v-for="v in filteredVariables" 
@@ -107,7 +107,7 @@
           >
             <div class="item-header">
               <div class="item-type">
-                <a-tag :color="getTypeColor('variable')">变量</a-tag>
+                <a-tag :color="getTypeColor('variable')">特征</a-tag>
               </div>
               <div class="item-actions">
                 <a-button type="text" size="mini" @click.stop="toggleVariableFavorite(v)">
@@ -150,7 +150,7 @@ const searchPlaceholder = computed(() => {
     case 'table': return activeSubTab.value === 'collections' ? '搜索集合名称或描述' : '搜索表名或描述'
     case 'metric': return '搜索指标名称或描述'
     case 'external': return '搜索外数名称或描述'
-    case 'variable': return '搜索变量名称或描述'
+    case 'variable': return '搜索特征名称或描述'
     default: return '搜索名称或描述'
   }
 })

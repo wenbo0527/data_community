@@ -23,7 +23,7 @@ export const ROLE_LABELS: Record<AnyRole, string> = {
   risk_data_member: '风险数据成员',
   risk_data_admin: '风险数据管理员',
   community_admin: '数字社区管理员',
-  variable_center_system: '变量中心系统',
+  variable_center_system: '特征中心系统',
   internal_number_system: '内数系统',
   dw_system: '数仓系统',
   oa_system: 'OA系统'

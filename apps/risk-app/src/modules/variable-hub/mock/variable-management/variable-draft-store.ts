@@ -71,7 +71,7 @@ export interface RegisterFormPayload {
  * 需求提出表单字段（A1 R01 · 文档 v2.1 模块 A0/A1）
  */
 export interface RequirementProposalPayload {
-  /** 变量名称（必填，≤50字）*/
+  /** 特征名称（必填，≤50字）*/
   requirementName: string
   /** 需求描述（选填，详细描述需求内容）*/
   requirementDescription?: string

@@ -6,7 +6,7 @@
 // 在浏览器控制台中运行此脚本来调试节点配置
 window.debugNodeConfig = function(nodeId) {
 
-  // 尝试从全局变量中获取图实例
+  // 尝试从全局特征中获取图实例
   const graph = window.graph || window.taskFlowGraph
   if (!graph) {
 

@@ -985,7 +985,7 @@ const copyText = async (text) => {
   }
 }
 
-// 在 <script setup> 中，所有顶层声明的变量和函数都会自动暴露给模板
+// 在 <script setup> 中，所有顶层声明的特征和函数都会自动暴露给模板
 // 不需要使用 return 语句
 
 </script>

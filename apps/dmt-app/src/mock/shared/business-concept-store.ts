@@ -182,9 +182,9 @@ const entityElementsMap: Record<string, RelatedElement[]> = {
     },
     {
       code: 'VAR001',
-      name: '实名核验一致性变量',
+      name: '实名核验一致性特征',
       type: 'variable',
-      relatedAsset: '变量中心',
+      relatedAsset: '特征中心',
       relatedResource: { table: 'ads_identity_verify_result', field: 'identity_match_flag' }
     }
   ],
@@ -209,9 +209,9 @@ const entityElementsMap: Record<string, RelatedElement[]> = {
   ENT004: [
     {
       code: 'VAR002',
-      name: '支用金额区间变量',
+      name: '支用金额区间特征',
       type: 'variable',
-      relatedAsset: '变量中心',
+      relatedAsset: '特征中心',
       relatedResource: { table: 'dwd_loan_order', field: 'loan_amount_band' }
     }
   ],

@@ -166,7 +166,7 @@ const doSearch = async (kw: string) => {
   if (!kw) return
   loading.value = true
   try {
-    const res: any = await searchApi({ keyword: kw, include: 'all' })
+    const res: any = await searchApi.search(kw)
     const data = res.data || res || {}
 
     results.value = {

@@ -1,8 +1,8 @@
 <template>
   <div class="explore-map-page">
-    <DmtPageHeader title="变量全景" subtitle="以变量类型为入口，查看当前类型下的分类汇总与状态分布。">
+    <DmtPageHeader title="特征全景" subtitle="以特征类型为入口，查看当前类型下的分类汇总与状态分布。">
       <template #extra>
-        <a-button @click="router.push('/variable-management')">变量台账</a-button>
+        <a-button @click="router.push('/variable-management')">特征台账</a-button>
         <a-button type="primary" @click="router.push('/explore/topics')">探索课题</a-button>
       </template>
     </DmtPageHeader>
@@ -12,8 +12,8 @@
     <a-card :bordered="false" class="toolbar-card">
       <div class="toolbar-head">
         <div>
-          <div class="toolbar-title">第一层：变量类型筛选</div>
-          <div class="toolbar-desc">先选定一个变量类型，再看该类型下的来源结构和状态分布。</div>
+          <div class="toolbar-title">第一层：特征类型筛选</div>
+          <div class="toolbar-desc">先选定一个特征类型，再看该类型下的来源结构和状态分布。</div>
         </div>
         <a-tag color="arcoblue">当前选中：{{ selectedType.title }}</a-tag>
       </div>
@@ -34,7 +34,7 @@
             <a-button size="mini" type="text" @click.stop="openTypeDrawer(item)">详情</a-button>
           </div>
           <div class="type-card-stats">
-            <span>变量 {{ item.stats.totalVariables }}</span>
+            <span>特征 {{ item.stats.totalVariables }}</span>
             <span>数据源 {{ item.stats.dataSources }}</span>
             <span>探索中 {{ item.stats.exploring }}</span>
             <span>已上线 {{ item.stats.online }}</span>
@@ -47,10 +47,10 @@
     <a-card :bordered="false" class="panel-card content-row">
       <template #title>
         <div class="card-title">
-          <span>{{ selectedType.title }} · 分类汇总（万级场景下不展开具体变量）</span>
+          <span>{{ selectedType.title }} · 分类汇总（万级场景下不展开具体特征）</span>
           <a-space>
             <a-tag color="arcoblue">类型 → 探索分类</a-tag>
-            <a-tag v-if="totalVariablesUnderType > 0" color="orange">涉及 {{ totalVariablesUnderType }} 个变量</a-tag>
+            <a-tag v-if="totalVariablesUnderType > 0" color="orange">涉及 {{ totalVariablesUnderType }} 个特征</a-tag>
             <a-button size="mini" type="primary" @click="goToVariableList()">在台账中查看全部</a-button>
           </a-space>
         </div>
@@ -61,7 +61,7 @@
           <a-card :bordered="false" class="category-summary-card" hoverable>
             <div class="cat-title">{{ cat.title }}</div>
             <div class="cat-stats">
-              <a-tag color="arcoblue">变量 {{ cat.stats?.totalVariables || 0 }}</a-tag>
+              <a-tag color="arcoblue">特征 {{ cat.stats?.totalVariables || 0 }}</a-tag>
               <a-tag color="green">已上线 {{ cat.stats?.online || 0 }}</a-tag>
               <a-tag color="orange">探索中 {{ cat.stats?.exploring || 0 }}</a-tag>
               <a-tag>已归档 {{ cat.stats?.archived || 0 }}</a-tag>
@@ -120,7 +120,7 @@
       <a-descriptions :column="1" bordered size="small">
         <a-descriptions-item label="说明">{{ drawerState.description || '—' }}</a-descriptions-item>
         <a-descriptions-item label="统计摘要">
-          变量 {{ drawerState.stats.totalVariables }} / 数据源 {{ drawerState.stats.dataSources }}
+          特征 {{ drawerState.stats.totalVariables }} / 数据源 {{ drawerState.stats.dataSources }}
         </a-descriptions-item>
         <a-descriptions-item label="状态分布">
           探索中 {{ drawerState.stats.exploring }}，已上线 {{ drawerState.stats.online }}，已归档 {{ drawerState.stats.archived }}
@@ -145,7 +145,7 @@
               <a-tag size="small" :color="topicStatusColor(topic.status)">{{ topicStatusLabel(topic.status) }}</a-tag>
               <span class="topic-name">{{ topic.name }}</span>
               <a-tag v-if="topic.variableSync?.status" size="small" :color="syncStatusColor(topic.variableSync.status)">
-                变量 {{ syncStatusLabel(topic.variableSync.status) }}
+                特征 {{ syncStatusLabel(topic.variableSync.status) }}
               </a-tag>
             </div>
             <div class="topic-meta">
@@ -159,7 +159,7 @@
 
       <a-divider />
 
-      <div class="drawer-title">示例变量</div>
+      <div class="drawer-title">示例特征</div>
       <div class="sample-list">
         <div v-for="item in drawerVariables" :key="item.id" class="sample-item">
           <div class="sample-top">
@@ -217,7 +217,7 @@ const archivedRatio = computed(() => {
 })
 
 const statItems = computed(() => [
-  { title: '变量总数', value: summary.totalVariables, iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff', subtitle: '当前全景' },
+  { title: '特征总数', value: summary.totalVariables, iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff', subtitle: '当前全景' },
   { title: '数据源数', value: summary.totalDataSources, iconText: '▣', iconBg: '#f5edff', iconColor: '#722ed1', subtitle: '覆盖数据源' },
   { title: '探索中', value: summary.exploring, iconText: '○', iconBg: '#e6fffb', iconColor: '#0fc6c2', subtitle: '在探索流程中' },
   { title: '已上线', value: summary.online, iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a', subtitle: '已进入台账生产' },
@@ -228,7 +228,7 @@ const statItems = computed(() => [
     iconBg: '#fff1f0',
     iconColor: '#f53f3f',
     subtitle: '过程沉淀，便于复用',
-    extraLabel: '占变量总数',
+    extraLabel: '占特征总数',
     extraValue: archivedRatio.value,
     extraPrecision: 1,
     extraSuffix: '%',
@@ -302,7 +302,7 @@ function titleToLifecycle(title: string): VariableLifecycle {
 
 function openTypeDrawer(type: PanoramaTypeBranch | (PanoramaCategoryBranch & { stats: PanoramaStats })) {
   drawerState.title = type.title
-  drawerState.levelLabel = '变量类型'
+  drawerState.levelLabel = '特征类型'
   drawerState.description = type.description
   drawerState.stats = type.stats || { totalVariables: 0, dataSources: 0, exploring: 0, online: 0, archived: 0 }
   drawerState.typeTitle = type.title
@@ -339,7 +339,7 @@ function openSourceDrawer(category: PanoramaCategoryBranch, source: PanoramaSour
 function openLifecycleDrawer(category: PanoramaCategoryBranch, source: PanoramaSourceBranch, lifecycle: PanoramaLifecycleBranch) {
   drawerState.title = `${source.title} / ${lifecycle.title}`
   drawerState.levelLabel = '生命周期'
-  drawerState.description = `查看 ${selectedType.value.title} / ${category.title} 在 ${source.title} 下，处于${lifecycle.title}状态的变量样例与统计。`
+  drawerState.description = `查看 ${selectedType.value.title} / ${category.title} 在 ${source.title} 下，处于${lifecycle.title}状态的特征样例与统计。`
   drawerState.stats = lifecycle.stats
   drawerState.typeTitle = selectedType.value.title
   drawerState.categoryTitle = category.title
@@ -449,7 +449,7 @@ const topicStatusColor = (status) => ({
   paused: 'orange'
 }[status] || 'gray')
 
-// 变量同步状态（与 §6.5 对齐）
+// 特征同步状态（与 §6.5 对齐）
 const syncStatusLabel = (status) => ({
   none: '无',
   pending_approval: '待审批',
@@ -486,7 +486,7 @@ const getTopicsByCategory = (baseId) => {
 }
 
 const goToVariableList = (typeId, categoryId) => {
-  // 跳转到变量台账并带预筛选条件（通过 query 实现）
+  // 跳转到特征台账并带预筛选条件（通过 query 实现）
   router.push({
     path: '/variable-management',
     query: {
@@ -574,7 +574,7 @@ const MindTreeNodeView = defineComponent({
       const stats = props.node.stats
       if (!stats) return []
       return [
-        `变量 ${stats.totalVariables}`,
+        `特征 ${stats.totalVariables}`,
         `数据源 ${stats.dataSources}`,
         `探索中 ${stats.exploring}`,
         `已上线 ${stats.online}`,

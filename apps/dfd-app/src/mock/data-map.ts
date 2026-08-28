@@ -985,7 +985,7 @@ export const mockDataGovernance = [
 export const mockDataElements = [
     { name: '核心指标', count: 120, icon: 'icon-trophy' },
     { name: '业务标签', count: 340, icon: 'icon-tag' },
-    { name: '数据变量', count: 560, icon: 'icon-code' },
+    { name: '数据特征', count: 560, icon: 'icon-code' },
     { name: '模型特征', count: 890, icon: 'icon-mind-mapping' }
 ];
 

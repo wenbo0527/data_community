@@ -401,20 +401,70 @@ const initGraph = () => {
     }
   })
 
-  graph.value.on('node:click', ({ e, node }) => {
-    // 避免点击展开按钮时触发抽屉
-    if (e.target && e.target.closest && e.target.closest('.expand-btn')) {
-      return
-    }
-    selectedNodeData.value = node.getData()
-    drawerVisible.value = true
-  })
-  graph.value.on('node:change:data', ({ node }) => {
-    const data = node.getData() || {}
-    const action = data.__expandAction
-    if (action === 'left' || action === 'right') {
-      expandNode(node.id, action)
-      node.setData({ ...data, __expandAction: undefined })
+  graph.value.on('node:click', ({ e, x, y, node }) => {
+    console.log('[lineage] node:click 事件触发！', { e, x, y, nodeId: node?.id })
+
+    try {
+      // 如果 X6 没提供 x/y，从原生事件坐标转换
+      let clickX = x
+      let clickY = y
+      if (clickX === undefined || clickY === undefined) {
+        console.log('[lineage] x/y 不存在，尝试从原生事件转换...')
+        const nativeEvent = e?.originalEvent || e?.e || e
+        if (nativeEvent && nativeEvent.clientX !== undefined && graph.value) {
+          const point = graph.value.clientToGraph(nativeEvent.clientX, nativeEvent.clientY)
+          clickX = point.x
+          clickY = point.y
+          console.log('[lineage] 转换后坐标:', { clickX, clickY })
+        }
+      }
+
+      const bbox = node.getBBox()
+      const relX = clickX - bbox.x
+      const relY = clickY - bbox.y
+      const data = node.getData()
+
+      // 加号区域宽度（与 CSS 中 expand-btn 的 20px 对应）
+      const EXPAND_ZONE = 24
+      const BTN_RADIUS = 12
+      const centerY = bbox.height / 2
+
+      // 判断是否点击了左侧加号区域
+      const showLeft = (data.type === 'main' || data.type === 'upstream') && !data.upstreamExpanded
+      const inLeftZone = showLeft && relX <= EXPAND_ZONE && Math.abs(relY - centerY) <= BTN_RADIUS
+
+      // 判断是否点击了右侧加号区域
+      const showRight = (data.type === 'main' || data.type === 'downstream') && !data.downstreamExpanded
+      const inRightZone = showRight && relX >= bbox.width - EXPAND_ZONE && Math.abs(relY - centerY) <= BTN_RADIUS
+
+      // === 调试日志 ===
+      console.log('[lineage node:click]', {
+        节点ID: node.id,
+        节点标签: data.label,
+        节点类型: data.type,
+        画布坐标: { x: clickX, y: clickY },
+        节点BBox: { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height },
+        相对坐标: { relX: Number(relX).toFixed(1), relY: Number(relY).toFixed(1) },
+        垂直中心: centerY,
+        展开状态: { upstreamExpanded: data.upstreamExpanded, downstreamExpanded: data.downstreamExpanded },
+        加号检测: { showLeft, inLeftZone, showRight, inRightZone },
+        判定结果: inLeftZone ? '展开上游' : inRightZone ? '展开下游' : '打开抽屉(TAB)'
+      })
+
+      if (inLeftZone) {
+        expandNode(node.id, 'left')
+        return
+      }
+      if (inRightZone) {
+        expandNode(node.id, 'right')
+        return
+      }
+
+      // 点击卡片主体 → 打开抽屉(TAB)
+      selectedNodeData.value = data
+      drawerVisible.value = true
+    } catch (err) {
+      console.error('[lineage] node:click 处理出错:', err)
     }
   })
 }
@@ -522,7 +572,7 @@ const jumpToDetail = () => {
 .floating-toolbar {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   z-index: 10;
   display: flex;
   align-items: center;
@@ -574,4 +624,9 @@ const jumpToDetail = () => {
 </style>
 <style>
 @import '@/styles/enhanced-toolbar-styles.css';
+
+/* 允许 X6 Vue 节点的 foreignObject 内容溢出（加号按钮等） */
+.x6-graph foreignObject {
+  overflow: visible !important;
+}
 </style>

@@ -78,7 +78,7 @@ const panoramaNodes: PanoramaNode[] = [
   {
     id: 'type-behavior',
     layer: 'type',
-    title: '行为类变量',
+    title: '行为类特征',
     subtitle: '用户行为、频次、活跃度',
     description: '用于识别客户行为变化与风险前置信号。',
     stats: { totalVariables: 48, dataSources: 9, exploring: 16, online: 24, archived: 8 }
@@ -86,25 +86,25 @@ const panoramaNodes: PanoramaNode[] = [
   {
     id: 'type-trade',
     layer: 'type',
-    title: '交易类变量',
+    title: '交易类特征',
     subtitle: '交易金额、笔数、趋势',
-    description: '围绕交易明细和交易趋势构建的基础变量簇。',
+    description: '围绕交易明细和交易趋势构建的基础特征簇。',
     stats: { totalVariables: 36, dataSources: 7, exploring: 10, online: 20, archived: 6 }
   },
   {
     id: 'type-profile',
     layer: 'type',
-    title: '画像类变量',
+    title: '画像类特征',
     subtitle: '标签、偏好、分层',
-    description: '面向客户经营、营销触达与分层分析的画像变量。',
+    description: '面向客户经营、营销触达与分层分析的画像特征。',
     stats: { totalVariables: 28, dataSources: 5, exploring: 8, online: 13, archived: 7 }
   },
   {
     id: 'type-external',
     layer: 'type',
-    title: '外部类变量',
+    title: '外部类特征',
     subtitle: '外数、征信、第三方服务',
-    description: '结合外部服务能力形成的补充变量，强调效果和成本平衡。',
+    description: '结合外部服务能力形成的补充特征，强调效果和成本平衡。',
     stats: { totalVariables: 22, dataSources: 6, exploring: 7, online: 9, archived: 6 }
   },
   {
@@ -127,8 +127,8 @@ const panoramaNodes: PanoramaNode[] = [
     id: 'source-reuse',
     layer: 'source',
     title: '历史复用/衍生',
-    subtitle: '复用变量、组合变量、派生变量',
-    description: '将已有变量、规则、课题成果进行再组合和再利用。',
+    subtitle: '复用特征、组合特征、派生特征',
+    description: '将已有特征、规则、课题成果进行再组合和再利用。',
     stats: { totalVariables: 26, dataSources: 4, exploring: 8, online: 12, archived: 6 }
   },
   {
@@ -144,7 +144,7 @@ const panoramaNodes: PanoramaNode[] = [
     layer: 'lifecycle',
     title: '已上线',
     subtitle: '已进入台账与生产使用',
-    description: '已完成评审和注册，进入正式变量资产台账。',
+    description: '已完成评审和注册，进入正式特征资产台账。',
     stats: { totalVariables: 66, dataSources: 13, exploring: 0, online: 66, archived: 0 }
   },
   {
@@ -185,7 +185,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-2001',
     name: '撞库命中次数_30d',
     variableTypeId: 'behavior',
-    variableType: '行为变量',
+    variableType: '行为特征',
     exploreCategoryId: 'behavior-attack',
     exploreCategory: '撞库类',
     sourceGroup: '内部数据源',
@@ -198,7 +198,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-2002',
     name: '撞库IP复用率_7d',
     variableTypeId: 'behavior',
-    variableType: '行为变量',
+    variableType: '行为特征',
     exploreCategoryId: 'behavior-attack',
     exploreCategory: '撞库类',
     sourceGroup: '历史复用/衍生',
@@ -211,7 +211,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-2003',
     name: '支用申请次数_30d',
     variableTypeId: 'behavior',
-    variableType: '行为变量',
+    variableType: '行为特征',
     exploreCategoryId: 'behavior-loan',
     exploreCategory: '支用行为类',
     sourceGroup: '内部数据源',
@@ -225,7 +225,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-2004',
     name: '支用成功率_7d',
     variableTypeId: 'behavior',
-    variableType: '行为变量',
+    variableType: '行为特征',
     exploreCategoryId: 'behavior-loan',
     exploreCategory: '支用行为类',
     sourceGroup: '内部数据源',
@@ -239,7 +239,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-2005',
     name: '清退名单命中标识',
     variableTypeId: 'behavior',
-    variableType: '行为变量',
+    variableType: '行为特征',
     exploreCategoryId: 'behavior-clean',
     exploreCategory: '清退信息类',
     sourceGroup: '内部数据源',
@@ -252,7 +252,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-3001',
     name: '年龄',
     variableTypeId: 'credit',
-    variableType: '征信变量',
+    variableType: '征信特征',
     exploreCategoryId: 'credit-basic',
     exploreCategory: '个人基本信息',
     sourceGroup: '内部数据源',
@@ -265,7 +265,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-3002',
     name: '账户数',
     variableTypeId: 'credit',
-    variableType: '征信变量',
+    variableType: '征信特征',
     exploreCategoryId: 'credit-account',
     exploreCategory: '账户信息',
     sourceGroup: '内部数据源',
@@ -278,7 +278,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-3003',
     name: '信贷余额_近6月均值',
     variableTypeId: 'credit',
-    variableType: '征信变量',
+    variableType: '征信特征',
     exploreCategoryId: 'credit-amount',
     exploreCategory: '信贷金额',
     sourceGroup: '历史复用/衍生',
@@ -291,7 +291,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-3004',
     name: '近12月逾期次数',
     variableTypeId: 'credit',
-    variableType: '征信变量',
+    variableType: '征信特征',
     exploreCategoryId: 'credit-repay',
     exploreCategory: '还款历史',
     sourceGroup: '内部数据源',
@@ -304,7 +304,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-3005',
     name: '最近一次逾期天数',
     variableTypeId: 'credit',
-    variableType: '征信变量',
+    variableType: '征信特征',
     exploreCategoryId: 'credit-repay',
     exploreCategory: '还款历史',
     sourceGroup: '内部数据源',
@@ -317,7 +317,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-4001',
     name: '多头借贷查询次数_30d',
     variableTypeId: 'external',
-    variableType: '外数变量',
+    variableType: '外数特征',
     exploreCategoryId: 'external-multi-loan',
     exploreCategory: '多头借贷',
     sourceGroup: '外部服务',
@@ -329,9 +329,9 @@ const panoramaVariables: PanoramaVariable[] = [
   },
   {
     id: 'VAR-4002',
-    name: '多头借贷组合变量v1',
+    name: '多头借贷组合特征v1',
     variableTypeId: 'external',
-    variableType: '外数变量',
+    variableType: '外数特征',
     exploreCategoryId: 'external-multi-loan',
     exploreCategory: '多头借贷',
     sourceGroup: '历史复用/衍生',
@@ -345,7 +345,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-4003',
     name: '设备指纹一致性得分',
     variableTypeId: 'external',
-    variableType: '外数变量',
+    variableType: '外数特征',
     exploreCategoryId: 'external-device',
     exploreCategory: '设备指纹',
     sourceGroup: '外部服务',
@@ -359,7 +359,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-4004',
     name: '外部评分稳定度',
     variableTypeId: 'external',
-    variableType: '外数变量',
+    variableType: '外数特征',
     exploreCategoryId: 'external-score',
     exploreCategory: '外部评分',
     sourceGroup: '外部服务',
@@ -372,7 +372,7 @@ const panoramaVariables: PanoramaVariable[] = [
     id: 'VAR-4005',
     name: '外部风险评分',
     variableTypeId: 'external',
-    variableType: '外数变量',
+    variableType: '外数特征',
     exploreCategoryId: 'external-score',
     exploreCategory: '外部评分',
     sourceGroup: '外部服务',
@@ -384,9 +384,9 @@ const panoramaVariables: PanoramaVariable[] = [
 ]
 
 const SOURCE_DEFS: Array<{ title: string; subtitle: string; description: string }> = [
-  { title: '内部数据源', subtitle: '内部明细/宽表', description: '来源于内部数据表与明细流的变量。' },
-  { title: '外部服务', subtitle: '外数接口/征信服务', description: '来源于外部接口、供应商服务或外数数据的变量。' },
-  { title: '历史复用/衍生', subtitle: '复用/组合/派生', description: '对已有变量或课题结果的复用与衍生。' }
+  { title: '内部数据源', subtitle: '内部明细/宽表', description: '来源于内部数据表与明细流的特征。' },
+  { title: '外部服务', subtitle: '外数接口/征信服务', description: '来源于外部接口、供应商服务或外数数据的特征。' },
+  { title: '历史复用/衍生', subtitle: '复用/组合/派生', description: '对已有特征或课题结果的复用与衍生。' }
 ]
 
 function computeStats(list: PanoramaVariable[]): PanoramaStats {

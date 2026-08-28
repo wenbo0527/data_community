@@ -433,7 +433,7 @@ function getStepBadge(key) {
 }
 
 const nextNormalLabel = computed(() => {
-  if (props.status === 'internal_sync_failed') return '变量中心同步中'
+  if (props.status === 'internal_sync_failed') return '特征中心同步中'
   if (props.status === 'variable_sync_failed') return '已上线'
   if (props.status === 'dw_online_failed') return '数仓开发完成'
   if (props.status === 'offline_failed') return '已下线'

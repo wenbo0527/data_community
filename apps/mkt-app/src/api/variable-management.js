@@ -1,7 +1,7 @@
 import request from '@/utils/mockRequest'
 
 /**
- * 获取变量列表
+ * 获取特征列表
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */
@@ -14,8 +14,8 @@ export function getVariableList(params) {
 }
 
 /**
- * 获取变量详情
- * @param {string} id - 变量ID
+ * 获取特征详情
+ * @param {string} id - 特征ID
  * @returns {Promise}
  */
 export function getVariableDetail(id) {
@@ -26,8 +26,8 @@ export function getVariableDetail(id) {
 }
 
 /**
- * 创建变量
- * @param {Object} data - 变量数据
+ * 创建特征
+ * @param {Object} data - 特征数据
  * @returns {Promise}
  */
 export function createVariable(data) {
@@ -39,9 +39,9 @@ export function createVariable(data) {
 }
 
 /**
- * 更新变量
- * @param {string} id - 变量ID
- * @param {Object} data - 变量数据
+ * 更新特征
+ * @param {string} id - 特征ID
+ * @param {Object} data - 特征数据
  * @returns {Promise}
  */
 export function updateVariable(id, data) {
@@ -53,8 +53,8 @@ export function updateVariable(id, data) {
 }
 
 /**
- * 删除变量
- * @param {string} id - 变量ID
+ * 删除特征
+ * @param {string} id - 特征ID
  * @returns {Promise}
  */
 export function deleteVariable(id) {
@@ -65,8 +65,8 @@ export function deleteVariable(id) {
 }
 
 /**
- * 更新变量状态
- * @param {string} id - 变量ID
+ * 更新特征状态
+ * @param {string} id - 特征ID
  * @param {string} status - 新状态
  * @returns {Promise}
  */
@@ -79,7 +79,7 @@ export function updateVariableStatus(id, status) {
 }
 
 /**
- * 获取变量统计信息
+ * 获取特征统计信息
  * @returns {Promise}
  */
 export function getVariableStats() {
@@ -90,7 +90,7 @@ export function getVariableStats() {
 }
 
 /**
- * 导出变量清单
+ * 导出特征清单
  * @param {Object} params - 导出参数
  * @returns {Promise}
  */
@@ -131,8 +131,8 @@ export function getDataSources() {
 }
 
 /**
- * 获取变量使用场景
- * @param {string} variableId - 变量ID
+ * 获取特征使用场景
+ * @param {string} variableId - 特征ID
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */
@@ -145,8 +145,8 @@ export function getVariableUsages(variableId, params) {
 }
 
 /**
- * 获取变量版本历史
- * @param {string} variableId - 变量ID
+ * 获取特征版本历史
+ * @param {string} variableId - 特征ID
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */

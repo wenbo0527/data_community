@@ -49,7 +49,7 @@
               <a-option value="dws">汇总表</a-option>
               <a-option value="dwd">明细表</a-option>
               <a-option value="metric">指标</a-option>
-              <a-option value="variable">变量</a-option>
+              <a-option value="variable">特征</a-option>
               <a-option value="feature">特征</a-option>
             </a-select>
           </div>

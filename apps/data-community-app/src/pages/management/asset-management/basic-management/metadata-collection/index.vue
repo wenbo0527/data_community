@@ -44,7 +44,7 @@
               <a-select v-model="form.assetType" placeholder="选择采集对象">
                 <a-option value="指标">指标</a-option>
                 <a-option value="API">API</a-option>
-                <a-option value="变量">变量</a-option>
+                <a-option value="特征">特征</a-option>
                 <a-option value="表">表</a-option>
               </a-select>
             </a-form-item>
@@ -138,8 +138,8 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="关联变量">
-              <a-input-tag v-model="form.association.relatedVariables" placeholder="输入变量名称并回车" />
+            <a-form-item label="关联特征">
+              <a-input-tag v-model="form.association.relatedVariables" placeholder="输入特征名称并回车" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -209,7 +209,7 @@ import { createMetadataTask, startMetadataTaskAsync } from '@/mock-dca/metadata-
 import { useRoute } from 'vue-router'
 
 type DataSourceType = 'Doris' | 'Hive' | 'Oracle'
-type AssetType = '指标' | 'API' | '变量' | '表'
+type AssetType = '指标' | 'API' | '特征' | '表'
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)

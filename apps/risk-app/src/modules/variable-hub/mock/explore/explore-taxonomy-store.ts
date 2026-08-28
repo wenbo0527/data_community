@@ -25,8 +25,8 @@ const defaultConfig: ExploreTaxonomyConfig = {
   types: [
     {
       id: 'credit',
-      title: '征信变量',
-      description: '征信域相关变量，强调合规字段口径、账户视角和还款表现。',
+      title: '征信特征',
+      description: '征信域相关特征，强调合规字段口径、账户视角和还款表现。',
       categories: [
         { id: 'credit-basic', title: '个人基本信息' },
         { id: 'credit-account', title: '账户信息' },
@@ -36,8 +36,8 @@ const defaultConfig: ExploreTaxonomyConfig = {
     },
     {
       id: 'behavior',
-      title: '行为变量',
-      description: '行为域变量，强调过程信号、行为变化和风险前置特征。',
+      title: '行为特征',
+      description: '行为域特征，强调过程信号、行为变化和风险前置特征。',
       categories: [
         { id: 'behavior-attack', title: '撞库类' },
         { id: 'behavior-loan', title: '支用行为类' },
@@ -46,8 +46,8 @@ const defaultConfig: ExploreTaxonomyConfig = {
     },
     {
       id: 'external',
-      title: '外数变量',
-      description: '外部数据/服务产生的变量，强调成本收益、供应商 SLA 与证据链。',
+      title: '外数特征',
+      description: '外部数据/服务产生的特征，强调成本收益、供应商 SLA 与证据链。',
       categories: [
         { id: 'external-multi-loan', title: '多头借贷' },
         { id: 'external-device', title: '设备指纹' },

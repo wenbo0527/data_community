@@ -1,6 +1,6 @@
 <template>
   <div class="evaluation-task-page">
-    <DmtPageHeader title="评估任务中心" subtitle="统一承接变量准入评估、复评任务与探索课题转评估的执行闭环。" />
+    <DmtPageHeader title="评估任务中心" subtitle="统一承接特征准入评估、复评任务与探索课题转评估的执行闭环。" />
 
     <DmtStatGroup :items="statItems" />
 
@@ -29,7 +29,7 @@
           <a-space wrap>
             <a-tag v-for="name in record.sourceNames" :key="name" size="small">{{ name }}</a-tag>
             <a-tag v-if="record.sourceType === 'topic'" color="purple" size="small">来自课题</a-tag>
-            <a-tag v-else color="arcoblue" size="small">来自变量</a-tag>
+            <a-tag v-else color="arcoblue" size="small">来自特征</a-tag>
           </a-space>
         </template>
         <template #originCell="{ record }">
@@ -81,7 +81,7 @@
               <div class="detail-field-value">{{ currentTask.dataSourceName || '—' }}</div>
             </div>
             <div class="detail-field-cell">
-              <div class="detail-field-label">变量类型</div>
+              <div class="detail-field-label">特征类型</div>
               <div class="detail-field-value">{{ currentTask.variableTypeName || '—' }}</div>
             </div>
             <div class="detail-field-cell">
@@ -128,13 +128,13 @@
           {{ currentTask.resultSummary }}
         </a-alert>
 
-        <!-- 目标变量 + 评估报告 左右两列 -->
+        <!-- 目标特征 + 评估报告 左右两列 -->
         <a-row :gutter="16" class="detail-row">
           <a-col :span="12">
-            <a-card title="目标变量" :bordered="false">
+            <a-card title="目标特征" :bordered="false">
               <a-table :data="currentTask.targets" :pagination="false" row-key="id" :bordered="false">
                 <template #columns>
-                  <a-table-column title="变量名称" data-index="name" />
+                  <a-table-column title="特征名称" data-index="name" />
                   <a-table-column title="编码" data-index="code" :width="160" />
                   <a-table-column title="来源" :width="80">
                     <template #cell="{ record }">
@@ -142,7 +142,7 @@
                     </template>
                   </a-table-column>
                 </template>
-                <template #empty><a-empty description="暂无目标变量" /></template>
+                <template #empty><a-empty description="暂无目标特征" /></template>
               </a-table>
             </a-card>
           </a-col>
@@ -150,7 +150,7 @@
             <a-card title="评估报告" :bordered="false">
               <template v-if="currentTaskReports.length">
                 <a-alert v-if="hasExternalReport" type="success" :show-icon="false" class="detail-mini-alert">
-                  外数评估能力已生成 {{ externalReportCount }} 份报告并回写变量档案。
+                  外数评估能力已生成 {{ externalReportCount }} 份报告并回写特征档案。
                 </a-alert>
                 <a-table :data="currentTaskReports" :pagination="false" row-key="id" :bordered="false">
                   <template #columns>
@@ -204,7 +204,7 @@
         <a-descriptions-item label="报告 ID">{{ internalPreviewContent.id }}</a-descriptions-item>
         <a-descriptions-item label="报告类型">内部报告（DMT 评估引擎）</a-descriptions-item>
         <a-descriptions-item label="报告名称">{{ internalPreviewContent.name }}</a-descriptions-item>
-        <a-descriptions-item v-if="internalPreviewContent.variableName" label="关联变量">
+        <a-descriptions-item v-if="internalPreviewContent.variableName" label="关联特征">
           <a-link @click="goToVariable(internalPreviewContent.variableId!)">
             {{ internalPreviewContent.variableName }}
           </a-link>
@@ -316,7 +316,7 @@ const openInternalReport = (report: EvaluationTaskReport) => {
 }
 
 const openExternalReport = (report: EvaluationTaskReport) => {
-  // 透传 risk-app 链接（与变量档案"查看外数评估"一致）
+  // 透传 risk-app 链接（与特征档案"查看外数评估"一致）
   const target = report.url?.startsWith('http')
     ? report.url
     : buildRiskAppUrl(report.url)
@@ -353,7 +353,7 @@ const handleRunTask = async (taskId: string) => {
     Message.error('任务不存在')
     return
   }
-  Message.success(`已完成 mock 执行，生成 ${task.reports.length} 份报告并回写变量档案`)
+  Message.success(`已完成 mock 执行，生成 ${task.reports.length} 份报告并回写特征档案`)
   openDetail(taskId)
 }
 

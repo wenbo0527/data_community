@@ -57,7 +57,7 @@ const insightMocks: VariableInsightMock[] = [
     content: '已确认进入准入评分卡首层规则，后续只允许在阈值层面调优，不再改口径。',
     author: '风控策略组',
     createdAt: '2026-06-24 10:30:00',
-    tags: ['准入', '核心变量']
+    tags: ['准入', '核心特征']
   },
   {
     id: 'insight-002',
@@ -87,10 +87,10 @@ const insightMocks: VariableInsightMock[] = [
     type: 'proposal',
     status: 'tracking',
     title: '近30日交易次数可衍生交易活跃度分层',
-    content: '建议在现有原子变量基础上继续派生轻度、中度、高活跃三个离散层级变量。',
+    content: '建议在现有原子特征基础上继续派生轻度、中度、高活跃三个离散层级特征。',
     author: '风险数据团队',
     createdAt: '2026-06-26 09:10:00',
-    tags: ['衍生变量', '活跃度']
+    tags: ['衍生特征', '活跃度']
   },
   {
     id: 'insight-005',
@@ -98,7 +98,7 @@ const insightMocks: VariableInsightMock[] = [
     type: 'risk',
     status: 'open',
     title: '待审核状态下已被多个方案提前引用',
-    content: '变量尚未完成审批，但已经出现在 2 个试验方案中，存在口径漂移风险。',
+    content: '特征尚未完成审批，但已经出现在 2 个试验方案中，存在口径漂移风险。',
     author: '数据治理组',
     createdAt: '2026-06-26 11:40:00',
     tags: ['审批', '口径风险']
@@ -108,8 +108,8 @@ const insightMocks: VariableInsightMock[] = [
     variableId: 'VAR-0004',
     type: 'note',
     status: 'resolved',
-    title: '历史征信变量转入归档观察',
-    content: '当前变量已停用，但仍保留历史评估记录与模型解释链路。',
+    title: '历史征信特征转入归档观察',
+    content: '当前特征已停用，但仍保留历史评估记录与模型解释链路。',
     author: '征信团队',
     createdAt: '2026-06-20 15:00:00',
     tags: ['归档']
@@ -145,7 +145,7 @@ const actionMocks: VariableActionMock[] = [
     sourceInsightId: 'insight-005',
     actionType: 'approval',
     status: 'pending',
-    title: '交易次数变量正式准入审批',
+    title: '交易次数特征正式准入审批',
     owner: '资产治理委员会',
     dueAt: '2026-06-29',
     progress: 10
@@ -195,8 +195,8 @@ const evidenceMocks: VariableEvidenceMock[] = [
     id: 'evidence-004',
     variableId: 'VAR-0003',
     kind: 'meeting',
-    title: '变量准入评审纪要',
-    source: '变量治理周会',
+    title: '特征准入评审纪要',
+    source: '特征治理周会',
     summary: '要求补齐审批单、标签和维度口径后再进入正式发布。',
     createdAt: '2026-06-26 10:00:00'
   },
@@ -204,8 +204,8 @@ const evidenceMocks: VariableEvidenceMock[] = [
     id: 'evidence-005',
     variableId: 'VAR-0004',
     kind: 'doc',
-    title: '历史征信变量归档说明',
-    source: 'docs/变量归档说明',
+    title: '历史征信特征归档说明',
+    source: 'docs/特征归档说明',
     summary: '保留历史解释链路，不再进入新增模型训练集。',
     createdAt: '2026-06-20 16:00:00'
   }
@@ -308,7 +308,7 @@ export const createVariableInsightMock = (payload: {
 }
 
 /**
- * 高风险变量直接生成评估任务
+ * 高风险特征直接生成评估任务
  * 接入评估任务中心
  */
 export const createVariableEvaluationAction = (payload: {
@@ -334,7 +334,7 @@ export const createVariableEvaluationAction = (payload: {
 }
 
 /**
- * 把变量地图的 insight 摘要同步为探索过程审计事件
+ * 把特征地图的 insight 摘要同步为探索过程审计事件
  * 思路：复用 ExploreStore.addAuditEvent；调用方传入 topicId（如有）即可
  */
 export const syncInsightToAudit = (insight: VariableInsightMock, topicId?: string) => {

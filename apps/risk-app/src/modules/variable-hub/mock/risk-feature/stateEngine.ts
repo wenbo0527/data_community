@@ -6,13 +6,13 @@
  * - 提 OA 单（开发/验收/投产）
  * - 数仓任务回调
  * - 内数 API 注册/变更
- * - 变量中心注册/确认
+ * - 特征中心注册/确认
  * - 失败重试
- * - 变量中心下线批次
+ * - 特征中心下线批次
  *
  * 状态机严格对齐文档 v2.1 D.4 色板（11 正常 + 4 异常 = 15 态）：
  *   需求提出 → 已注册 → 开发中(OA单) → 数仓已上线 → 待业务验证 → 业务已验证 → 管理员已确认 →
- *   参数准备 → 内数注册中 → 变量中心注册中 → 已上线 → 已下线
+ *   参数准备 → 内数注册中 → 特征中心注册中 → 已上线 → 已下线
  * 数据形态分界：管理员已确认（含）之前为离线分析，之后为在线接口
  */
 
@@ -200,7 +200,7 @@ let offlineRecords: OfflineRecord[] = [
     featureId: 'MIDLOAN-FEAT-0016',
     featureName: '近7日银行卡号变更次数',
     offlineAt: '2026-08-05 02:00:00',
-    reason: '变量中心批量接口返回 503',
+    reason: '特征中心批量接口返回 503',
     status: 'failed',
     detail: '批量接口响应超时，3 条特征中 1 条未确认（feature_id=MIDLOAN-FEAT-0016）'
   }
@@ -263,11 +263,11 @@ export function submitRequirement(featureId: string, payload?: { remark?: string
   return { ok: true }
 }
 
-/** 需求7：重复备案前置校验 - 新增变量做前置重复校验 */
+/** 需求7：重复备案前置校验 - 新增特征做前置重复校验 */
 export function checkDuplicate(featureId: string): { ok: boolean; isDuplicate: boolean; duplicateWith?: string; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, isDuplicate: false, reason: '特征不存在' }
-  // 模拟：在存量数据中查找同名或同编码的变量
+  // 模拟：在存量数据中查找同名或同编码的特征
   const duplicate = variableAssets.find(x =>
     x.id !== featureId &&
     (x.name === v.name || x.code === v.code)
@@ -276,8 +276,8 @@ export function checkDuplicate(featureId: string): { ok: boolean; isDuplicate: b
   if (duplicate) {
     v.duplicateCheckStatus = 'failed'
     v.duplicateCheckedAt = now
-    recordStatusChange(featureId, v.name, '', '', '需求7 重复备案校验', '系统', 'internal_number_system', `与已有变量 ${duplicate.id}(${duplicate.name}) 重复`)
-    return { ok: true, isDuplicate: true, duplicateWith: duplicate.id, reason: `与已有变量 ${duplicate.name} 重复` }
+    recordStatusChange(featureId, v.name, '', '', '需求7 重复备案校验', '系统', 'internal_number_system', `与已有特征 ${duplicate.id}(${duplicate.name}) 重复`)
+    return { ok: true, isDuplicate: true, duplicateWith: duplicate.id, reason: `与已有特征 ${duplicate.name} 重复` }
   }
   v.duplicateCheckStatus = 'passed'
   v.duplicateCheckedAt = now
@@ -615,12 +615,12 @@ export function internalSync(featureId: string, autoTriggered = false): { ok: bo
     finishedAt: now,
     retryCount: 0
   })
-  // 模拟内数回调后立即进入「变量中心同步中」
+  // 模拟内数回调后立即进入「特征中心同步中」
   setTimeout(() => variableSync(featureId), 100)
   return { ok: true, apiNo }
 }
 
-/** H1：变量中心同步成功 → 已上线 */
+/** H1：特征中心同步成功 → 已上线 */
 export function variableSync(featureId: string, forceFail = false): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
@@ -628,10 +628,10 @@ export function variableSync(featureId: string, forceFail = false): { ok: boolea
   if (forceFail || DemoFlags.isVariableDown()) {
     const fromStatus = v.midloanStatus
     v.midloanStatus = 'variable_sync_failed'
-    v.syncFailedReason = '变量中心返回失败：特征已存在 / 字段冲突'
+    v.syncFailedReason = '特征中心返回失败：特征已存在 / 字段冲突'
     v.syncFailedAt = now
     v.syncRetryCount = (v.syncRetryCount || 0) + 1
-    recordStatusChange(featureId, v.name, fromStatus, 'variable_sync_failed', 'H1 变量中心同步失败', '变量中心系统', 'variable_center_system', v.syncFailedReason)
+    recordStatusChange(featureId, v.name, fromStatus, 'variable_sync_failed', 'H1 特征中心同步失败', '特征中心系统', 'variable_center_system', v.syncFailedReason)
     SyncLogStore.push({
       id: logId(),
       featureId,
@@ -646,14 +646,14 @@ export function variableSync(featureId: string, forceFail = false): { ok: boolea
     })
     return { ok: false, reason: v.syncFailedReason }
   }
-  // 成功 → 已上线（文档 H1 R05：变量中心确认上线 → 已上线）
+  // 成功 → 已上线（文档 H1 R05：特征中心确认上线 → 已上线）
   const fromStatus = v.midloanStatus
   v.midloanStatus = 'online'
   setStatusTimestamp(v, 'online')
   v.onlineTime = now
   v.referenceStatus = '已引用'
-  v.referenceDetail = `已正式投产到变量中心，关联决策引擎：风控V3、风控V4`
-  recordStatusChange(featureId, v.name, fromStatus, 'online', 'H1 变量中心确认上线', '变量中心系统', 'variable_center_system', `上线时间：${now} 接口号：VC-API-002`)
+  v.referenceDetail = `已正式投产到特征中心，关联决策引擎：风控V3、风控V4`
+  recordStatusChange(featureId, v.name, fromStatus, 'online', 'H1 特征中心确认上线', '特征中心系统', 'variable_center_system', `上线时间：${now} 接口号：VC-API-002`)
   SyncLogStore.push({
     id: logId(),
     featureId,
@@ -670,11 +670,11 @@ export function variableSync(featureId: string, forceFail = false): { ok: boolea
   return { ok: true }
 }
 
-/** K1：变量中心发起下线（台账被动接收，文档 K1 R01） */
-export function receiveOffline(featureId: string, reason = '变量中心下线', payload?: { offlineDate?: string; remark?: string }): { ok: boolean; reason?: string } {
+/** K1：特征中心发起下线（台账被动接收，文档 K1 R01） */
+export function receiveOffline(featureId: string, reason = '特征中心下线', payload?: { offlineDate?: string; remark?: string }): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
-  // 文档 v2.1 L1 R07：下线边界处理——内数注册中/变量中心注册中状态忽略下线回调并记录日志告警
+  // 文档 v2.1 L1 R07：下线边界处理——内数注册中/特征中心注册中状态忽略下线回调并记录日志告警
   if (v.midloanStatus === 'syncing_internal' || v.midloanStatus === 'syncing_variable') {
     SyncLogStore.push({
       id: logId(),
@@ -702,10 +702,10 @@ export function receiveOffline(featureId: string, reason = '变量中心下线',
   v.offlineTime = payload?.offlineDate ? new Date(payload.offlineDate).toISOString().slice(0, 19).replace('T', ' ') : now
   v.offlineReason = reason + (payload?.remark ? `（${payload.remark}）` : '')
   v.referenceStatus = '已断开'
-  v.referenceDetail = '变量中心已断开引用，等待数字社区团队断开 hbase/hive'
+  v.referenceDetail = '特征中心已断开引用，等待数字社区团队断开 hbase/hive'
   // 需求6：全流程节点信息归档留存
   v.archiveStatus = 'archived'
-  recordStatusChange(featureId, v.name, fromStatus, 'offline', 'K1 变量中心发起下线', '变量中心系统', 'variable_center_system', v.offlineReason)
+  recordStatusChange(featureId, v.name, fromStatus, 'offline', 'K1 特征中心发起下线', '特征中心系统', 'variable_center_system', v.offlineReason)
   OfflineRecordStore.push({
     batchId: `BATCH-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900 + 100)}`,
     featureId,
@@ -798,7 +798,7 @@ export function retrySync(featureId: string, operator = '小李'): { ok: boolean
       offlineAt: now,
       reason: `操作人 ${operator} 手动触发批次重试`,
       status: 'success',
-      detail: '重试后变量中心确认下线成功'
+      detail: '重试后特征中心确认下线成功'
     })
     SyncLogStore.push({
       id: logId(),
@@ -831,7 +831,7 @@ export function supplementDataTable(featureId: string, tableName: string): { ok:
 }
 
 /**
- * 变量归档（文档 v2.1 §六 变量归档）
+ * 特征归档（文档 v2.1 §六 特征归档）
  * - 仅在 requirement_proposal / registered 阶段可发起
  * - midloan_behavior 品类：midloanStatus 置为 'archived'
  * - 非 midloan 品类：status 置为 'archived'
@@ -883,7 +883,7 @@ export function archiveVariable(featureId: string, payload?: { reason?: string; 
     type: 'internal_sync',
     direction: 'call',
     status: 'success',
-    reason: `变量已归档：${payload.reason.trim()}`,
+    reason: `特征已归档：${payload.reason.trim()}`,
     startedAt: now,
     finishedAt: now,
     retryCount: 0,
@@ -1003,14 +1003,14 @@ const STATUS_CHANGE_META: Record<string, { trigger: string; operator: string; op
     reason: '内数同步接口号：INTERNAL-API-001'
   },
   online: {
-    trigger: '变量中心确认',
-    operator: '变量中心',
+    trigger: '特征中心确认',
+    operator: '特征中心',
     operatorRole: 'variable_center_system',
-    reason: '变量中心接口号：VC-API-002'
+    reason: '特征中心接口号：VC-API-002'
   },
   offline: {
     trigger: '接收下线',
-    operator: '变量中心',
+    operator: '特征中心',
     operatorRole: 'variable_center_system',
     reason: '下线原因：业务调整'
   }
@@ -1019,9 +1019,9 @@ const STATUS_CHANGE_META: Record<string, { trigger: string; operator: string; op
 /** 异常状态对应的原因 */
 const FAILED_REASON_MAP: Record<string, string> = {
   internal_sync_failed: '内数API注册接口返回 timeout，请稍后重试',
-  variable_sync_failed: '变量中心接口返回 503 服务暂时不可用',
+  variable_sync_failed: '特征中心接口返回 503 服务暂时不可用',
   dw_online_failed: '数仓任务执行超时（> 30 分钟），疑似任务阻塞',
-  offline_failed: '变量中心批次同步接口返回 500，已记录待人工处理'
+  offline_failed: '特征中心批次同步接口返回 500，已记录待人工处理'
 }
 
 /**
@@ -1075,7 +1075,7 @@ export function initMockStatusHistory(featureId: string): void {
     const offset = STATUS_TIMELINE_OFFSET[status] || (i * 60)
     const operatedAt = offsetTime(baseTime, offset)
 
-    // 触发变量数据上的 timestamp 字段（如果有）
+    // 触发特征数据上的 timestamp 字段（如果有）
     if (v) {
       const tsKey = STATUS_TIMESTAMP_MAP[status]
       if (tsKey) (v as any)[tsKey] = operatedAt
@@ -1122,17 +1122,17 @@ export function initMockStatusHistory(featureId: string): void {
     v.syncRetryCount = Math.floor(Math.random() * 3) + 1
   }
 
-  // 补充：内数 + 变量中心同步日志（如果当前到 syncing_internal 或之后）
+  // 补充：内数 + 特征中心同步日志（如果当前到 syncing_internal 或之后）
   if (targetIdx >= 8) {
     pushMockSyncLog(featureId, v.name, 'internal_sync', 'callback', 'success', STATUS_TIMELINE_OFFSET['syncing_internal'], baseTime, '内数API返回成功，接口号：INTERNAL-API-001')
   }
   if (targetIdx >= 9) {
-    pushMockSyncLog(featureId, v.name, 'variable_sync', 'callback', 'success', STATUS_TIMELINE_OFFSET['syncing_variable'], baseTime, '变量中心注册成功，接口号：VC-API-002')
+    pushMockSyncLog(featureId, v.name, 'variable_sync', 'callback', 'success', STATUS_TIMELINE_OFFSET['syncing_variable'], baseTime, '特征中心注册成功，接口号：VC-API-002')
   }
 
   // 补充：下线批次（如果当前是 offline / offline_failed）
   if (currentStatus === 'offline' || currentStatus === 'offline_failed') {
-    pushMockOfflineBatch(featureId, v.name, currentStatus === 'offline_failed' ? 'failed' : 'success', STATUS_TIMELINE_OFFSET['offline'], baseTime, currentStatus === 'offline_failed' ? '变量中心批次同步失败' : '业务调整下线')
+    pushMockOfflineBatch(featureId, v.name, currentStatus === 'offline_failed' ? 'failed' : 'success', STATUS_TIMELINE_OFFSET['offline'], baseTime, currentStatus === 'offline_failed' ? '特征中心批次同步失败' : '业务调整下线')
   }
 
   MOCK_HISTORY_INITIALIZED.add(featureId)
@@ -1167,7 +1167,7 @@ function pushMockOfflineBatch(featureId: string, featureName: string, status: st
     offlineAt: offsetTime(baseTime, offsetMin),
     reason,
     status: status as any,
-    detail: status === 'failed' ? '变量中心接口返回 500，请联系管理员' : '变量中心确认下线成功'
+    detail: status === 'failed' ? '特征中心接口返回 500，请联系管理员' : '特征中心确认下线成功'
   })
 }
 
@@ -1224,7 +1224,7 @@ export function retryDwTask(featureId: string, operator = '培培'): { ok: boole
 /**
  * 管理员状态修正功能（文档 v2.1 §四 管理员状态修正功能）
  * - 仅允许在相邻状态间修正
- * - 跨系统状态（内数注册中/变量中心注册中/已上线/已下线）不可修正
+ * - 跨系统状态（内数注册中/特征中心注册中/已上线/已下线）不可修正
  * - 修正操作必须记录原因，且触发告警通知管理员确认
  */
 const ADJACENT_STATUS_MAP: Record<string, string[]> = {
@@ -1316,7 +1316,7 @@ export const MidloanStateEngine = {
   checkDuplicate,
   /** 需求8：参数有效性验证 */
   validateParams,
-  /** 变量归档（仅需求提出 / 已注册阶段） */
+  /** 特征归档（仅需求提出 / 已注册阶段） */
   archiveVariable,
   /** 聚合：根据 action key 调用对应函数 */
   handleAction(featureId: string, key: string, payload?: any): any {

@@ -238,7 +238,7 @@ const standardMenus = [
 // ========== 数据服务管理 ==========
 const serviceMenus = [
   { key: '/service', title: '服务首页' },
-  { key: '/service/backtrack', title: '全量变量回溯' },
+  { key: '/service/backtrack', title: '全量特征回溯' },
   { key: '/service/fund-usage-query', title: '客户资金用途查询' },
   { key: '/service/detail-data-query', title: '明细查询服务管理' },
   { key: '/service/api-management', title: 'API管理' },

@@ -152,7 +152,7 @@ const getElementTypeName = (type: string) => {
   const map: Record<string, string> = {
     metric: '指标',
     tag: '标签',
-    variable: '变量',
+    variable: '特征',
     caliber: '口径'
   };
   return map[type] || type;

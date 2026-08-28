@@ -262,7 +262,7 @@ const assetTypeOptions = computed(() => {
       { label: '数据表', value: 'data_table' },
       { label: '外数', value: 'external_data' },
       { label: '指标', value: 'metric' },
-      { label: '变量', value: 'variable' }
+      { label: '特征', value: 'variable' }
     ]
   }
   return []

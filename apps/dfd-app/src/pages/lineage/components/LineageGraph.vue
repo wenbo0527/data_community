@@ -42,50 +42,29 @@
            </a-button>
         </div>
 
-        <a-descriptions title="基本信息" :column="1" bordered>
-          <a-descriptions-item label="名称">
+        <a-descriptions :column="1" bordered>
+          <a-descriptions-item label="资产名称">
             {{ selectedNodeData.label }}
           </a-descriptions-item>
-          <a-descriptions-item label="类型">
-            <a-tag>{{ selectedNodeData.dataType }}</a-tag>
+          <a-descriptions-item label="中文名称">
+            {{ selectedNodeData.chineseName || selectedNodeData.label }}
+          </a-descriptions-item>
+          <a-descriptions-item label="资产描述">
+            <span v-if="selectedNodeData.description" class="description-text">
+              {{ selectedNodeData.description }}
+            </span>
+            <span v-else class="no-data-text">暂无描述</span>
           </a-descriptions-item>
           <a-descriptions-item label="负责人">
             {{ selectedNodeData.owner }}
           </a-descriptions-item>
-          <a-descriptions-item label="存储库">
-            {{ selectedNodeData.dbName }}
-          </a-descriptions-item>
-          <a-descriptions-item label="数据量" v-if="selectedNodeData.rowCount">
-             {{ selectedNodeData.rowCount.toLocaleString() }} 行 ({{ selectedNodeData.dataSize }})
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <a-descriptions title="加工任务" :column="1" bordered style="margin-top: 20px;">
-          <a-descriptions-item label="任务名称">
-            {{ selectedNodeData.taskName }}
-          </a-descriptions-item>
-          <a-descriptions-item label="状态">
-            <a-tag :color="selectedNodeData.taskStatus === 'success' ? 'green' : selectedNodeData.taskStatus === 'running' ? 'blue' : 'red'">
-              {{ selectedNodeData.taskStatus === 'success' ? '成功' : selectedNodeData.taskStatus === 'running' ? '运行中' : '失败' }}
-            </a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="最近运行时间">
-            {{ selectedNodeData.lastRunTime }}
+          <a-descriptions-item label="加工逻辑">
+            <span v-if="selectedNodeData.transformationLogic" class="transformation-text">
+              {{ selectedNodeData.transformationLogic }}
+            </span>
+            <span v-else class="no-data-text">暂无加工逻辑</span>
           </a-descriptions-item>
         </a-descriptions>
-        
-        <div class="sql-section">
-          <div class="section-title">
-            <span>SQL语句</span>
-            <a-button type="text" size="mini" @click="copySQL">
-               <template #icon><IconCopy /></template>
-               复制
-            </a-button>
-          </div>
-          <div class="sql-block">
-            <pre>{{ selectedNodeData.sql }}</pre>
-          </div>
-        </div>
       </div>
     </a-drawer>
   </div>
@@ -93,12 +72,20 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, provide } from 'vue'
-import { Graph, Shape } from '@antv/x6'
+import { useRouter } from 'vue-router'
+import { Graph } from '@antv/x6'
 import { register } from '@antv/x6-vue-shape'
 import dagre from '@dagrejs/dagre'
 import LineageNode from './LineageNode.vue'
-import { IconRefresh, IconFullscreen, IconCopy, IconLaunch, IconZoomIn, IconZoomOut, IconExpand } from '@arco-design/web-vue/es/icon'
+import { IconRefresh, IconFullscreen, IconLaunch, IconZoomIn, IconZoomOut, IconExpand } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
+import {
+  toGraphData,
+  dataLineageConfig,
+  createNodeData as createMockNodeData,
+  getDbName,
+  getOwner
+} from '../../../mock/shared/lineage-data'
 
 const props = defineProps({
   tableName: {
@@ -136,192 +123,208 @@ register({
   component: LineageNode,
 })
 
-// 辅助函数：生成节点数据
-const createNodeData = (id, label, type, dbName, owner, dataType = 'Table') => {
-  const status = Math.random() > 0.8 ? 'failed' : (Math.random() > 0.5 ? 'running' : 'success')
-  const rowCount = Math.floor(Math.random() * 1000000)
-  const dataSize = (Math.random() * 100).toFixed(2) + ' GB'
-  
-  return {
-      label,
-      type,
-      dataType, // 新增数据类型字段
-      dbName,
-      owner,
-      rowCount, // 新增行数
-      dataSize, // 新增数据大小
-      taskName: `任务_${label}`,
-      taskId: `task-${type}-${Math.random().toString(36).substr(2, 5)}`,
-      taskStatus: status,
-      lastRunTime: new Date(Date.now() - Math.random() * 86400000).toLocaleString(),
-      sql: `SELECT * FROM ${label} \nWHERE dt = '${new Date().toISOString().slice(0, 10)}'`,
-      upstreamExpanded: false,
-      downstreamExpanded: false
-  }
+// 端口配置（复用）
+const portConfig = {
+  groups: {
+    left: {
+      position: 'left',
+      attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
+    },
+    right: {
+      position: 'right',
+      attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
+    }
+  },
+  items: [
+    { id: 'left', group: 'left' },
+    { id: 'right', group: 'right' }
+  ]
 }
 
-// 辅助函数：随机获取数据类型
-const getRandomDataType = () => {
-  const types = ['Table', 'Metric', 'API', 'Variable']
-  return types[Math.floor(Math.random() * types.length)]
+const edgeAttrs = { line: { stroke: '#A2B1C3', strokeWidth: 2, targetMarker: 'classic' } }
+
+// 将 toGraphData 的边格式转换为 X6 格式
+const convertEdges = (edges) => {
+  return edges.map(e => ({
+    id: e.id,
+    source: { cell: e.source, port: e.sourcePort || 'right' },
+    target: { cell: e.target, port: e.targetPort || 'left' },
+    attrs: edgeAttrs,
+    data: e.data
+  }))
 }
 
-// 辅助函数：生成指定方向的节点
-  const generateNodes = (sourceId, direction, count = 1) => {
-      const newNodes = []
-      const newEdges = []
-      
-      for(let i=0; i<count; i++) {
-          const id = `${direction}-${Date.now()}-${i}`
-          const label = direction === 'upstream' ? `ods_source_${i}` : `ads_app_${i}`
-          
-          // 如果没有筛选，随机生成类型；如果有筛选，从筛选中随机选一个
-          let dataType = 'Table'
-          if (props.dataTypes && props.dataTypes.length > 0) {
-             dataType = props.dataTypes[Math.floor(Math.random() * props.dataTypes.length)]
-          } else {
-             dataType = getRandomDataType()
-          }
+// 根据血缘配置查找上下游表，生成新节点（替代 Math.random 随机生成）
+const generateNodes = (sourceId, direction) => {
+  const sourceNode = graphData.value.nodes.find(n => n.id === sourceId)
+  if (!sourceNode) return { nodes: [], edges: [] }
 
-          const nodeData = createNodeData(id, label, direction, direction === 'upstream' ? 'ods' : 'ads', 'User', dataType)
-          
-          // 如果开启了“仅显示异常”，则强制设置为 failed
-          if (props.onlyFailed) {
-            nodeData.taskStatus = 'failed'
-          }
+  const tableName = sourceNode.data.label
+  const newNodes = []
+  const newEdges = []
 
-          newNodes.push({
-              id,
-              shape: 'lineage-node',
-              data: nodeData,
-              ports: {
-                groups: {
-                  left: {
-                    position: 'left',
-                    attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
-                  },
-                  right: {
-                    position: 'right',
-                    attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
-                  }
-                },
-                items: [
-                  { id: 'left', group: 'left' },
-                  { id: 'right', group: 'right' }
-                ]
-              }
-          })
-          
-          if (direction === 'upstream') {
-              newEdges.push({
-                  source: { cell: id, port: 'right' },
-                  target: { cell: sourceId, port: 'left' },
-                  attrs: { line: { stroke: '#A2B1C3', strokeWidth: 2, targetMarker: 'classic' } }
-              })
-          } else {
-              newEdges.push({
-                  source: { cell: sourceId, port: 'right' },
-                  target: { cell: id, port: 'left' },
-                  attrs: { line: { stroke: '#A2B1C3', strokeWidth: 2, targetMarker: 'classic' } }
-              })
-          }
-      }
-      return { nodes: newNodes, edges: newEdges }
+  // 从 dataLineageConfig 查找上下游表
+  const relatedTables = dataLineageConfig
+    .filter(l => direction === 'upstream' ? l.targetTable === tableName : l.sourceTable === tableName)
+    .map(l => direction === 'upstream' ? l.sourceTable : l.targetTable)
+
+  relatedTables.forEach(tbl => {
+    const nodeId = `${direction}-${tbl}`
+    // 已存在则跳过
+    if (graphData.value.nodes.some(n => n.id === nodeId || (n.data && n.data.label === tbl))) return
+
+    const lineage = direction === 'upstream'
+      ? dataLineageConfig.find(l => l.sourceTable === tbl && l.targetTable === tableName)
+      : dataLineageConfig.find(l => l.sourceTable === tableName && l.targetTable === tbl)
+
+    const nodeData = createMockNodeData(
+      nodeId, tbl, direction,
+      getDbName(tbl), getOwner(tbl), 'Table',
+      lineage ? {
+        transformationLogic: lineage.transformationLogic,
+        dependencies: lineage.dependencies,
+        updateFrequency: lineage.updateFrequency
+      } : undefined
+    )
+
+    // 应用 onlyFailed 筛选
+    if (props.onlyFailed) nodeData.taskStatus = 'failed'
+
+    newNodes.push({
+      id: nodeId,
+      shape: 'lineage-node',
+      data: nodeData,
+      ports: JSON.parse(JSON.stringify(portConfig))
+    })
+
+    if (direction === 'upstream') {
+      newEdges.push({
+        source: { cell: nodeId, port: 'right' },
+        target: { cell: sourceId, port: 'left' },
+        attrs: edgeAttrs,
+        data: lineage ? {
+          relationFields: lineage.relationFields,
+          transformationLogic: lineage.transformationLogic
+        } : undefined
+      })
+    } else {
+      newEdges.push({
+        source: { cell: sourceId, port: 'right' },
+        target: { cell: nodeId, port: 'left' },
+        attrs: edgeAttrs,
+        data: lineage ? {
+          relationFields: lineage.relationFields,
+          transformationLogic: lineage.transformationLogic
+        } : undefined
+      })
+    }
+  })
+
+  return { nodes: newNodes, edges: newEdges }
 }
 
 // 展开节点逻辑
 const expandNode = (nodeId, direction) => {
-    // 查找节点
-    const node = graphData.value.nodes.find(n => n.id === nodeId)
-    if (!node) return
+  const node = graphData.value.nodes.find(n => n.id === nodeId)
+  if (!node) return
 
-    // 如果已展开，不再处理
-    if (direction === 'left' && node.data.upstreamExpanded) return
-    if (direction === 'right' && node.data.downstreamExpanded) return
+  // 如果已展开，不再处理
+  if (direction === 'left' && node.data.upstreamExpanded) return
+  if (direction === 'right' && node.data.downstreamExpanded) return
 
-    const dirType = direction === 'left' ? 'upstream' : 'downstream'
-    
-    // 生成新节点
-    const count = Math.floor(Math.random() * 2) + 1
-    const { nodes: newNodes, edges: newEdges } = generateNodes(nodeId, dirType, count)
-    
-    // 更新数据
-    graphData.value.nodes.push(...newNodes)
-    graphData.value.edges.push(...newEdges)
-    
-    // 更新节点展开状态
-    if (direction === 'left') {
-        node.data.upstreamExpanded = true
-    } else {
-        node.data.downstreamExpanded = true
-    }
-    
-    // 重新渲染布局
-    render()
+  const dirType = direction === 'left' ? 'upstream' : 'downstream'
+  const { nodes: newNodes, edges: newEdges } = generateNodes(nodeId, dirType)
+
+  graphData.value.nodes.push(...newNodes)
+  graphData.value.edges.push(...newEdges)
+
+  if (direction === 'left') {
+    node.data.upstreamExpanded = true
+  } else {
+    node.data.downstreamExpanded = true
+  }
+
+  render()
 }
 
-// 监听筛选条件变化
-watch(() => [props.tableName, props.layers, props.dataTypes, props.onlyFailed], () => {
-  if (graph.value) {
-    initData()
-    render()
-  }
-})
+// 自动展开所有未展开节点一层（用于 layers prop）
+const autoExpandAll = () => {
+  const nodesSnapshot = [...graphData.value.nodes]
+  nodesSnapshot.forEach(node => {
+    if (!node.data.upstreamExpanded) {
+      const { nodes: newNodes, edges: newEdges } = generateNodes(node.id, 'upstream')
+      graphData.value.nodes.push(...newNodes)
+      graphData.value.edges.push(...newEdges)
+      node.data.upstreamExpanded = true
+    }
+    if (!node.data.downstreamExpanded) {
+      const { nodes: newNodes, edges: newEdges } = generateNodes(node.id, 'downstream')
+      graphData.value.nodes.push(...newNodes)
+      graphData.value.edges.push(...newEdges)
+      node.data.downstreamExpanded = true
+    }
+  })
+}
 
 // 提供给子组件
 provide('expandNode', expandNode)
 
-// 初始化数据
+const router = useRouter()
+
+// 跳转到详情页
+const navigateToDetail = (nodeData) => {
+  if (!nodeData) return
+  const { dataType, label, id } = nodeData
+  switch (dataType) {
+    case 'Table':
+      router.push({
+        path: '/data-community/discovery/data-map/table',
+        query: { tableName: label }
+      })
+      break
+    case 'Metric':
+      router.push({
+        path: `/data-community/management/asset-management/listing-management/metric-management/${id || label}/detail`
+      })
+      break
+    case 'Variable':
+      router.push({
+        path: '/data-community/discovery/variable-dict',
+        query: { variable: label }
+      })
+      break
+    default:
+      Message.info(`暂无 ${label} 的详情页面`)
+  }
+}
+
+provide('navigateToDetail', navigateToDetail)
+
+// 初始化数据（使用结构化 mock 数据，替代 Math.random）
 const initData = () => {
-  const nodes = []
-  const edges = []
-  // 假设主节点类型是筛选的第一项，或者默认为 Table
-  let mainType = 'Table'
-  if (props.dataTypes && props.dataTypes.length > 0) {
-    mainType = props.dataTypes[0]
+  const raw = toGraphData(dataLineageConfig, props.tableName, true, true)
+
+  // 应用 onlyFailed 筛选
+  if (props.onlyFailed) {
+    raw.nodes.forEach(n => { n.data.taskStatus = 'failed' })
   }
 
-  const mainNodeId = `main-${props.tableName}`
-  
-  // 主节点
-  nodes.push({
-    id: mainNodeId,
-    shape: 'lineage-node',
-    data: {
-      ...createNodeData(mainNodeId, props.tableName, 'main', 'dw', '张三', mainType),
-      taskStatus: 'success',
-      upstreamExpanded: true, // 初始默认展开一层
-      downstreamExpanded: true // 初始默认展开一层
-    },
-    ports: {
-      groups: {
-        left: {
-          position: 'left',
-          attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
-        },
-        right: {
-          position: 'right',
-          attrs: { circle: { r: 4, magnet: false, stroke: 'transparent', fill: 'transparent' } }
-        }
-      },
-      items: [
-        { id: 'left', group: 'left' },
-        { id: 'right', group: 'right' }
-      ]
-    }
-  })
-  
-  // 初始上游（默认一层）
-  const upRes = generateNodes(mainNodeId, 'upstream', Math.floor(Math.random() * 2) + 1)
-  nodes.push(...upRes.nodes)
-  edges.push(...upRes.edges)
-  
-  // 初始下游（默认一层）
-  const downRes = generateNodes(mainNodeId, 'downstream', Math.floor(Math.random() * 2) + 1)
-  nodes.push(...downRes.nodes)
-  edges.push(...downRes.edges)
-  
-  graphData.value = { nodes, edges }
+  // 应用 dataTypes 筛选（保留主节点）
+  if (props.dataTypes && props.dataTypes.length > 0) {
+    raw.nodes = raw.nodes.filter(n =>
+      n.id === `main-${props.tableName}` || props.dataTypes.includes(n.data.dataType)
+    )
+  }
+
+  graphData.value = {
+    nodes: raw.nodes,
+    edges: convertEdges(raw.edges)
+  }
+
+  // 根据 layers prop 自动展开更多层级
+  for (let layer = 1; layer < props.layers; layer++) {
+    autoExpandAll()
+  }
 }
 
 // 自动布局
@@ -409,53 +412,42 @@ const initGraph = () => {
     selectedNodeData.value = node.getData()
     drawerVisible.value = true
   })
-  graph.value.on('node:change:data', ({ node }) => {
-    const data = node.getData() || {}
-    const action = data.__expandAction
-    if (action === 'left' || action === 'right') {
-      expandNode(node.id, action)
-      node.setData({ ...data, __expandAction: undefined })
-    }
-  })
 }
 
 const render = () => {
   if (!graph.value) return
-  // 如果是初始化，graphData可能为空，先init
   if (graphData.value.nodes.length === 0) {
-      initData()
+    initData()
   }
   const layoutData = layout()
   graph.value.fromJSON(layoutData)
-  
-  // 只有第一次渲染或数据完全重置时才居中，避免展开时跳动太大
-  // 但dagre布局可能会大幅改变位置，所以重新居中通常是安全的
-  // 为了更好的体验，可以尝试只移动视口，不过简单起见先centerContent
-  // 也可以使用 zoomToFit 或其他
-  // graph.value.centerContent()
-  // 实际上，每次layout后，位置都会变，如果不centerContent，可能部分节点跑出视野
-  // 所以还是保持centerContent
   graph.value.centerContent()
 }
 
-watch(() => [props.tableName], () => {
-  initData() // 重置数据
-  render()
+// 监听筛选条件变化（统一 watcher，删除了重复的第二个）
+watch(() => [props.tableName, props.layers, props.dataTypes, props.onlyFailed], () => {
+  if (graph.value) {
+    initData()
+    render()
+  }
 })
+
+// 全屏事件处理函数（命名引用，便于正确移除监听器）
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement && document.fullscreenElement === graphContainer.value
+}
 
 onMounted(() => {
   initGraph()
   render()
-  document.addEventListener('fullscreenchange', () => {
-    isFullscreen.value = !!document.fullscreenElement && document.fullscreenElement === graphContainer.value
-  })
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 onUnmounted(() => {
   if (graph.value) {
     graph.value.dispose()
   }
-  document.removeEventListener('fullscreenchange', () => {})
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 const refreshGraph = () => {
@@ -489,17 +481,9 @@ const fitView = () => {
   graph.value?.centerContent()
 }
 
-const copySQL = () => {
-  if (selectedNodeData.value?.sql) {
-    navigator.clipboard.writeText(selectedNodeData.value.sql)
-    Message.success('SQL已复制到剪贴板')
-  }
-}
-
 const jumpToDetail = () => {
   if (selectedNodeData.value) {
-    // 模拟跳转
-    Message.info(`跳转到 ${selectedNodeData.value.label} 的详情页面`)
+    navigateToDetail(selectedNodeData.value)
   }
 }
 </script>
@@ -516,7 +500,7 @@ const jumpToDetail = () => {
 .canvas-container {
   flex: 1;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 0;
 }
 
 .floating-toolbar {
@@ -540,36 +524,19 @@ const jumpToDetail = () => {
   justify-content: flex-end;
 }
 
-.sql-section {
-  margin-top: 24px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--subapp-text-primary);
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sql-block {
-  background: #f7f8fa;
-  padding: 12px;
-  border-radius: 4px;
-  border: 1px solid var(--subapp-border);
-  font-family: monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--subapp-text-secondary);
-  overflow-x: auto;
-}
-
-.sql-block pre {
-  margin: 0;
-  white-space: pre-wrap;
+.transformation-text {
   word-break: break-all;
+  line-height: 1.6;
+}
+
+.description-text {
+  word-break: break-all;
+  line-height: 1.6;
+  color: var(--subapp-text-secondary, #4E5969);
+}
+
+.no-data-text {
+  color: var(--subapp-text-tertiary, #86909C);
 }
 </style>
 <style>

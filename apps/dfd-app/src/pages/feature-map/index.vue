@@ -124,7 +124,7 @@ const typeMap = {
   boolean: { label: '布尔型', color: 'var(--subapp-info)' }
 }
 
-// 变量列表（征信/行为）
+// 特征列表（征信/行为）
 const featureLoading = ref(false)
 const featureRows = ref([])
 const featureFilter = reactive({ name: '', majorCategory: '', level1: '', level2: '' })
@@ -137,7 +137,7 @@ const featureColumns = [
   { title: '二级分类', dataIndex: 'level2', width: 140 },
   { title: '描述', dataIndex: 'description' }
 ]
-const getMajorCategoryLabel = (mc) => ({ credit: '征信变量', behavior: '行为变量' }[mc] || mc || '—')
+const getMajorCategoryLabel = (mc) => ({ credit: '征信特征', behavior: '行为特征' }[mc] || mc || '—')
 const level1Label = (l1) => ({
   credit_report: '征信报告',
   credit_history: '信贷记录',
@@ -147,13 +147,13 @@ const level1Label = (l1) => ({
 }[l1] || l1 || '—')
 const categoryTree = computed(() => ([
   {
-    key: 'credit', title: '征信变量', children: [
+    key: 'credit', title: '征信特征', children: [
       { key: 'credit_report', title: '征信报告' },
       { key: 'credit_history', title: '信贷记录' }
     ]
   },
   {
-    key: 'behavior', title: '行为变量', children: [
+    key: 'behavior', title: '行为特征', children: [
       { key: 'transaction_behavior', title: '交易行为' },
       { key: 'activity', title: '活跃度' }
     ]
@@ -304,9 +304,9 @@ const initGraph = () => {
   })
 }
 
-// 获取变量选项 - 现在通过computed自动获取
+// 获取特征选项 - 现在通过computed自动获取
 const fetchVariableOptions = async () => {
-  // 变量选项已通过computed属性从store获取
+  // 特征选项已通过computed属性从store获取
 
 }
 
@@ -330,7 +330,7 @@ const renderGraph = async () => {
     let filteredNodes = graphData.nodes
     let filteredEdges = graphData.edges
 
-    // 根据中心变量过滤
+    // 根据中心特征过滤
     if (centerVariable.value) {
       const centerId = centerVariable.value
       const relatedNodeIds = new Set([centerId])
@@ -514,7 +514,7 @@ const getRelationLabel = (type) => {
   return labelMap[type] || type
 }
 
-// 处理节点点击：跳转变量详情（只读视图）
+// 处理节点点击：跳转特征详情（只读视图）
 const handleNodeClick = (node) => {
   const d = node.getData()
   if (d && d.id) {
@@ -522,7 +522,7 @@ const handleNodeClick = (node) => {
   }
 }
 
-// 处理中心变量变化
+// 处理中心特征变化
 const handleCenterVariableChange = () => {
   renderGraph()
 }
@@ -575,14 +575,14 @@ const handleAnalyzePath = () => {
 // 执行路径分析
 const handleExecutePathAnalysis = async () => {
   if (!pathAnalysisForm.sourceId || !pathAnalysisForm.targetId) {
-    Message.warning('请选择起始变量和目标变量')
+    Message.warning('请选择起始特征和目标特征')
     return
   }
 
   try {
     // Mock路径分析结果
-    const sourceNode = variableOptions.value.find(v => v.id === pathAnalysisForm.sourceId) || { id: (pathAnalysisForm.sourceId || 'source'), name: '起始变量', type: 'numerical' }
-    const targetNode = variableOptions.value.find(v => v.id === pathAnalysisForm.targetId) || { id: (pathAnalysisForm.targetId || 'target'), name: '目标变量', type: 'numerical' }
+    const sourceNode = variableOptions.value.find(v => v.id === pathAnalysisForm.sourceId) || { id: (pathAnalysisForm.sourceId || 'source'), name: '起始特征', type: 'numerical' }
+    const targetNode = variableOptions.value.find(v => v.id === pathAnalysisForm.targetId) || { id: (pathAnalysisForm.targetId || 'target'), name: '目标特征', type: 'numerical' }
     
     pathAnalysisResult.value = {
       length: 2,
@@ -603,7 +603,7 @@ const handleExecutePathAnalysis = async () => {
 // 显示血缘追踪
 const handleShowLineage = () => {
   if (!centerVariable.value) {
-    Message.warning('请先选择一个中心变量')
+    Message.warning('请先选择一个中心特征')
     return
   }
   
@@ -626,7 +626,7 @@ const handleCloseDetail = () => {
   selectedNode.value = null
 }
 
-// 查看变量详情
+// 查看特征详情
 const handleViewVariableDetail = () => {
   if (selectedNode.value) {
     router.push({ name: 'VariableMapDetail', params: { id: selectedNode.value.id, mode: 'view' } })

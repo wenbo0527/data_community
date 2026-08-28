@@ -18,13 +18,13 @@ export type MidloanStatus =
   | 'oa_production_reviewing' // OA 投产单审批中（新增：OA 审批闸门）
   | 'param_preparing'         // 参数准备
   | 'syncing_internal'        // 内数注册中
-  | 'syncing_variable'        // 变量中心注册中
+  | 'syncing_variable'        // 特征中心注册中
   | 'online'                  // 已上线
   | 'offline'                 // 已下线
   | 'archived'                // 已归档（通用入口 · 需求提出/已注册阶段可发起）
   // 4 异常状态
   | 'internal_sync_failed'    // 内数注册失败
-  | 'variable_sync_failed'    // 变量中心注册失败
+  | 'variable_sync_failed'    // 特征中心注册失败
   | 'dw_online_failed'        // 数仓上线失败
   | 'offline_failed'          // 下线接收失败
 
@@ -48,15 +48,15 @@ export const MIDLOAN_STATUS_MAP: Record<MidloanStatus, MidloanStatusMeta> = {
   oa_production_reviewing:  { label: 'OA 投产审批中',   color: 'arcoblue',     description: 'OA 投产单已提交，等待审批人通过（审批通过后进入参数准备）', dataForm: 'online_interface' },
   param_preparing:          { label: '参数准备',         color: 'cyan',         description: 'OA 审批通过后系统自动参数映射+有效性验证', dataForm: 'online_interface' },
   syncing_internal:         { label: '内数注册中',      color: 'cyan',         description: 'OA单已提给内数，等待返回接口信息', dataForm: 'online_interface' },
-  syncing_variable:         { label: '变量中心注册中',  color: 'cyan',         description: 'OA单已提给变量中心，等待确认上线', dataForm: 'online_interface' },
-  online:                   { label: '已上线',          color: 'green',        description: '变量中心已确认上线，特征投产中', dataForm: 'online_interface' },
-  offline:                  { label: '已下线',          color: 'darkgray',     description: '变量中心已下线，归档保留', dataForm: 'online_interface' },
-  archived:                { label: '已归档',          color: 'gray',         description: '变量已归档（需求阶段 / 已注册阶段可发起），从主列表移除，可在「已归档」筛选中查看', dataForm: 'offline_analysis' },
+  syncing_variable:         { label: '特征中心注册中',  color: 'cyan',         description: 'OA单已提给特征中心，等待确认上线', dataForm: 'online_interface' },
+  online:                   { label: '已上线',          color: 'green',        description: '特征中心已确认上线，特征投产中', dataForm: 'online_interface' },
+  offline:                  { label: '已下线',          color: 'darkgray',     description: '特征中心已下线，归档保留', dataForm: 'online_interface' },
+  archived:                { label: '已归档',          color: 'gray',         description: '特征已归档（需求阶段 / 已注册阶段可发起），从主列表移除，可在「已归档」筛选中查看', dataForm: 'offline_analysis' },
   // 异常
   internal_sync_failed:     { label: '内数注册失败',     color: 'red',          description: '内数API注册/变更返回失败，可点击「重新同步」', dataForm: 'online_interface' },
-  variable_sync_failed:     { label: '变量中心注册失败', color: 'red',          description: '变量中心注册返回失败，可点击「重新同步」', dataForm: 'online_interface' },
+  variable_sync_failed:     { label: '特征中心注册失败', color: 'red',          description: '特征中心注册返回失败，可点击「重新同步」', dataForm: 'online_interface' },
   dw_online_failed:         { label: '数仓上线失败',     color: 'red',          description: '数仓任务执行失败，可点击「重新触发数仓任务」', dataForm: 'offline_analysis' },
-  offline_failed:           { label: '下线接收失败',     color: 'red',          description: '变量中心批次同步失败，可手动触发批次重试', dataForm: 'online_interface' }
+  offline_failed:           { label: '下线接收失败',     color: 'red',          description: '特征中心批次同步失败，可手动触发批次重试', dataForm: 'online_interface' }
 }
 
 /** 状态机正常流转顺序（时间轴展示用 · 文档 v2.1 严格顺序） */
@@ -298,14 +298,14 @@ export const allowedActionsByStatus = (status: string, _data?: any, role?: strin
       // 需求提出：管理员在注册特征抽屉内补充/确认字段后提交，进入「已注册」状态
       result = [
         { key: 'submit_requirement', label: '注册特征', type: 'primary', category: 'main' },
-        { key: 'archive_variable', label: '变量归档', type: 'warning', category: 'admin' }
+        { key: 'archive_variable', label: '特征归档', type: 'warning', category: 'admin' }
       ]
       break
 
     case 'registered':
       result = [
         { key: 'submit_dev_oa', label: '提开发OA单', type: 'primary', category: 'main' },
-        { key: 'archive_variable', label: '变量归档', type: 'warning', category: 'admin' }
+        { key: 'archive_variable', label: '特征归档', type: 'warning', category: 'admin' }
       ]
       break
 
@@ -421,13 +421,13 @@ export const mainActionsByStatus = (status: string, role?: string): AllowedActio
 
 /**
  * ============ 编辑保护规则（用户反馈）============
- * 变量上线后，核心信息不可编辑（否则会影响实际上线调用）
+ * 特征上线后，核心信息不可编辑（否则会影响实际上线调用）
  *
  * 文档依据：贷中行为特征自动化上下线 v2.0 §三 G.上线调用阶段
  *
  * 字段分类：
  * - core：核心字段（特征英文名/中文名/字段类型/加工逻辑/默认值/接口号等）
- *        上线后会影响变量中心实际调用，必须锁定
+ *        上线后会影响特征中心实际调用，必须锁定
  * - supplementary：补充字段（数据底表名/数仓任务ID/OA单号/验收人等）
  *        仅在 developing_oa / dw_online / dw_online_failed 阶段可补充
  * - meta：元数据（描述/标签/可见性等）
@@ -453,10 +453,10 @@ export const VARIABLE_FIELD_POLICIES: FieldEditPolicy[] = [
   { field: 'processingLogic', label: '加工逻辑', category: 'core' },
   { field: 'defaultValue', label: '默认值', category: 'core' },
   { field: 'apiNo', label: '接口号', category: 'core' },
-  { field: 'name', label: '变量名称', category: 'core' },
-  { field: 'code', label: '变量代码', category: 'core' },
-  { field: 'variableType', label: '变量类型', category: 'core' },
-  { field: 'definition', label: '变量定义', category: 'core' },
+  { field: 'name', label: '特征名称', category: 'core' },
+  { field: 'code', label: '特征代码', category: 'core' },
+  { field: 'variableType', label: '特征类型', category: 'core' },
+  { field: 'definition', label: '特征定义', category: 'core' },
   { field: 'l1Category', label: '一级分类', category: 'core' },
   { field: 'l2Category', label: '二级分类', category: 'core' },
   { field: 'sourceTableAfter', label: '标准化后源表', category: 'core' },
@@ -470,7 +470,7 @@ export const VARIABLE_FIELD_POLICIES: FieldEditPolicy[] = [
   // 元数据（描述/标签）
   { field: 'businessScene', label: '业务场景', category: 'meta' },
   { field: 'domainTags', label: '业务域标签', category: 'meta' },
-  { field: 'variableTypeTags', label: '变量类型标签', category: 'meta' },
+  { field: 'variableTypeTags', label: '特征类型标签', category: 'meta' },
   { field: 'description', label: '描述', category: 'meta' },
   { field: 'visibility', label: '可见性', category: 'meta' },
   { field: 'remark', label: '备注', category: 'meta' }
@@ -478,7 +478,7 @@ export const VARIABLE_FIELD_POLICIES: FieldEditPolicy[] = [
 
 /**
  * 给定状态，判断某个字段是否可编辑
- * @param status 变量当前状态
+ * @param status 特征当前状态
  * @param field 字段名
  * @returns true 可编辑；false 锁定
  */
@@ -514,7 +514,7 @@ export const getLockedFields = (status: string): FieldEditPolicy[] => {
 }
 
 /**
- * 判断当前状态下，整个变量是否允许编辑入口
+ * 判断当前状态下，整个特征是否允许编辑入口
  * （用于编辑按钮的 disabled 控制）
  */
 export const canEdit = (status: string): boolean => {
@@ -531,7 +531,7 @@ export const getEditLockReason = (status: string): string => {
     case 'offline':
       return '已下线：归档状态，禁止修改'
     case 'archived':
-      return '已归档：变量已归档，不再进入主流程，禁止修改'
+      return '已归档：特征已归档，不再进入主流程，禁止修改'
     case 'param_preparing':
     case 'syncing_internal':
     case 'syncing_variable':
@@ -575,10 +575,10 @@ export const getEditLockReason = (status: string): string => {
  * - evaluation：评估
  * - retry：重试（异常态）
  *
- * 文档 §K1 明确：下线是被动接收（变量中心发起），台账无主动下线按钮。
+ * 文档 §K1 明确：下线是被动接收（特征中心发起），台账无主动下线按钮。
  *
- * @param status 变量状态
- * @param record 变量数据（含 sourceType、isExternal 等）
+ * @param status 特征状态
+ * @param record 特征数据（含 sourceType、isExternal 等）
  * @param role 当前角色（用于权限过滤）
  */
 export type TableActionKey =
@@ -589,7 +589,7 @@ export type TableActionKey =
   | 'retry'                 // 重试（异常态）
   | 'submit_online'         // 提交上线（非 midloan 行为品类·草稿/pending 状态）
   | 'correct_status'        // 状态修正（管理员专属）
-  | 'archive_variable'      // 变量归档（管理员专属 · 仅需求提出/已注册）
+  | 'archive_variable'      // 特征归档（管理员专属 · 仅需求提出/已注册）
 
 export interface TableAction {
   key: TableActionKey
@@ -678,10 +678,10 @@ export const tableActionsByStatus = (
     topActions.push({ key: 'correct_status', label: '状态修正', type: 'warning' })
   }
 
-  // 变量归档（管理员专属 · 仅需求提出 / 已注册阶段）：在顶层 topActions 暴露
+  // 特征归档（管理员专属 · 仅需求提出 / 已注册阶段）：在顶层 topActions 暴露
   const archiveAction = allMain.find(a => a.key === 'archive_variable')
   if (archiveAction && isAdmin && !topActionKeys.has('archive_variable')) {
-    topActions.push({ key: 'archive_variable', label: '变量归档', type: 'warning' })
+    topActions.push({ key: 'archive_variable', label: '特征归档', type: 'warning' })
   }
 
   const mainActions = allMain.filter(a => {

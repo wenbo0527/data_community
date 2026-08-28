@@ -106,7 +106,7 @@
             </a-card>
           </a-tab-pane>
 
-          <a-tab-pane key="6" title="变量评估">
+          <a-tab-pane key="6" title="特征评估">
             <a-card :bordered="false" class="info-card">
               <a-descriptions :column="2" :data="evaluationInfo" />
             </a-card>
@@ -487,7 +487,7 @@ const usageInfo = ref([
   { label: '账期', value: '预付费' }
 ])
 
-// 变量评估信息
+// 特征评估信息
 const evaluationInfo = ref([
   { label: '准确率', value: '99.95%' },
   { label: '响应时间', value: '平均150ms' },

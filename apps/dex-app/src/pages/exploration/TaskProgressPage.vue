@@ -186,7 +186,7 @@ const progressPercent = ref(0);
 const progressStatus = ref<'normal' | 'success' | 'warning' | 'danger'>('normal');
 const statusMessage = ref('任务已创建，正在准备执行...');
 
-// 新增功能变量
+// 新增功能特征
 const refreshing = ref(false);
 const retrying = ref(false);
 const errorMessage = ref('');

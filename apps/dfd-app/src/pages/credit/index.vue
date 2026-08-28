@@ -1,7 +1,7 @@
 <template>
   <div class="credit-variables">
     <div class="page-header">
-      <h2>征信变量</h2>
+      <h2>征信特征</h2>
       <a-space>
         <a-button type="primary" @click="showBatchUpload = true">
           <template #icon>
@@ -19,11 +19,11 @@
     </div>
     
     <a-card :bordered="false">
-      <!-- 变量详情抽屉 -->
+      <!-- 特征详情抽屉 -->
             <a-drawer
               v-model:visible="drawerVisible"
               :width="600"
-              title="变量详情"
+              title="特征详情"
               @cancel="closeDrawer"
             >
               <template #title>
@@ -73,14 +73,14 @@
            <a-col :span="8">
              <a-input-search
                v-model="searchKeyword"
-               placeholder="搜索变量名称、描述"
+               placeholder="搜索特征名称、描述"
                @search="handleSearch"
              />
            </a-col>
            <a-col :span="4">
              <a-select
                v-model="selectedTag"
-               placeholder="变量标签"
+               placeholder="特征标签"
                allow-clear
                @change="handleSearch"
              >
@@ -92,7 +92,7 @@
            <a-col :span="4">
              <a-select
                v-model="selectedCategory"
-               placeholder="变量分类"
+               placeholder="特征分类"
                allow-clear
                @change="handleSearch"
              >
@@ -273,11 +273,11 @@ const filterForm = ref({
 
 const basicInfo = computed(() => [
   {
-    label: '变量英文名',
+    label: '特征英文名',
     value: currentVariable.value.englishName
   },
   {
-    label: '变量中文名',
+    label: '特征中文名',
     value: currentVariable.value.chineseName
   },
   {
@@ -341,10 +341,10 @@ const columns = [
   { title: '字段位', dataIndex: 'fieldPosition', width: 100, align: 'center' },
   { title: '分类', dataIndex: 'primaryCategory', width: 120, align: 'center' },
   { title: '二级分类', dataIndex: 'secondaryCategory', width: 120, align: 'center' },
-  { title: '变量英文名', dataIndex: 'englishName', width: 160, align: 'left', slotName: 'englishName' },
-  { title: '标准化变量英文名', dataIndex: 'normalizedEnglishName', width: 180, align: 'left' },
-  { title: '标准化变量中文名', dataIndex: 'normalizedChineseName', width: 180, align: 'left' },
-  { title: '变量中文名', dataIndex: 'chineseName', width: 160, align: 'left' },
+  { title: '特征英文名', dataIndex: 'englishName', width: 160, align: 'left', slotName: 'englishName' },
+  { title: '标准化特征英文名', dataIndex: 'normalizedEnglishName', width: 180, align: 'left' },
+  { title: '标准化特征中文名', dataIndex: 'normalizedChineseName', width: 180, align: 'left' },
+  { title: '特征中文名', dataIndex: 'chineseName', width: 160, align: 'left' },
   { title: '加工逻辑', dataIndex: 'logic', width: 220, align: 'left' },
   { title: '类型', dataIndex: 'type', width: 110, align: 'center' },
   { title: '默认值', dataIndex: 'defaultValue', width: 110, align: 'center' },

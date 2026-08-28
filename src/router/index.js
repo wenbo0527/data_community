@@ -10,7 +10,7 @@ import modelOfflineAnalysisRoutes from './model-offline-analysis'
 import { ROUTE_NAMES, ROUTE_PATHS, ROUTE_GUARD_CONFIG } from './constants'
 import { checkRoutePermission, getBreadcrumb } from './utils'
 import { warning, error } from '../utils/message'
-import { useUserStore } from '../store/modules/user'
+import { useUserStore } from '../stores/user'
 import { loadComponent } from '../utils/componentLoader'
 
 const RISK_EXTERNAL_ENABLED = (import.meta.env?.VITE_RISK_EXTERNAL === 'true')

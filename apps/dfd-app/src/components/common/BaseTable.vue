@@ -103,7 +103,7 @@ import {
   IconSettings,
   IconMenu
 } from '@arco-design/web-vue'
-import { arcoConfig } from '@/utils/arco'
+import { arcoConfig } from '@app/shared-utils'
 
 export default {
   name: 'BaseTable',

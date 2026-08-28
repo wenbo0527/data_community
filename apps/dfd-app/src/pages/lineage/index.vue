@@ -9,7 +9,7 @@
             <a-option value="Table">数据表</a-option>
             <a-option value="Metric">指标</a-option>
             <a-option value="API">API</a-option>
-            <a-option value="Variable">变量</a-option>
+            <a-option value="Variable">特征</a-option>
           </a-select>
           <a-input-number v-model="form.layers" placeholder="层数" :min="1" :max="3" style="width: 100px" />
           <a-checkbox v-model="form.onlyFailed">仅显示异常</a-checkbox>
@@ -67,9 +67,11 @@ const handleSearch = () => {
 
 <style scoped>
 .lineage-application {
-  height: 100%;
+  /* 60px header + 32px padding (16px * 2) = 92px */
+  height: calc(100vh - 92px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .page-header {

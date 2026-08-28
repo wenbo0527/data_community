@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h2>探索分类管理</h2>
-        <p>维护“变量类型 → 探索分类（一级/二级）”的映射，用于变量探索全景的分类展开（Demo）。</p>
+        <p>维护“特征类型 → 探索分类（一级/二级）”的映射，用于特征探索全景的分类展开（Demo）。</p>
       </div>
       <a-space>
         <a-button type="outline" @click="router.push('/explore/map')">返回全景页</a-button>
@@ -27,7 +27,7 @@
           <template #title>
             <div class="detail-header">
               <span>节点详情</span>
-              <a-tag v-if="currentNode">{{ currentNode.kind === 'type' ? '变量类型' : '探索分类' }}</a-tag>
+              <a-tag v-if="currentNode">{{ currentNode.kind === 'type' ? '特征类型' : '探索分类' }}</a-tag>
             </div>
           </template>
 
@@ -59,7 +59,7 @@
             <a-divider />
 
             <a-alert type="info" :show-icon="false">
-              修改配置后，变量探索全景页建议刷新页面以读取最新配置（Demo 版不做实时订阅）。
+              修改配置后，特征探索全景页建议刷新页面以读取最新配置（Demo 版不做实时订阅）。
             </a-alert>
           </div>
         </a-card>

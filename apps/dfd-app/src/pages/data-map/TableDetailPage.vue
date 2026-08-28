@@ -324,7 +324,7 @@ import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import dataMapMock from '@/mock/data-map.ts'
-import { SENSITIVITY_NAMES } from '@shared/classify-constants'
+import { SENSITIVITY_NAMES } from '@/mock/shared/classify-constants'
 import LineageGraph from '@/pages/lineage/components/LineageGraph.vue'
 
 // 注册必须的组件

@@ -2,14 +2,14 @@
   <div class="data-resources-page">
     <div class="banner-section">
       <div class="banner-content">
-        <div class="title-row"><h1 class="banner-title">变量字典</h1></div>
-        <p class="banner-subtitle">风控与营销变量的统一注册、上下架与权限管理</p>
+        <div class="title-row"><h1 class="banner-title">特征字典</h1></div>
+        <p class="banner-subtitle">风控与营销特征的统一注册、上下架与权限管理</p>
         <div class="search-area">
-          <a-input-search v-model="search" class="main-search-input" placeholder="输入变量名称、编码或描述搜索" search-button size="large" allow-clear>
+          <a-input-search v-model="search" class="main-search-input" placeholder="输入特征名称、编码或描述搜索" search-button size="large" allow-clear>
             <template #button-icon><icon-search /></template>
           </a-input-search>
           <div class="search-filters-inline">
-            <a-select v-model="varType" placeholder="变量类型" allow-clear size="large" style="width: 160px" class="filter-select">
+            <a-select v-model="varType" placeholder="特征类型" allow-clear size="large" style="width: 160px" class="filter-select">
               <a-option value="numerical">数值型</a-option>
               <a-option value="categorical">分类型</a-option>
               <a-option value="text">文本型</a-option>
@@ -22,6 +22,9 @@
               <a-option value="inactive">已下架</a-option>
               <a-option value="expired">已过期</a-option>
             </a-select>
+            <a-button class="action-btn" size="large" @click="showMissingTicket({ assetType: 'variable', pageSource: '特征字典' })">
+              <template #icon><icon-plus /></template>缺失工单
+            </a-button>
           </div>
         </div>
       </div>
@@ -54,16 +57,27 @@
             </a-card>
           </a-col>
         </a-row>
-        <a-empty v-if="filteredList.length === 0" description="暂无变量数据" />
+        <a-empty v-if="filteredList.length === 0" description="暂无特征数据" />
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 
 const search = ref('')
 const varType = ref<string | undefined>(undefined)
@@ -96,7 +110,7 @@ function typeColor(t: string) { return { numerical: 'blue', categorical: 'green'
 function typeLabel(t: string) { return { numerical: '数值型', categorical: '分类型', text: '文本型', datetime: '时间型', boolean: '布尔型' }[t] || t }
 function statusColor(s: string) { return { active: 'green', pending: 'orange', inactive: 'gray', expired: 'red' }[s] || 'gray' }
 function statusLabel(s: string) { return { active: '已上架', pending: '待审核', inactive: '已下架', expired: '已过期' }[s] || s }
-function viewDetail(v: any) { Message.info(`查看变量: ${v.name}`) }
+function viewDetail(v: any) { Message.info(`查看特征: ${v.name}`) }
 function applyPermission(v: any) { Message.success(`已提交权限申请: ${v.name}`) }
 </script>
 
