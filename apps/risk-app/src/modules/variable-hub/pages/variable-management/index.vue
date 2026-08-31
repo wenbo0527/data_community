@@ -74,10 +74,10 @@
 
       <a-card v-if="activeTab === 'features'" class="filter-card">
         <a-form :model="filterForm" layout="inline">
-          <a-form-item label="品类">
+          <a-form-item label="业务品类">
             <a-select
               v-model="filterForm.riskCategory"
-              placeholder="全部品类"
+              placeholder="全部业务品类"
               allow-clear
               @change="handleSearch"
             >
@@ -86,10 +86,10 @@
               </a-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="特征来源">
+          <a-form-item label="数据来源">
             <a-select
               v-model="filterForm.sourceFilter"
-              placeholder="全量"
+              placeholder="全部数据来源"
               allow-clear
               @change="handleSearch"
             >
@@ -101,7 +101,7 @@
           <a-form-item label="特征类型">
             <a-select
               v-model="filterForm.type"
-              placeholder="全部类型"
+              placeholder="全部特征类型"
               allow-clear
               @change="handleSearch"
             >
