@@ -51,12 +51,10 @@ export default defineConfig({
 
       // dfd 子目录(中等长度)
       { find: '@/components', replacement: path.resolve(DFD, 'components') },
-      // 注: 原 alias 把 '@/mock' 指向 DFD mock,但 src/api/search-shim.ts 与
-      // src/mock/metadata-bus.ts 都引用 data-community-app 自己的 mock。
-      // 改为指向自己,与 @ 优先级匹配。
-      { find: '@/mock', replacement: path.resolve(__dirname, 'src/mock') },
+      // 注: cherry-pick 23aebc20 后需要 dca 也能解析 DFD api/mock (variable-map, offlineModel 等)
+      { find: '@/mock', replacement: path.resolve(DFD, 'mock') },
       { find: '@/mock-dca', replacement: path.resolve(__dirname, 'src/mock') },
-      { find: '@/api', replacement: path.resolve(__dirname, 'src/api') },
+      { find: '@/api', replacement: path.resolve(DFD, 'api') },
       { find: '@/types', replacement: path.resolve(DFD, 'types') },
       { find: '@/utils', replacement: path.resolve(DFD, 'utils') },
       { find: '@/store', replacement: path.resolve(DFD, 'store') },
