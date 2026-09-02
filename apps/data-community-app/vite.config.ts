@@ -46,12 +46,17 @@ export default defineConfig({
       { find: '@/composables', replacement: path.resolve(__dirname, 'src/composables') },
       { find: '@/dfd-pages', replacement: path.resolve(DFD, 'pages') },
       { find: '@/shared', replacement: MONOREPO },
+      // 跨子应用复用:dca 公共组件(data-community-app 解析 dfd-app 的 vue 时也需要这个 alias)
+      { find: '@dca-components', replacement: path.resolve(__dirname, 'src/components-dca') },
 
       // dfd 子目录(中等长度)
       { find: '@/components', replacement: path.resolve(DFD, 'components') },
-      { find: '@/mock', replacement: path.resolve(DFD, 'mock') },
+      // 注: 原 alias 把 '@/mock' 指向 DFD mock,但 src/api/search-shim.ts 与
+      // src/mock/metadata-bus.ts 都引用 data-community-app 自己的 mock。
+      // 改为指向自己,与 @ 优先级匹配。
+      { find: '@/mock', replacement: path.resolve(__dirname, 'src/mock') },
       { find: '@/mock-dca', replacement: path.resolve(__dirname, 'src/mock') },
-      { find: '@/api', replacement: path.resolve(DFD, 'api') },
+      { find: '@/api', replacement: path.resolve(__dirname, 'src/api') },
       { find: '@/types', replacement: path.resolve(DFD, 'types') },
       { find: '@/utils', replacement: path.resolve(DFD, 'utils') },
       { find: '@/store', replacement: path.resolve(DFD, 'store') },
