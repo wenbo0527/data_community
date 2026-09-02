@@ -1,85 +1,73 @@
 <template>
   <div class="global-search-result">
-    <a-empty v-if="loading" description="搜索中..." />
-    <a-empty
-      v-else-if="!results || totalCount === 0"
-      :description="`未找到与 '${props.keyword}' 相关的结果`"
-    />
-    <template v-else>
-      <div class="result-summary">
-        找到 <b>{{ totalCount }}</b> 条结果 · 已按"用户意图"分组
-      </div>
+    <a-spin :loading="loading" style="width: 100%">
+      <a-empty v-if="!loading && totalCount === 0" :description="`未找到与 '${props.keyword}' 相关的结果`" />
 
-      <!-- 1. 智能意图推荐(P0#1 整合点:不按数据类型,按意图) -->
-      <section v-if="intentCards.length > 0" class="intent-section">
-        <div class="intent-title">意图推荐</div>
-        <div class="intent-grid">
-          <div
-            v-for="card in intentCards"
-            :key="card.key"
-            class="intent-card"
-            @click="onIntentClick(card)"
-          >
-            <component :is="card.icon" class="intent-icon" />
-            <div class="intent-content">
-              <div class="intent-card-title">{{ card.title }}</div>
-              <div class="intent-card-desc">{{ card.desc }}</div>
-            </div>
-            <icon-right class="intent-arrow" />
-          </div>
+      <template v-else>
+        <div class="result-summary">
+          找到 <b>{{ totalCount }}</b> 条结果 · 已按"用户意图"分组
         </div>
-      </section>
 
-      <a-tabs v-model:active-key="activeTab">
-        <a-tab-pane v-for="tab in tabs" :key="tab.key">
-          <template #title>
-            {{ tab.title }} ({{ results[tab.key]?.length || 0 }})
-          </template>
-          <a-list
-            :data="results[tab.key] || []"
-            :bordered="false"
-            :pagination-props="false"
-          >
-            <template #item="item">
-              <a-list-item
-                class="result-item"
-                @click="onClickItem(item.item)"
-              >
-                <a-list-item-meta
-                  :title="item.item.title || item.item.name || item.item.elementName || item.item.chineseName || '(无标题)'"
-                  :description="item.item.description || item.item.desc || ''"
-                >
-                  <template #avatar>
-                    <component :is="getIcon(item.item.type || '')" class="result-icon" />
-                  </template>
-                </a-list-item-meta>
-                <template #actions>
-                  <a-tag v-if="item.item.domain" size="small">{{ item.item.domain }}</a-tag>
-                  <a-tag v-if="item.item.category" size="small" color="arcoblue">{{ item.item.category }}</a-tag>
-                  <a-tag v-if="item.item.entityType" size="small" color="purple">{{ item.item.entityType }}</a-tag>
-                </template>
-              </a-list-item>
+        <!-- P0#1: 意图推荐卡片(分组放在顶部) -->
+        <section v-if="intentCards.length > 0" class="intent-section">
+          <div class="intent-title">意图推荐</div>
+          <a-row :gutter="[16, 16]">
+            <a-col
+              v-for="card in intentCards"
+              :key="card.key"
+              :xs="24" :sm="12" :md="12" :lg="8" :xl="6"
+            >
+              <AssetCard
+                :title="card.title"
+                type="intent"
+                :tags="[{ label: '推荐', value: card.title }]"
+                :description="card.desc"
+                :icon="card.icon"
+                theme-color="blue"
+                @click="onIntentClick(card)"
+              />
+            </a-col>
+          </a-row>
+        </section>
+
+        <!-- 详情结果(按类型分 tab,每个 tab 内统一用 AssetCard 卡片网格) -->
+        <a-tabs v-model:active-key="activeTab">
+          <a-tab-pane v-for="tab in tabs" :key="tab.key">
+            <template #title>
+              {{ tab.title }} ({{ results[tab.key]?.length || 0 }})
             </template>
-          </a-list>
-        </a-tab-pane>
-      </a-tabs>
-    </template>
+            <a-empty
+              v-if="(results[tab.key] || []).length === 0"
+              :description="`该分类暂无结果`"
+            />
+            <a-row v-else :gutter="[16, 16]">
+              <a-col
+                v-for="(item, idx) in results[tab.key]"
+                :key="(item.id || item.name || item.title || '') + '-' + idx"
+                :xs="24" :sm="12" :md="8" :lg="6"
+              >
+                <AssetCard
+                  :title="getItemTitle(item)"
+                  :type="getItemTypeLabel(item)"
+                  :tags="getItemTags(item)"
+                  :meta-lines="getItemMetaLines(item)"
+                  :description="getItemDesc(item)"
+                  @click="onClickItem(item)"
+                />
+              </a-col>
+            </a-row>
+          </a-tab-pane>
+        </a-tabs>
+      </template>
+    </a-spin>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import {
-  IconStorage,
-  IconBranch,
-  IconTags,
-  IconCommon,
-  IconDesktop,
-  IconApps,
-  IconUserGroup,
-  IconRight
-} from '@arco-design/web-vue/es/icon'
 import { searchApi } from '@/api/search-shim'
+import AssetCard from '@/components-dca/common/AssetCard.vue'
+import type { MetaTag } from '@/components-dca/common/AssetCard.vue'
 
 interface SearchItem {
   id?: string
@@ -93,6 +81,8 @@ interface SearchItem {
   category?: string
   entityType?: string
   type?: string
+  owner?: string
+  updateTime?: string
   routeKey?: string
   routeParams?: Record<string, string | number>
 }
@@ -105,9 +95,7 @@ interface SearchResults {
   dashboards?: SearchItem[]
 }
 
-const props = defineProps<{
-  keyword: string
-}>()
+const props = defineProps<{ keyword: string }>()
 
 const emit = defineEmits<{
   navigate: [result: { routeKey: string; params?: Record<string, string | number> }]
@@ -124,10 +112,10 @@ const results = ref<SearchResults>({
 })
 
 const tabs = [
-  { key: 'tables', title: '数据表', icon: IconStorage },
-  { key: 'metrics', title: '指标', icon: IconBranch },
-  { key: 'concepts', title: '业务概念', icon: IconCommon },
-  { key: 'dashboards', title: '看板', icon: IconDesktop }
+  { key: 'tables', title: '数据表' },
+  { key: 'metrics', title: '指标' },
+  { key: 'concepts', title: '业务概念' },
+  { key: 'dashboards', title: '看板' }
 ] as const
 
 const totalCount = computed(() => {
@@ -138,20 +126,41 @@ const totalCount = computed(() => {
   )
 })
 
-const getIcon = (type: string) => {
-  if (type.includes('metric')) return IconBranch
-  if (type.includes('concept')) return IconCommon
-  if (type.includes('tag')) return IconTags
-  if (type.includes('dashboard')) return IconDesktop
-  return IconStorage
+function getItemTitle(item: SearchItem): string {
+  return item.title || item.name || item.elementName || item.chineseName || '(无标题)'
+}
+function getItemDesc(item: SearchItem): string {
+  return item.description || item.desc || ''
+}
+function getItemTypeLabel(item: SearchItem): string {
+  const map: Record<string, string> = {
+    table: '数据表',
+    metric: '指标',
+    tag: '标签',
+    concept: '业务概念',
+    dashboard: '看板'
+  }
+  return map[item.type || ''] || '数据'
+}
+function getItemTags(item: SearchItem): MetaTag[] {
+  const tags: MetaTag[] = []
+  if (item.domain) tags.push({ label: '业务域', value: item.domain, color: 'arcoblue' })
+  if (item.category) tags.push({ label: '分类', value: item.category, color: 'purple' })
+  if (item.entityType) tags.push({ label: '实体', value: item.entityType, color: 'cyan' })
+  return tags
+}
+function getItemMetaLines(item: SearchItem): string[] {
+  const lines: string[] = []
+  if (item.owner) lines.push(`责任人: ${item.owner}`)
+  if (item.updateTime) lines.push(`更新时间: ${item.updateTime}`)
+  return lines
 }
 
-const onClickItem = (item: SearchItem) => {
+function onClickItem(item: SearchItem) {
   if (item.routeKey) {
     emit('navigate', { routeKey: item.routeKey, params: item.routeParams })
     return
   }
-  // 兜底映射:按 type 字段路由
   const map: Record<string, string> = {
     table: 'discovery:asset-catalog',
     metric: 'discovery:metrics-map',
@@ -162,7 +171,7 @@ const onClickItem = (item: SearchItem) => {
   emit('navigate', { routeKey })
 }
 
-const doSearch = async (kw: string) => {
+async function doSearch(kw: string) {
   if (!kw) return
   loading.value = true
   try {
@@ -199,11 +208,9 @@ const doSearch = async (kw: string) => {
       }))
     }
 
-    // 自动切到第一个有结果的 tab
     const firstTab = tabs.find(t => (results.value as any)[t.key]?.length > 0)
     if (firstTab) activeTab.value = firstTab.key
 
-    // P0#1: 生成意图推荐卡片
     intentCards.value = generateIntentCards(kw, results.value)
   } catch (err) {
     console.warn('[GlobalSearchResult] 搜索失败', err)
@@ -219,98 +226,89 @@ interface IntentCard {
   key: string
   title: string
   desc: string
-  icon: any
+  /** icon 字符串 key(传给 AssetCard,由 AssetCard 内部 markRaw 解析) */
+  icon: string
   routeKey: string
   params?: Record<string, string>
 }
 
 const intentCards = ref<IntentCard[]>([])
 
-// 客户相关关键词
 const CUSTOMER_KEYWORDS = ['客户', 'user', '用户', '授信', '信贷', 'loan', '客户数', '客户画像', '客户360', '客户洞察']
-// 指标相关
 const METRIC_KEYWORDS = ['指标', 'metric', '日活', 'dau', 'gmv', '转化率']
-// 数据源相关
 const SOURCE_KEYWORDS = ['数据源', 'datasource', '数据库', 'kafka', 'mysql']
-// 看板相关
 const BOARD_KEYWORDS = ['看板', 'dashboard', '报表', 'report', '驾驶舱']
 
-const generateIntentCards = (kw: string, res: SearchResults): IntentCard[] => {
+function generateIntentCards(kw: string, res: SearchResults): IntentCard[] {
   const lower = kw.toLowerCase()
   const cards: IntentCard[] = []
 
-  // 1. 客户洞察(命中客户关键词 或 results.tags/metrics 里有客户相关)
   const isCustomerIntent = CUSTOMER_KEYWORDS.some(k => lower.includes(k.toLowerCase()))
   if (isCustomerIntent) {
     cards.push({
       key: 'customer-insight',
       title: '查看客户洞察',
       desc: `跳转到客户 360,预填搜索"${kw}"`,
-      icon: IconUserGroup,
+      icon: 'icon-user-group',
       routeKey: 'exploration:customer360',
       params: { keyword: kw }
     })
   }
 
-  // 2. 数据地图(有表)
   if (res.tables.length > 0) {
     cards.push({
       key: 'browse-tables',
       title: `浏览 ${res.tables.length} 张数据表`,
       desc: '在数据地图中查看详情与血缘',
-      icon: IconStorage,
+      icon: 'icon-storage',
       routeKey: 'discovery:asset-catalog'
     })
   }
 
-  // 3. 指标地图(有指标)
   if (res.metrics.length > 0) {
     cards.push({
       key: 'browse-metrics',
       title: `查看 ${res.metrics.length} 个指标定义`,
       desc: '在指标地图中查看业务口径',
-      icon: IconBranch,
+      icon: 'icon-branch',
       routeKey: 'discovery:metrics-map'
     })
   }
 
-  // 4. 看板(命中看板关键词)
-  if (BOARD_KEYWORDS.some(k => lower.includes(k.toLowerCase())) || res.dashboards.length > 0) {
+  if (BOARD_KEYWORDS.some(k => lower.includes(k.toLowerCase())) || (res.dashboards?.length || 0) > 0) {
     cards.push({
       key: 'browse-dashboards',
       title: `查看看板/报表`,
       desc: '在指标看板中浏览可视化',
-      icon: IconDesktop,
+      icon: 'icon-desktop',
       routeKey: 'exploration:indicator-dashboard'
     })
   }
 
-  // 5. 数据源(命中)
   if (SOURCE_KEYWORDS.some(k => lower.includes(k.toLowerCase()))) {
     cards.push({
       key: 'browse-sources',
       title: '查看数据源',
       desc: '管理数据源接入',
-      icon: IconStorage,
+      icon: 'icon-storage',
       routeKey: 'exploration:tag-system'
     })
   }
 
-  // 6. 业务概念(命中)
   if (res.concepts.length > 0) {
     cards.push({
       key: 'browse-concepts',
       title: `查看 ${res.concepts.length} 个业务概念`,
       desc: '在业务概念图谱中浏览',
-      icon: IconCommon,
+      icon: 'icon-common',
       routeKey: 'management:business-concept'
     })
   }
 
-  return cards.slice(0, 4) // 最多 4 张
+  return cards.slice(0, 4)
 }
 
-const onIntentClick = (card: IntentCard) => {
+function onIntentClick(card: IntentCard) {
   emit('navigate', { routeKey: card.routeKey, params: card.params })
 }
 
@@ -325,84 +323,18 @@ watch(
 .global-search-result {
   .result-summary {
     padding: 0 0 16px;
-    color: #86909c;
+    color: var(--dca-text-tertiary);
     font-size: 13px;
   }
 
-  .result-item {
-    cursor: pointer;
-    transition: background-color 0.15s;
-    &:hover {
-      background-color: #f7f8fa;
-    }
-  }
-
-  .result-icon {
-    font-size: 22px;
-    color: #165dff;
-  }
-
-  // P0#1: 意图卡片样式
   .intent-section {
     margin-bottom: 24px;
 
     .intent-title {
       font-size: 13px;
       font-weight: 500;
-      color: #4e5969;
+      color: var(--dca-text-secondary);
       margin-bottom: 12px;
-    }
-
-    .intent-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .intent-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
-      border: 1px solid #e8f3ff;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
-
-      &:hover {
-        border-color: #165dff;
-        transform: translateX(4px);
-        box-shadow: 0 2px 8px rgba(22, 93, 255, 0.1);
-      }
-
-      .intent-icon {
-        font-size: 24px;
-        color: #165dff;
-        flex-shrink: 0;
-      }
-
-      .intent-content {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .intent-card-title {
-        font-size: 14px;
-        font-weight: 500;
-        color: #1d2129;
-      }
-
-      .intent-card-desc {
-        font-size: 12px;
-        color: #86909c;
-        margin-top: 2px;
-      }
-
-      .intent-arrow {
-        color: #c9cdd4;
-        font-size: 14px;
-      }
     }
   }
 }

@@ -16,14 +16,26 @@ export default defineConfig(async () => {
 
   return {
     plugins,
-    server: { host: '0.0.0.0', port: 5185, strictPort: true },
+    server: {
+      host: '0.0.0.0',
+      port: 5185,
+      strictPort: true,
+      fs: {
+        allow: [
+          path.resolve(__dirname),
+          path.resolve(__dirname, '../data-community-app/src')
+        ]
+      }
+    },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src'),
-        // 修正 (R3): 原来 '../../src/mock/shared' 解析到 apps/data_community/src/mock/shared (上层, 错)
-        // 实际 dfd-app 自己的 mock 在 apps/dfd-app/src/mock/shared/
-        '@shared': path.resolve(__dirname, 'src/mock/shared')
-      }
+      '@': path.resolve(__dirname, 'src'),
+      // 修正 (R3): 原来 '../../src/mock/shared' 解析到 apps/data_community/src/mock/shared (上层, 错)
+      // 实际 dfd-app 自己的 mock 在 apps/dfd-app/src/mock/shared/
+      '@shared': path.resolve(__dirname, 'src/mock/shared'),
+      // 复用 data-community-app 公共组件
+      '@dca-components': path.resolve(__dirname, '../data-community-app/src/components-dca')
+    }
     },
     base: '/dfd/',
     build: {
