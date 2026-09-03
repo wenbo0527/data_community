@@ -223,16 +223,6 @@
           <div style="margin-top: 12px">已解析记录数：{{ incrementalFileCount }}</div>
         </a-modal>
 
-    <!-- ============ 新增特征（B1 完整注册表单 / 即「注册为特征」入口）============ -->
-    <VariableRegisterDrawer
-      v-model:visible="registerDrawerVisible"
-      :existing-names="existingFeatureNames"
-      :existing-cn-names="existingFeatureCnNames"
-      :requirement-data="registerDrawerRequirementData"
-      @submit="handleRegisterSubmit"
-      @save-draft="handleRegisterSaveDraft"
-    />
-
     <!-- ============ 列表页通用 Action 抽屉（提交OA/发起验收/验收驳回）============ -->
     <MidloanActionDrawer
       :visible="actionDrawerVisible"
@@ -386,7 +376,7 @@
                   :disabled="selectedRows.length < 2"
                   @click="openBatchEvaluationModal"
                 >
-                  <icon-chart /> 批量发起评估
+                  <icon-bar-chart /> 批量发起评估
                   <a-tag v-if="selectedRows.length < 2" color="gray" size="mini" style="margin-left: 8px">需 ≥2 项</a-tag>
                   <a-tag v-else size="mini" style="margin-left: 8px">（{{ selectedRows.length }} 项）</a-tag>
                 </a-doption>
@@ -819,15 +809,6 @@
         @cancel="bulkImportVisible = false"
       />
 
-      <!-- B1 注册弹窗（旅程 2 关键） -->
-      <DerivationRegisterModal
-        v-if="derivationRegisterVisible && derivationRegisterTarget"
-        :visible="derivationRegisterVisible"
-        :derivation="derivationRegisterTarget"
-        @ok="onDerivationRegisterSubmit"
-        @cancel="derivationRegisterVisible = false"
-      />
-
       <!-- 需求驳回弹窗 -->
       <a-modal
         v-model:visible="rejectModalVisible"
@@ -856,6 +837,19 @@
         </a-form>
       </a-modal>
     </div>
+
+    <!-- ============ 注册特征（B1 完整注册表单）============
+         三种入口共用：台账「注册特征」/ 台账状态机 submit_requirement / 需求列表「去注册」
+         挂在 Tab v-if 块之外，两个 Tab 均可触发 -->
+    <VariableRegisterDrawer
+      v-model:visible="registerDrawerVisible"
+      :existing-names="existingFeatureNames"
+      :existing-cn-names="existingFeatureCnNames"
+      :requirement-data="registerDrawerRequirementData"
+      :source="registerDrawerSource"
+      @submit="handleRegisterSubmit"
+      @save-draft="handleRegisterSaveDraft"
+    />
   </div>
 </template>
 
@@ -875,13 +869,12 @@ import { variableStatus } from '@/modules/variable-hub/constants/statusMap'
 import DmtPageHeader from '@/modules/variable-hub/components/PageHeader.vue'
 import DmtStatGroup from '@/modules/variable-hub/components/StatGroup.vue'
 import { ExploreStore } from '@/modules/variable-hub/mock/explore/explore-store'
-import { RISK_CATEGORY_OPTIONS, MIDLOAN_L1_CATEGORIES, VARIABLE_SOURCE_FILTER_OPTIONS } from '@/modules/variable-hub/constants/riskCategoryMap'
+import { RISK_CATEGORY_OPTIONS, MIDLOAN_L1_CATEGORIES, VARIABLE_SOURCE_FILTER_OPTIONS, LIST_TYPES } from '@/modules/variable-hub/constants/riskCategoryMap'
 import { midloanStatusLabel, midloanStatusColor, allowedActionsByStatus, canEdit, getEditLockReason, tableActionsByStatus, OFFLINE_ANALYSIS_FILTER_OPTIONS, API_CALL_FILTER_OPTIONS, getStatusCategory, getOfflineAnalysisDisplay, getApiCallDisplay } from '@/modules/variable-hub/constants/midloanStatusMap'
 import { riskCategoryLabel, riskCategoryColor } from '@/modules/variable-hub/constants/riskCategoryMap'
 import DerivationStore from '@/modules/variable-hub/mock/risk-feature/derivations'
 import DerivationCreateModal from '@/modules/variable-hub/components/risk-feature/DerivationCreateModal.vue'
 import BulkImportDerivationModal from '@/modules/variable-hub/components/risk-feature/BulkImportDerivationModal.vue'
-import DerivationRegisterModal from '@/modules/variable-hub/components/risk-feature/DerivationRegisterModal.vue'
 import VariableRegisterDrawer from '@/modules/variable-hub/components/risk-feature/VariableRegisterDrawer.vue'
 import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
 import { ExploreTaxonomyStore } from '@/modules/variable-hub/mock/explore/explore-taxonomy-store'
@@ -1373,6 +1366,7 @@ const triggerTableAction = (record, action) => {
   // submit_requirement：打开 VariableRegisterDrawer 审核模式（B1 完整注册表单）
   if (action.key === 'submit_requirement') {
     registerDrawerRequirementData.value = record
+    registerDrawerSource.value = 'ledger'
     registerDrawerVisible.value = true
     return
   }
@@ -1900,6 +1894,7 @@ const handleCreateMenuSelect = (val) => {
   if (val === 'add' || val === 'create') {
     // 「注册为特征」=「新增」= 打开完整注册表单抽屉（B1 文档）
     registerDrawerRequirementData.value = null
+    registerDrawerSource.value = 'ledger'
     registerDrawerVisible.value = true
     return
   }
@@ -1912,16 +1907,42 @@ const handleCreateMenuSelect = (val) => {
 const registerDrawerVisible = ref(false)
 // 审核模式：传入 A1 需求数据，预填 B1 注册表单（submit_requirement 触发）
 const registerDrawerRequirementData = ref(null)
+// 抽屉入口：ledger=特征台账注册特征；derivation=需求列表「去注册」（同一个组件，不同预填与提交口径）
+const registerDrawerSource = ref('ledger')
+
+// 去重校验时需要排除「自己」：需求本身 + 该需求已生成的台账资产
+// 否则「去注册」会因台账里已存在同名特征而误报重名
+const registerSelfIds = computed(() => {
+  const target = registerDrawerRequirementData.value
+  if (!target) return new Set()
+  const ids = new Set([target.id])
+  ;(variableStore.variableList || []).forEach((v) => {
+    if (v.derivationId && v.derivationId === target.id) ids.add(v.id)
+    if (v.midloanFeatureId && v.midloanFeatureId === target.id) ids.add(v.id)
+  })
+  return ids
+})
 
 // 已存在的英文名/中文名（用于去重校验）
 const existingFeatureNames = computed(() =>
-  (variableStore.variableList || []).map((v) => v.code || v.name || '').filter(Boolean)
+  (variableStore.variableList || [])
+    .filter((v) => !registerSelfIds.value.has(v.id))
+    .map((v) => v.code || v.name || '')
+    .filter(Boolean)
 )
 const existingFeatureCnNames = computed(() =>
-  (variableStore.variableList || []).map((v) => v.featureCnName || v.name || '').filter(Boolean)
+  (variableStore.variableList || [])
+    .filter((v) => !registerSelfIds.value.has(v.id))
+    .map((v) => v.featureCnName || v.name || '')
+    .filter(Boolean)
 )
 
 const handleRegisterSubmit = (payload) => {
+  // 需求列表「去注册」：B1 表单 → 回写 A1 需求 + 台账资产
+  if (payload.source === 'derivation') {
+    completeDerivationRegister(payload)
+    return
+  }
   // 审核模式（submit_requirement）：走 stateEngine 推进流程，而非新增草稿
   if (payload.isReview) {
     const result = MidloanStateEngine.handleAction(payload.requirementId, 'submit_requirement', payload)
@@ -2167,20 +2188,68 @@ function resetDerivationFilter() {
 }
 
 // 流转动作
+// 「去注册」与特征台账「注册特征」共用 VariableRegisterDrawer（B1 完整表单），
+// 区别只在 source='derivation'：打开时把 A1 需求已填信息预填到表单，提交后回写需求 + 台账
 function goRegister(record) {
-  derivationRegisterTarget.value = DerivationStore.get(record.id) || record
-  derivationRegisterVisible.value = true
+  registerDrawerRequirementData.value = DerivationStore.get(record.id) || record
+  registerDrawerSource.value = 'derivation'
+  registerDrawerVisible.value = true
 }
 
-function onDerivationRegisterSubmit(payload) {
-  const target = derivationRegisterTarget.value
-  if (!target) return
-  const rec = DerivationStore.register(target.id, payload)
-  if (rec) {
-    Message.success(`已注册特征 ${rec.featureId}，特征状态：已注册`)
-    derivationRegisterVisible.value = false
-    refreshDerivations()
+// B1 表单字段 → A1 需求（DerivationRecord）字段口径
+function derivationRegisterPatch(payload) {
+  const patch = {
+    featureEnName: payload.name,
+    featureCnName: payload.featureCnName,
+    fieldType: payload.fieldType,
+    processingLogic: payload.processingLogic,
+    defaultValue: payload.defaultValue || '',
+    requirementDescription: payload.description || '',
+    l1Category: payload.l1Category,
+    l2Category: payload.l2Category,
+    sourceTableAfter: payload.sourceTableAfter || '',
+    sourceTableBefore: payload.sourceTableBefore || '',
+    originFeatureEnName: payload.sourceField || '',
+    dataFreshness: payload.dataFreshness,
+    developer: payload.developer,
+    dataTableName: payload.dataTableName || '',
+    dwTaskId: payload.dwTaskId || '',
+    productScope: payload.productScope || '',
+    listType: payload.listType || 'none',
+    batch: payload.batch || '',
+    acceptor: payload.acceptor || '',
+    remark: payload.remark || ''
   }
+  // 附件为空时不写入，避免 Object.assign 清掉需求原有的 Excel 评估报告
+  if (payload.excelAttachment) patch.attachment = { ...payload.excelAttachment }
+  return patch
+}
+
+function completeDerivationRegister(payload) {
+  const target = registerDrawerRequirementData.value
+  if (!target) return
+  const list = variableStore.variableList || []
+  // 该需求是否已有台账资产（种子数据里部分需求已带资产）：有则复用，避免重复建档
+  let asset = list.find(
+    (v) => v.derivationId === target.id || v.midloanFeatureId === target.id || v.id === target.id
+  )
+  if (!asset) {
+    asset = VariableDraftStore.addDraft({ ...payload, derivationId: target.id })
+  }
+  const rec = DerivationStore.register(target.id, {
+    ...derivationRegisterPatch(payload),
+    featureId: asset.id
+  })
+  if (!rec) {
+    Message.error('注册失败：未找到需求记录')
+    return
+  }
+  Message.success(`已注册特征 ${rec.featureId}，状态：已注册`)
+  registerDrawerVisible.value = false
+  registerDrawerRequirementData.value = null
+  registerDrawerSource.value = 'ledger'
+  refreshDerivations()
+  fetchVariableList()
 }
 
 function goFeatureDetail(featureId) {
@@ -2246,10 +2315,6 @@ function onDerivationCreated(payloads) {
   refreshDerivations()
 }
 
-// B1 注册弹窗
-const derivationRegisterVisible = ref(false)
-const derivationRegisterTarget = ref(null)
-
 // 详情抽屉
 const derivationDetailVisible = ref(false)
 const derivationDetail = ref(null)
@@ -2263,6 +2328,13 @@ const derivationDetailStatusColor = computed(() => {
   if (!derivationDetail.value) return 'gray'
   return derivationStatusColorMap[derivationDetail.value.status] || 'gray'
 })
+
+// 名单类型码值 → 中文（与 VariableRegisterDrawer 共用 LIST_TYPES 字典）
+function listTypeLabel(val) {
+  if (!val) return '—'
+  const hit = LIST_TYPES.find((item) => item.value === val)
+  return hit ? hit.label : val
+}
 
 // 1. 需求信息（2 列）
 const derivationDetailBaseDesc = computed(() => derivationDetail.value ? [
@@ -2316,7 +2388,7 @@ const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '数据底表名称', value: derivationDetail.value.dataTableName || '暂未补充' },
   { label: '数仓任务ID', value: derivationDetail.value.dwTaskId || '—' },
   { label: '产品范围', value: derivationDetail.value.productScope || '—' },
-  { label: '名单类型', value: derivationDetail.value.listType || '—' },
+  { label: '名单类型', value: listTypeLabel(derivationDetail.value.listType) },
   { label: '批次', value: derivationDetail.value.batch || '—' },
   { label: '验收人', value: derivationDetail.value.acceptor || '—' },
   { label: '备注', value: derivationDetail.value.remark || '—' },

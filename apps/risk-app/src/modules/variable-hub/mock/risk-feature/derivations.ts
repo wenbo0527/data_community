@@ -541,34 +541,28 @@ export const DerivationStore = {
     persist()
     return record
   },
-  /** 特征注册：生成特征ID，写入特征台账（特征状态为需求提出→已注册） */
+  /**
+   * 特征注册：写入注册信息并关联特征台账资产
+   * @param payload B1 注册表单载荷（由页面完成字段映射后传入）
+   *                payload.featureId 优先使用（来自台账已有资产或新建草稿），
+   *                未传时兜底生成 MIDLOAN-FEAT-NNNN（避开已有编号）
+   */
   register(id: string, payload: any) {
     const d = store.find(x => x.id === id)
     if (!d) return null
     Object.assign(d, payload)
-    // 生成特征 ID：MIDLOAN-FEAT-NNNN
-    const idx = String(store.filter(x => x.featureId).length + 1).padStart(4, '0')
-    d.featureId = `MIDLOAN-FEAT-${idx}`
+    if (!d.featureId) {
+      const used = store
+        .filter(x => x.featureId)
+        .map(x => Number(String(x.featureId).replace(/^MIDLOAN-FEAT-/, '')))
+        .filter(n => !Number.isNaN(n))
+      const idx = String((used.length ? Math.max(...used) : 0) + 1).padStart(4, '0')
+      d.featureId = `MIDLOAN-FEAT-${idx}`
+    }
     d.registeredAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
     d.updatedAt = d.registeredAt
     // 需求状态保持为 requirement_accepted（注册状态由特征台账的 midloanStatus 跟踪）
     persist()
-    // 同步把生成的 featureId / dataTableName 等写回特征表
-    const v = (window as any).__midloanVariableList
-    if (v && Array.isArray(v)) {
-      const vv = v.find(x => x.id === d.featureId || x.derivationId === d.id)
-      if (vv) {
-        vv.midloanFeatureId = d.featureId
-        vv.midloanStatus = 'registered'
-        vv.dataTableName = d.dataTableName || ''
-        vv.dwTaskId = d.dwTaskId || ''
-        vv.productScope = d.productScope || ''
-        vv.listType = d.listType || ''
-        vv.batch = d.batch || ''
-        vv.acceptor = d.acceptor || ''
-        vv.remark = d.remark || ''
-      }
-    }
     return d
   },
   /** 需求驳回：仅需求受理状态可驳回，记录驳回原因 */

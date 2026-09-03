@@ -65,6 +65,8 @@ export interface RegisterFormPayload {
   dwTaskId?: string
   /** Excel 评估报告附件（文件名/大小）*/
   excelAttachment?: { name: string; size: number; uploadedAt: string }
+  /** 关联的风险特征需求 ID（需求列表「去注册」时写入，用于台账与需求双向定位）*/
+  derivationId?: string
 }
 
 /**
@@ -142,9 +144,15 @@ function buildRequirementId(existing: string[]): string {
  * 一级分类 → 二级分类映射（B1 R08/R09 联动）
  */
 export const L1_L2_CATEGORY_MAP: Record<string, string[]> = {
-  credit_grant: ['credit_grant_amount', 'credit_grant_behavior', 'credit_grant_risk'],
+  credit_grant: [
+    'credit_grant_amount',
+    'credit_grant_behavior',
+    'credit_grant_risk',
+    'credit_grant_freq'
+  ],
+  loan_usage: ['loan_usage_amount', 'loan_usage_behavior', 'loan_usage_freq'],
+  repayment: ['repayment_behavior', 'repayment_volatility', 'repayment_stability'],
   collection: ['collection_behavior', 'collection_response'],
-  repayment: ['repayment_behavior', 'repayment_volatility'],
   fraud: ['fraud_behavior', 'fraud_geo', 'fraud_device'],
   risk_model: ['model_input', 'model_output']
 }
@@ -180,7 +188,7 @@ export const SOURCE_TYPE_OPTIONS = [
 export function validateFeatureName(name: string, existingNames: string[]): string | null {
   if (!name) return '特征英文名必填'
   if (name.length > 30) return '特征英文名不超过 30 字'
-  if (!/^[A-Za-z_]+$/.test(name)) return '特征英文名仅允许英文大小写字母与下划线'
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) return '特征英文名仅允许英文大小写字母、数字与下划线，且以字母开头'
   if (existingNames.includes(name)) return '特征英文名不可重复'
   return null
 }
@@ -229,12 +237,15 @@ export const VariableDraftStore = {
       fieldType: payload.fieldType,
       processingLogic: payload.processingLogic,
       defaultValue: payload.defaultValue || '',
+      featureGranularity: payload.featureGranularity || 'identity_only',
       l1Category: payload.l1Category,
       l2Category: payload.l2Category,
       dataFreshness: payload.dataFreshness,
       sourceTableAfter: payload.sourceTableAfter,
       sourceTableBefore: payload.sourceTableBefore,
       sourceField: payload.sourceField,
+      // 关联需求（需求列表「去注册」时透传，台账详情页/去重校验据此定位）
+      derivationId: payload.derivationId,
       // 协作信息（写入 profile 便于详情页展示）
       profile: {
         dataType: payload.category === 'credit' ? '征信' : payload.category === 'external' ? '外数' : '行为',
