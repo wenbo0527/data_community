@@ -34,7 +34,9 @@ export default defineConfig(async () => {
       // 实际 dfd-app 自己的 mock 在 apps/dfd-app/src/mock/shared/
       '@shared': path.resolve(__dirname, 'src/mock/shared'),
       // 复用 data-community-app 公共组件
-      '@dca-components': path.resolve(__dirname, '../data-community-app/src/components-dca')
+      '@dca-components': path.resolve(__dirname, '../data-community-app/src/components-dca'),
+      // 复用 data-community-app composables
+      '@composables': path.resolve(__dirname, '../data-community-app/src/composables')
     }
     },
     base: '/dfd/',

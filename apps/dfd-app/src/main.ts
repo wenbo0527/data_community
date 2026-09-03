@@ -6,7 +6,7 @@ import { createPinia } from 'pinia'
 import ArcoVue from '@arco-design/web-vue/es/arco-vue.js'
 import '@arco-design/web-vue/es/index.css'
 // 引入 DCA 设计 token(与 data-community-app 共享)
-import '../data-community-app/src/styles-dca/tokens.css'
+import '../../data-community-app/src/styles-dca/tokens.css'
 import Root from './Root.vue'
 import router from './router'
 
