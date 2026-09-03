@@ -1,77 +1,49 @@
 <template>
-  <div class="data-resources-page">
-    <!-- 顶部 Banner 区域 -->
-    <div class="banner-section">
-      <div class="banner-content">
-        <div class="title-row">
-          <h1 class="banner-title">数据资源目录 · 实时数据接入</h1>
-        </div>
-        <p class="banner-subtitle">Kafka / CDC 流式接入</p>
+  <div class="realtime-page">
+    <PageBanner
+      v-model:search="search"
+      :title="selectedCategory ? `实时数据 · ${selectedCategory.name}` : '数据资源目录 · 实时数据接入'"
+      :subtitle="selectedCategory ? selectedCategory.description : 'Kafka / CDC 流式接入'"
+      :search-placeholder="selectedCategory ? '输入实时源、下游表或负责人搜索' : '搜索主题'"
+    >
+      <template v-if="selectedCategory" #actions>
+        <a-button size="large" @click="goBack">
+          <template #icon><icon-left /></template>
+          返回
+        </a-button>
+      </template>
+    </PageBanner>
 
-        <div class="search-area">
-          <a-input-search
-            v-model="search"
-            class="main-search-input"
-            placeholder="输入实时源、下游表或负责人搜索"
-            search-button
-            size="large"
-            allow-clear
-          >
-            <template #button-icon>
-              <icon-search />
-            </template>
-          </a-input-search>
-
-          <div class="search-filters-inline">
-            <a-select
-              v-model="engine"
-              placeholder="中间件"
-              allow-clear
-              size="large"
-              style="width: 160px"
-              class="filter-select"
-            >
-              <a-option value="Kafka">Kafka</a-option>
-              <a-option value="CDC">CDC</a-option>
-            </a-select>
-          </div>
-        </div>
-      </div>
-      <div class="banner-decoration">
-        <div class="decoration-cube"></div>
-      </div>
+    <div v-if="!selectedCategory" class="main-content">
+      <a-row :gutter="[16, 16]">
+        <a-col v-for="cat in filteredCategories" :key="cat.code" :xs="24" :sm="12" :md="8" :lg="6">
+          <a-card hoverable :bordered="false" class="theme-card" @click="selectCategory(cat)">
+            <div class="theme-card-header">
+              <a-tag :color="cat.color" size="large">{{ cat.name }}</a-tag>
+            </div>
+            <div class="theme-card-count">{{ cat.count }}<span class="theme-card-unit"> 项</span></div>
+            <div class="theme-card-desc">{{ cat.description }}</div>
+            <div class="theme-card-footer"><span>点击查看详情</span><icon-right /></div>
+          </a-card>
+        </a-col>
+      </a-row>
     </div>
 
-    <!-- 主体内容区域 -->
-    <div class="main-content">
-      <div class="content-section">
-        <a-row :gutter="[16, 16]">
-          <a-col v-for="r in filteredStreams" :key="r.id" :xs="24" :sm="12" :md="8" :lg="6">
-            <a-card hoverable :bordered="false">
-              <template #title>
-                <a-space>
-                  <a-tag :color="engineColor(r.engine)">{{ r.engine }}</a-tag>
-                  <span>{{ r.name }}</span>
-                </a-space>
-              </template>
-              <a-descriptions :column="1" size="small">
-                <a-descriptions-item label="吞吐">{{ r.throughputLabel }}</a-descriptions-item>
-                <a-descriptions-item label="延迟">{{ r.latencyLabel }}</a-descriptions-item>
-                <a-descriptions-item label="下游表">{{ r.downstream }}</a-descriptions-item>
-                <a-descriptions-item label="负责人">{{ r.owner }}</a-descriptions-item>
-                <a-descriptions-item label="状态">
-                  <a-tag :color="statusColor(r.status)">{{ statusLabel(r.status) }}</a-tag>
-                </a-descriptions-item>
-              </a-descriptions>
-              <template #actions>
-                <a-button type="text" size="small" @click="viewDetail(r)">详情</a-button>
-                <a-button type="text" size="small" @click="configStream(r)">采集配置</a-button>
-              </template>
-            </a-card>
-          </a-col>
-        </a-row>
-        <a-empty v-if="filteredStreams.length === 0" description="暂无实时源" />
-      </div>
+    <div v-else class="main-content">
+      <a-card :bordered="false">
+        <a-table :columns="columns" :data="filteredList" :pagination="{ pageSize: 10, showTotal: true }" row-key="id" size="medium">
+          <template #engine="{ record }">
+            <a-tag :color="engineColor(record.engine)">{{ record.engine }}</a-tag>
+          </template>
+          <template #status="{ record }">
+            <a-tag :color="statusColor(record.status)">{{ statusLabel(record.status) }}</a-tag>
+          </template>
+          <template #actions="{ record }">
+            <a-button type="text" size="small" @click="viewDetail(record)">详情</a-button>
+            <a-button type="text" size="small" @click="configStream(record)">采集配置</a-button>
+          </template>
+        </a-table>
+      </a-card>
     </div>
   </div>
 </template>
@@ -79,158 +51,73 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconLeft, IconRight } from '@arco-design/web-vue/es/icon'
+import PageBanner from '@/components-dca/common/PageBanner.vue'
 
 const search = ref('')
-const engine = ref<string | undefined>(undefined)
+const selectedCategory = ref<any>(null)
 
 const streams = ref([
   { id: 'S001', name: '交易流水 CDC', engine: 'Kafka', throughputLabel: '0.8 MB/s', latencyLabel: '32 ms', downstream: 'dwd_交易_0001', owner: '李开发', status: 'running' },
   { id: 'S002', name: '客户主档 binlog', engine: 'CDC', throughputLabel: '0.4 MB/s', latencyLabel: '45 ms', downstream: 'dws_客户主档', owner: '王运营', status: 'running' },
   { id: 'S003', name: '风控事件流', engine: 'Kafka', throughputLabel: '0.5 MB/s', latencyLabel: '28 ms', downstream: 'dwd_风控_0017', owner: '张风控', status: 'running' },
-  { id: 'S004', name: '营销点击流', engine: 'Kafka', throughputLabel: '0.4 MB/s', latencyLabel: '52 ms', downstream: 'ods_营销_0001', owner: '陈营销', status: 'paused' }
+  { id: 'S004', name: '营销点击流', engine: 'Kafka', throughputLabel: '0.4 MB/s', latencyLabel: '52 ms', downstream: 'ods_营销_0001', owner: '陈营销', status: 'paused' },
+  { id: 'S005', name: '账务流水 binlog', engine: 'CDC', throughputLabel: '0.6 MB/s', latencyLabel: '38 ms', downstream: 'dwd_账务_0002', owner: '吴财务', status: 'running' },
+  { id: 'S006', name: '用户行为事件流', engine: 'Kafka', throughputLabel: '1.2 MB/s', latencyLabel: '25 ms', downstream: 'dws_用户行为', owner: '王运营', status: 'running' }
 ])
 
-const filteredStreams = computed(() => {
-  let result = streams.value
-  if (search.value) {
-    const k = search.value.toLowerCase()
-    result = result.filter(s =>
-      s.name.toLowerCase().includes(k) ||
-      s.downstream.toLowerCase().includes(k) ||
-      s.owner.toLowerCase().includes(k)
-    )
-  }
-  if (engine.value) {
-    result = result.filter(s => s.engine === engine.value)
-  }
-  return result
+const categories = computed(() => [
+  { code: 'Kafka', name: 'Kafka', count: streams.value.filter(s => s.engine === 'Kafka').length, description: 'Kafka 消息队列流式接入', color: 'arcoblue' },
+  { code: 'CDC', name: 'CDC', count: streams.value.filter(s => s.engine === 'CDC').length, description: 'Change Data Capture 变更捕获', color: 'purple' }
+])
+
+const filteredCategories = computed(() => {
+  if (!search.value) return categories.value
+  const k = search.value.toLowerCase()
+  return categories.value.filter(c => c.name.toLowerCase().includes(k) || c.description.toLowerCase().includes(k))
 })
 
-function engineColor(e: string) {
-  return { Kafka: 'arcoblue', CDC: 'purple' }[e] || 'gray'
+function matchSearch(s: any) {
+  if (!search.value) return true
+  const k = search.value.toLowerCase()
+  return s.name.toLowerCase().includes(k) || s.downstream.toLowerCase().includes(k) || s.owner.toLowerCase().includes(k)
 }
-function statusColor(s: string) {
-  return s === 'running' ? 'green' : 'gray'
-}
-function statusLabel(s: string) {
-  return s === 'running' ? '采集中' : '已停'
-}
-function viewDetail(r: any) {
-  Message.info(`查看实时源: ${r.name}`)
-}
-function configStream(r: any) {
-  Message.success(`已打开采集配置: ${r.name}`)
-}
+
+const filteredList = computed(() => {
+  if (!selectedCategory.value) return []
+  return streams.value.filter(s => s.engine === selectedCategory.value.code).filter(matchSearch)
+})
+
+function selectCategory(cat: any) { selectedCategory.value = cat; search.value = '' }
+function goBack() { selectedCategory.value = null; search.value = '' }
+
+const columns = [
+  { title: '流ID', dataIndex: 'id', width: 100 },
+  { title: '名称', dataIndex: 'name', width: 200 },
+  { title: '中间件', dataIndex: 'engine', slotName: 'engine', width: 90 },
+  { title: '吞吐', dataIndex: 'throughputLabel', width: 110 },
+  { title: '延迟', dataIndex: 'latencyLabel', width: 90 },
+  { title: '下游表', dataIndex: 'downstream', width: 160 },
+  { title: '负责人', dataIndex: 'owner', width: 100 },
+  { title: '状态', dataIndex: 'status', slotName: 'status', width: 80 },
+  { title: '操作', slotName: 'actions', width: 140, fixed: 'right' as const }
+]
+
+function engineColor(e: string) { return { Kafka: 'arcoblue', CDC: 'purple' }[e] || 'gray' }
+function statusColor(s: string) { return s === 'running' ? 'green' : 'gray' }
+function statusLabel(s: string) { return s === 'running' ? '采集中' : '已停' }
+function viewDetail(r: any) { Message.info(`查看实时源: ${r.name}`) }
+function configStream(r: any) { Message.success(`已打开采集配置: ${r.name}`) }
 </script>
 
 <style scoped>
-.data-resources-page {
-  min-height: 100vh;
-  background: #f7f8fa;
-  position: relative;
-  overflow-x: hidden;
-}
-.banner-section {
-  background: linear-gradient(180deg, #E6F0FF 0%, #F7F8FA 100%);
-  padding: 40px 0;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 280px;
-}
-.banner-content {
-  width: 100%;
-  max-width: 1800px;
-  z-index: 2;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 0 40% 0 40px;
-  box-sizing: border-box;
-}
-.banner-title {
-  font-size: 40px;
-  font-weight: bold;
-  color: #1d2129;
-  margin: 0 0 16px 0;
-  line-height: 1.2;
-}
-.banner-subtitle {
-  font-size: 14px;
-  color: #86909c;
-  margin-bottom: 32px;
-  max-width: 600px;
-  line-height: 1.6;
-}
-.search-area {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  width: 100%;
-  max-width: 900px;
-  flex-wrap: wrap;
-}
-.main-search-input {
-  flex: 1;
-  min-width: 400px;
-  background: #fff;
-  border-radius: 30px;
-  border: 1px solid #165DFF;
-  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.1);
-}
-.main-search-input :deep(.arco-input-wrapper) {
-  border-radius: 30px;
-  padding-left: 20px;
-  background: #fff;
-}
-.main-search-input :deep(.arco-input-search-btn) {
-  border-radius: 0 30px 30px 0;
-  background: transparent;
-  color: #165DFF;
-  border-left: 1px solid #f2f3f5;
-}
-.search-filters-inline {
-  display: flex;
-  gap: 12px;
-}
-.filter-select {
-  background: #fff;
-  border-radius: 4px;
-}
-.banner-decoration {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 40%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-.decoration-cube {
-  position: absolute;
-  top: 40px;
-  right: 100px;
-  width: 200px;
-  height: 200px;
-  background: linear-gradient(135deg, #e8f3ff 0%, #cce4ff 100%);
-  transform: rotate(-15deg) skew(-10deg);
-  border-radius: 20px;
-  box-shadow: -20px 20px 40px rgba(22, 93, 255, 0.1);
-}
-.main-content {
-  padding: 0 40px 40px;
-  width: 100%;
-  max-width: 1800px;
-  margin: -40px auto 0;
-  position: relative;
-  z-index: 3;
-}
-.content-section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
+.realtime-page { min-height: 100vh; background: var(--dca-bg-page-alt); position: relative; overflow-x: hidden; }
+.main-content { padding: 0 40px var(--dca-spacing-2xl); width: 100%; max-width: var(--dca-page-max-width-wide); margin: -40px auto 0; position: relative; z-index: 3; }
+.theme-card { cursor: pointer; transition: all 0.3s; border-radius: var(--dca-radius-lg); }
+.theme-card:hover { transform: translateY(-4px); box-shadow: var(--dca-shadow-lg); }
+.theme-card-header { margin-bottom: var(--dca-spacing-md); }
+.theme-card-count { font-size: 32px; font-weight: 700; color: var(--dca-text-primary); margin-bottom: var(--dca-spacing-xs); }
+.theme-card-unit { font-size: var(--dca-font-md); font-weight: 400; color: var(--dca-text-tertiary); }
+.theme-card-desc { font-size: var(--dca-font-sm); color: var(--dca-text-secondary); margin-bottom: var(--dca-spacing-md); line-height: 1.5; }
+.theme-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: var(--dca-font-sm); color: var(--dca-text-tertiary); border-top: 1px solid var(--dca-border-light); padding-top: var(--dca-spacing-sm); }
 </style>
