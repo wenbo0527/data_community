@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 /**
- * Qiankun 全局变量类型声明
+ * Qiankun 全局特征类型声明
  */
 declare global {
   interface Window {

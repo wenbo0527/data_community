@@ -283,7 +283,7 @@ import { useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { getDataModelsList, executeDataModel } from '@/api/dataModels'
 import { IconCopy, IconRefresh, IconDelete, IconEye, IconPlus, IconFilter, IconInfoCircle } from '@arco-design/web-vue/es/icon'
-import { copyToClipboard } from '@/utils/copy'
+import { copyToClipboard } from '@app/shared-utils'
 import QueryResultDetail from './QueryResultDetail.vue'
 
 // 路由实例
@@ -997,7 +997,7 @@ const copyText = async (text) => {
   }
 }
 
-// 在 <script setup> 中，所有顶层声明的变量和函数都会自动暴露给模板
+// 在 <script setup> 中，所有顶层声明的特征和函数都会自动暴露给模板
 // 不需要使用 return 语句
 
 </script>

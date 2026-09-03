@@ -27,7 +27,11 @@
             搜索
           </a-button>
         </a-col>
-
+        <a-col :span="3">
+          <a-button @click="showMissingTicket({ assetType: 'metric', pageSource: '指标地图' })">
+            <template #icon><icon-plus /></template>缺失工单
+          </a-button>
+        </a-col>
       </a-row>
     </div>
 
@@ -90,7 +94,12 @@
       </a-col>
     </a-row>
 
-
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
@@ -109,6 +118,10 @@ import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
 import type { MetricItem } from '@/types/metrics'
 import { METRIC_TYPE_LABELS, REGULATORY_CATEGORY_LABELS, MetricType } from '@/types/metrics'
 import { useRouter } from 'vue-router'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 
 interface ApiResponse<T> {
   data: {
@@ -147,7 +160,7 @@ const dynamicColumns = computed(() => {
 // 路由
 const router = useRouter()
 
-// 添加缺失的响应式变量
+// 添加缺失的响应式特征
 const searchKeyword = ref('')
 const selectedRegulatoryCategory = ref('')
 const selectedReportName = ref('')

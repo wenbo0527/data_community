@@ -2,7 +2,7 @@
   <div class="variable-map-page">
     <div class="page-header">
       <div class="header-left">
-        <h2 class="page-title">变量地图</h2>
+        <h2 class="page-title">特征地图</h2>
         <span class="page-subtitle">Variable Map · 数据要素发现</span>
       </div>
       <div class="header-actions">
@@ -17,12 +17,12 @@
     <div class="search-section">
       <a-row :gutter="12">
         <a-col :span="6">
-          <a-input v-model="searchName" placeholder="搜索变量名称" allow-clear @press-enter="fetchGraphData">
+          <a-input v-model="searchName" placeholder="搜索特征名称" allow-clear @press-enter="fetchGraphData">
             <template #prefix><icon-search /></template>
           </a-input>
         </a-col>
         <a-col :span="4">
-          <a-select v-model="searchType" placeholder="变量类型" allow-clear style="width: 100%">
+          <a-select v-model="searchType" placeholder="特征类型" allow-clear style="width: 100%">
             <a-option value="numerical">数值型</a-option>
             <a-option value="categorical">分类型</a-option>
             <a-option value="text">文本型</a-option>
@@ -42,7 +42,7 @@
     <!-- 图谱可视化区 -->
     <div class="graph-section">
       <div class="graph-header">
-        <span class="graph-title">变量关系图谱</span>
+        <span class="graph-title">特征关系图谱</span>
         <span class="graph-stats">{{ graphData.nodes.length }} 节点 / {{ graphData.edges.length }} 关系</span>
       </div>
       <div class="graph-container" ref="graphContainer">
@@ -101,7 +101,7 @@
     <!-- 节点详情 -->
     <a-drawer
       v-model:visible="drawerVisible"
-      :title="selectedNode?.label || '变量详情'"
+      :title="selectedNode?.label || '特征详情'"
       width="420"
       :footer-style="{ textAlign: 'right' }"
     >
@@ -110,8 +110,8 @@
       </template>
       <div v-if="selectedNode" class="node-detail">
         <a-descriptions :column="1" bordered size="small">
-          <a-descriptions-item label="变量名称">{{ selectedNode.label }}</a-descriptions-item>
-          <a-descriptions-item label="变量类型">
+          <a-descriptions-item label="特征名称">{{ selectedNode.label }}</a-descriptions-item>
+          <a-descriptions-item label="特征类型">
             <a-tag :color="getNodeColor(selectedNode.type)">{{ selectedNode.type }}</a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="状态">
@@ -154,7 +154,7 @@
     </a-drawer>
 
     <!-- 血缘弹窗 -->
-    <a-modal v-model:visible="lineageVisible" title="变量血缘分析" width="700px" :footer="null">
+    <a-modal v-model:visible="lineageVisible" title="特征血缘分析" width="700px" :footer="null">
       <a-spin v-if="lineageLoading" />
       <div v-else class="lineage-content">
         <div class="lineage-section">
@@ -166,7 +166,7 @@
           </a-table>
         </div>
         <div class="lineage-section">
-          <h4>当前变量</h4>
+          <h4>当前特征</h4>
           <a-descriptions v-if="lineageData.current" :column="2" size="small" bordered>
             <a-descriptions-item label="名称">{{ lineageData.current.name }}</a-descriptions-item>
             <a-descriptions-item label="类型">{{ lineageData.current.type }}</a-descriptions-item>
@@ -213,7 +213,7 @@ const typeList = [
 ]
 
 const relationColumns = [
-  { title: '目标变量', dataIndex: 'targetLabel' },
+  { title: '目标特征', dataIndex: 'targetLabel' },
   { title: '关系类型', slotName: 'type' },
 ]
 
@@ -274,7 +274,7 @@ async function fetchGraphData() {
     assignPositions(graphData.value.nodes || [])
   } catch (e) {
 
-    Message.error('加载变量图谱失败')
+    Message.error('加载特征图谱失败')
     graphData.value = { nodes: [], edges: [] }
   } finally {
     loading.value = false

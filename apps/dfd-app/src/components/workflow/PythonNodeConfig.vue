@@ -68,7 +68,7 @@
         </div>
       </a-form-item>
       
-      <a-form-item label="输入变量">
+      <a-form-item label="输入特征">
         <div class="variables-list">
           <div 
             v-for="(variable, index) in formData.inputVariables" 
@@ -77,7 +77,7 @@
           >
             <a-input 
               v-model="variable.name" 
-              placeholder="变量名"
+              placeholder="特征名"
               class="variable-name"
               @change="handleFormChange"
             />
@@ -113,12 +113,12 @@
             @click="addInputVariable"
             class="add-variable-btn"
           >
-            + 添加输入变量
+            + 添加输入特征
           </a-button>
         </div>
       </a-form-item>
       
-      <a-form-item label="输出变量">
+      <a-form-item label="输出特征">
         <div class="variables-list">
           <div 
             v-for="(variable, index) in formData.outputVariables" 
@@ -127,7 +127,7 @@
           >
             <a-input 
               v-model="variable.name" 
-              placeholder="变量名"
+              placeholder="特征名"
               class="variable-name"
               @change="handleFormChange"
             />
@@ -163,7 +163,7 @@
             @click="addOutputVariable"
             class="add-variable-btn"
           >
-            + 添加输出变量
+            + 添加输出特征
           </a-button>
         </div>
       </a-form-item>

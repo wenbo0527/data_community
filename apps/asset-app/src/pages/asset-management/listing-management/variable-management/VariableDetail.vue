@@ -5,10 +5,10 @@
         <template #icon><IconLeft /></template>
         返回
       </a-button>
-      <h2>{{ isEditMode ? '编辑变量' : (isViewMode ? '变量详情' : '新建变量') }}</h2>
+      <h2>{{ isEditMode ? '编辑特征' : (isViewMode ? '特征详情' : '新建特征') }}</h2>
       <div v-if="!isViewMode">
         <a-button type="outline" @click="handleSaveDraft" style="margin-right: 12px">保存草稿</a-button>
-        <a-button type="primary" @click="handleSubmit">{{ isEditMode ? '更新变量' : '上线' }}</a-button>
+        <a-button type="primary" @click="handleSubmit">{{ isEditMode ? '更新特征' : '上线' }}</a-button>
         <a-button v-if="isEditMode && formData.versionStatus === '草稿'" type="primary" @click="handleGoOnline" style="margin-left: 12px">上线</a-button>
       </div>
       <div v-else>
@@ -23,21 +23,21 @@
         <a-card title="基本信息" class="form-section">
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="变量名称" field="name">
-                <a-input v-model="formData.name" :max-length="50" show-word-limit placeholder="请输入变量名称（2-50字符）" />
+              <a-form-item label="特征名称" field="name">
+                <a-input v-model="formData.name" :max-length="50" show-word-limit placeholder="请输入特征名称（2-50字符）" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="变量编码" field="code">
-                <a-input v-model="formData.code" :max-length="30" show-word-limit placeholder="请输入变量编码（英文/数字/下划线/中划线，长度≥3）" />
+              <a-form-item label="特征编码" field="code">
+                <a-input v-model="formData.code" :max-length="30" show-word-limit placeholder="请输入特征编码（英文/数字/下划线/中划线，长度≥3）" />
               </a-form-item>
             </a-col>
           </a-row>
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="变量类型" field="type">
-                <a-select v-model="formData.type" placeholder="请选择变量类型">
+              <a-form-item label="特征类型" field="type">
+                <a-select v-model="formData.type" placeholder="请选择特征类型">
                   <a-option value="numerical">数值型</a-option>
                   <a-option value="categorical">分类型</a-option>
                   <a-option value="text">文本型</a-option>
@@ -48,7 +48,7 @@
             </a-col>
             <a-col :span="12">
               <a-form-item label="状态" field="status">
-                <a-select v-model="formData.status" placeholder="请选择变量状态">
+                <a-select v-model="formData.status" placeholder="请选择特征状态">
                   <a-option value="draft">草稿</a-option>
                   <a-option value="pending">待审核</a-option>
                   <a-option value="active">已发布</a-option>
@@ -210,13 +210,13 @@ const formData = reactive({
 })
 
 const getFormRules = () => {
-  const nameValidator = { validator: (_: any, v: string) => { const len = (v||'').trim().length; if (!len) return Promise.reject('请输入变量名称'); if (len < 2 || len > 50) return Promise.reject('变量名称需在2-50字符之间'); return Promise.resolve() } }
-  const codeValidator = { validator: (_: any, v: string) => { const s = (v||'').trim(); if (!s) return Promise.reject('请输入变量编码'); if (s.length < 3 || s.length > 30) return Promise.reject('变量编码需在3-30字符之间'); if (!/^[A-Za-z0-9_-]+$/.test(s)) return Promise.reject('变量编码仅支持英文、数字、下划线或中划线'); return Promise.resolve() } }
+  const nameValidator = { validator: (_: any, v: string) => { const len = (v||'').trim().length; if (!len) return Promise.reject('请输入特征名称'); if (len < 2 || len > 50) return Promise.reject('特征名称需在2-50字符之间'); return Promise.resolve() } }
+  const codeValidator = { validator: (_: any, v: string) => { const s = (v||'').trim(); if (!s) return Promise.reject('请输入特征编码'); if (s.length < 3 || s.length > 30) return Promise.reject('特征编码需在3-30字符之间'); if (!/^[A-Za-z0-9_-]+$/.test(s)) return Promise.reject('特征编码仅支持英文、数字、下划线或中划线'); return Promise.resolve() } }
   return {
     name: [nameValidator],
     code: [codeValidator],
-    type: [{ required: true, message: '请选择变量类型' }],
-    status: [{ required: true, message: '请选择变量状态' }],
+    type: [{ required: true, message: '请选择特征类型' }],
+    status: [{ required: true, message: '请选择特征状态' }],
     dataSource: [{ required: true, message: '请选择数据源' }],
     technicalCaliber: [{ validator: (_: any, v: string) => { const len = (v||'').trim().length; if (len > 1000) return Promise.reject('技术口径最大1000字符'); return Promise.resolve() } }],
     technicalUsageNote: [{ validator: (_: any, v: string) => { const len = (v||'').trim().length; if (len > 300) return Promise.reject('技术口径使用说明最大300字符'); return Promise.resolve() } }],
@@ -293,10 +293,10 @@ const handleSubmit = async () => {
     if (isCreateMode.value) {
       await createVariable(payload)
       formData.versionStatus = '草稿'
-      Message.success('变量创建成功')
+      Message.success('特征创建成功')
     } else {
       await updateVariable(String(route.params.id), payload)
-      Message.success('变量更新成功')
+      Message.success('特征更新成功')
     }
     goBack()
   } catch (e) { console.error('表单验证失败:', e) }
@@ -325,7 +325,7 @@ const handleGoOnline = async () => {
       await updateVariable(String(route.params.id), payload)
     }
     formData.versionStatus = '启动'
-    Message.success('变量已成功上线')
+    Message.success('特征已成功上线')
   } catch (e) { console.error('表单验证失败:', e) }
 }
 
@@ -366,8 +366,8 @@ onMounted(async () => {
         formData.queryCode = ''
       }
     } catch (e) {
-      console.error('加载变量详情失败:', e)
-      Message.error('加载变量详情失败')
+      console.error('加载特征详情失败:', e)
+      Message.error('加载特征详情失败')
     }
   }
 })

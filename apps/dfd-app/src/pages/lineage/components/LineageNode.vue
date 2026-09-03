@@ -3,17 +3,14 @@
     <div class="node-header">
       <div class="status-indicator" :class="statusClass" :title="statusText"></div>
       <component :is="iconComponent" class="node-icon" :style="{ color: typeColor }" />
-      <span class="node-title" :title="nodeData.label">{{ nodeData.label }}</span>
-      <span class="node-type-tag" :style="{ backgroundColor: typeColor }">{{ nodeData.dataType }}</span>
+      <span class="node-title clickable" :title="nodeData.label" @click.stop="handleNavigate">{{ nodeData.label }}</span>
+      <span class="node-type-tag" :style="{ backgroundColor: typeColor }">{{ typeLabel }}</span>
     </div>
     <div class="node-content">
       <div class="content-top">
         <div v-if="nodeData.type === 'main'" class="node-tag main-tag">主节点</div>
         <div v-else-if="nodeData.type === 'upstream'" class="node-tag upstream-tag">上游</div>
         <div v-else-if="nodeData.type === 'downstream'" class="node-tag downstream-tag">下游</div>
-        <div class="node-metrics" v-if="nodeData.rowCount">
-          <span class="metric-item" title="数据量">{{ formatNumber(nodeData.rowCount) }} 行</span>
-        </div>
       </div>
       
       <div class="node-info">
@@ -50,7 +47,7 @@
 
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue'
-import { IconApps, IconArrowLeft, IconArrowRight, IconStorage, IconPlus, IconCode, IconDashboard, IconFile } from '@arco-design/web-vue/es/icon'
+import { IconApps, IconStorage, IconPlus, IconCode, IconDashboard, IconFile } from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({
   node: {
@@ -61,6 +58,7 @@ const props = defineProps({
 
 // 注入 Graph 实例的方法（需要在父组件 provide）
 const expandNode = inject('expandNode', () => {})
+const navigateToDetail = inject('navigateToDetail', () => {})
 
 // 获取节点数据
 const getNodeData = () => {
@@ -108,6 +106,21 @@ const typeColor = computed(() => {
   }
 })
 
+const typeLabel = computed(() => {
+  const type = nodeData.value.dataType
+  switch (type) {
+    case 'Table': return '数据表'
+    case 'Metric': return '指标'
+    case 'Variable': return '特征'
+    case 'API': return 'API'
+    default: return type || '未知'
+  }
+})
+
+const handleNavigate = () => {
+  navigateToDetail(nodeData.value)
+}
+
 const statusClass = computed(() => {
   const status = nodeData.value.taskStatus
   return {
@@ -127,12 +140,6 @@ const statusText = computed(() => {
   }
 })
 
-const formatNumber = (num) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num
-}
-
 // 按钮显示逻辑
 const showLeftExpand = computed(() => {
   const { type, upstreamExpanded } = nodeData.value
@@ -147,8 +154,6 @@ const showRightExpand = computed(() => {
 })
 
 const handleExpand = (direction) => {
-  const data = getNodeData()
-  props.node.setData({ ...data, __expandAction: direction })
   expandNode(props.node.id, direction)
 }
 </script>
@@ -264,6 +269,16 @@ const handleExpand = (direction) => {
   flex: 1;
 }
 
+.node-title.clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.node-title.clickable:hover {
+  color: var(--subapp-primary);
+  text-decoration: underline;
+}
+
 .node-type-tag {
   font-size: 10px;
   color: #fff;
@@ -285,19 +300,6 @@ const handleExpand = (direction) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.node-metrics {
-  display: flex;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--subapp-text-tertiary);
-}
-
-.metric-item {
-  background: var(--subapp-bg-secondary);
-  padding: 1px 4px;
-  border-radius: 2px;
 }
 
 .node-tag {

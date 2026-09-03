@@ -45,7 +45,7 @@
       <a-tab-pane key="evaluation" title="评估">
         <a-space direction="vertical" fill>
           <a-alert type="info" :show-icon="false">
-            Demo：评估结果可用于"实验回写"或"上线准入"，不同入口共享同一套能力（写入评估任务中心并回写变量档案）。
+            Demo：评估结果可用于"实验回写"或"上线准入"，不同入口共享同一套能力（写入评估任务中心并回写特征档案）。
           </a-alert>
           <a-descriptions :column="2" bordered size="small">
             <a-descriptions-item label="KS">0.38</a-descriptions-item>
@@ -59,7 +59,7 @@
             <a-button @click="activeKey = contextType === 'variable' ? 'online' : 'accompany'">返回</a-button>
           </a-space>
           <a-alert v-if="lastWriteBackResult" type="success" :show-icon="false">
-            评估任务 {{ lastWriteBackResult.id }} 已执行：覆盖 {{ Math.round((lastWriteBackResult.metrics?.coverage || 0) * 100) }}%，通过率 {{ Math.round((lastWriteBackResult.metrics?.passRate || 0) * 100) }}%，已回写变量档案。
+            评估任务 {{ lastWriteBackResult.id }} 已执行：覆盖 {{ Math.round((lastWriteBackResult.metrics?.coverage || 0) * 100) }}%，通过率 {{ Math.round((lastWriteBackResult.metrics?.passRate || 0) * 100) }}%，已回写特征档案。
           </a-alert>
         </a-space>
       </a-tab-pane>
@@ -102,11 +102,11 @@ watch(
 )
 
 const title = computed(() => {
-  if (props.contextType === 'variable') return '变量上线与治理'
+  if (props.contextType === 'variable') return '特征上线与治理'
   return '课题推进与治理'
 })
 
-const contextLabel = computed(() => (props.contextType === 'variable' ? '变量档案' : '探索课题'))
+const contextLabel = computed(() => (props.contextType === 'variable' ? '特征档案' : '探索课题'))
 
 const writeBackLoading = ref(false)
 const lastWriteBackResult = ref<EvaluationTaskMock | null>(null)
@@ -116,8 +116,8 @@ async function handleWriteBack() {
   try {
     // 1) 在评估任务中心创建一个任务（pending）
     const targets = props.contextType === 'variable'
-      ? [{ id: props.contextId, name: props.contextName || props.contextId, code: '', sourceType: 'external' as const, dataSourceName: '变量中心（Demo）' }]
-      : [{ id: props.contextId, name: props.contextName || props.contextId, code: '', sourceType: 'internal' as const, dataSourceName: '变量中心（Demo）' }]
+      ? [{ id: props.contextId, name: props.contextName || props.contextId, code: '', sourceType: 'external' as const, dataSourceName: '特征中心（Demo）' }]
+      : [{ id: props.contextId, name: props.contextName || props.contextId, code: '', sourceType: 'internal' as const, dataSourceName: '特征中心（Demo）' }]
     const task = EvaluationTaskStore.addTask({
       name: `${props.contextName || props.contextId} 治理评估`,
       taskType: 'recheck',
@@ -130,10 +130,10 @@ async function handleWriteBack() {
     // 2) pending → running → completed（中间态模拟）
     EvaluationTaskStore.startTask(task.id)
     await new Promise((r) => setTimeout(r, 1200))
-    // 3) 跑完任务 → 自动回写 quality / missingRate 到变量档案
+    // 3) 跑完任务 → 自动回写 quality / missingRate 到特征档案
     const finished = EvaluationTaskStore.runTask(task.id)
     lastWriteBackResult.value = finished
-    // 4) 记录审计（如果是变量，路由到该变量所属课题；如果是课题，直接记）
+    // 4) 记录审计（如果是特征，路由到该特征所属课题；如果是课题，直接记）
     if (props.contextType === 'topic') {
       ExploreStore.addAuditEvent({
         topicId: props.contextId,
@@ -145,7 +145,7 @@ async function handleWriteBack() {
         reason: `由治理抽屉发起评估：${task.name}`
       })
     }
-    Message.success(`评估任务 ${task.id} 已完成，结果已回写变量档案`)
+    Message.success(`评估任务 ${task.id} 已完成，结果已回写特征档案`)
   } catch (e) {
     Message.error('写回失败')
   } finally {

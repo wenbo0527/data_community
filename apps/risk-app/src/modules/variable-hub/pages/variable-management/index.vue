@@ -1,6 +1,6 @@
 <template>
   <div class="variable-management-page">
-    <DmtPageHeader title="风险特征台账" subtitle="贷中行为/外数/征信多品类特征统一管理，全生命周期闭环" :show-back="false">
+    <DmtPageHeader title="风险特征列表" subtitle="贷中行为/外数/征信多品类特征统一管理，全生命周期闭环" :show-back="false">
       <template #extra>
         <a-input
           v-model="globalKeyword"
@@ -38,7 +38,7 @@
         <a-row :gutter="12">
           <a-col :span="4"><div class="mo-cell mo-total"><div class="mo-num">{{ midloanStats.total }}</div><div class="mo-label">贷中行为特征总数</div></div></a-col>
           <a-col :span="4"><div class="mo-cell mo-online"><div class="mo-num">{{ midloanStats.online }}</div><div class="mo-label">已上线（含灰度）</div></div></a-col>
-          <a-col :span="4"><div class="mo-cell mo-syncing"><div class="mo-num">{{ midloanStats.syncing }}</div><div class="mo-label">同步中（内数+变量中心）</div></div></a-col>
+          <a-col :span="4"><div class="mo-cell mo-syncing"><div class="mo-num">{{ midloanStats.syncing }}</div><div class="mo-label">同步中（内数+特征中心）</div></div></a-col>
           <a-col :span="4"><div class="mo-cell mo-developing"><div class="mo-num">{{ midloanStats.developing }}</div><div class="mo-label">开发/验收/上线流程</div></div></a-col>
           <a-col :span="4"><div class="mo-cell mo-failed"><div class="mo-num">{{ midloanStats.failed }}</div><div class="mo-label">同步失败（需重试）</div></div></a-col>
         </a-row>
@@ -59,10 +59,10 @@
         </a-radio-group>
         <div class="view-mode-hint">
           <template v-if="viewMode === 'effect'">
-            按 IV（信息价值）降序排列，关注变量区分度
+            按 IV（信息价值）降序排列，关注特征区分度
           </template>
           <template v-else-if="viewMode === 'cost'">
-            按月均成本降序排列，关注高成本变量
+            按月均成本降序排列，关注高成本特征
           </template>
           <template v-else>
             完整列表视图，按更新时间倒序
@@ -74,10 +74,10 @@
 
       <a-card v-if="activeTab === 'features'" class="filter-card">
         <a-form :model="filterForm" layout="inline">
-          <a-form-item label="品类">
+          <a-form-item label="业务品类">
             <a-select
               v-model="filterForm.riskCategory"
-              placeholder="全部品类"
+              placeholder="全部业务品类"
               allow-clear
               @change="handleSearch"
             >
@@ -86,10 +86,10 @@
               </a-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="变量来源">
+          <a-form-item label="数据来源">
             <a-select
               v-model="filterForm.sourceFilter"
-              placeholder="全量"
+              placeholder="全部数据来源"
               allow-clear
               @change="handleSearch"
             >
@@ -98,10 +98,10 @@
               </a-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="变量类型">
+          <a-form-item label="特征类型">
             <a-select
               v-model="filterForm.type"
-              placeholder="全部类型"
+              placeholder="全部特征类型"
               allow-clear
               @change="handleSearch"
             >
@@ -173,7 +173,7 @@
                 </a-doption>
               </template>
             </a-dropdown>
-            <a-link style="margin-left: 12px" @click="router.push('/explore/taxonomy')">管理变量类型/分类</a-link>
+            <a-link style="margin-left: 12px" @click="router.push('/explore/taxonomy')">管理特征类型/分类</a-link>
           </a-form-item>
         </a-form>
         <div class="filter-actions">
@@ -183,7 +183,7 @@
               新建特征
             </a-button>
             <template #content>
-              <a-doption value="add">注册为变量</a-doption>
+              <a-doption value="add">注册为特征</a-doption>
               <a-doption value="incremental">导入更新</a-doption>
             </template>
           </a-dropdown>
@@ -198,12 +198,12 @@
         <a-space class="batch-toolbar" align="center" wrap>
           <a-space wrap>
             <a-tag :color="overSelectionLimit ? 'red' : 'arcoblue'">
-              已选 {{ selectedRowKeys.length }} / {{ SELECTION_LIMIT }} 个变量{{ overSelectionLimit ? '（超过上限）' : '' }}
+              已选 {{ selectedRowKeys.length }} / {{ SELECTION_LIMIT }} 个特征{{ overSelectionLimit ? '（超过上限）' : '' }}
             </a-tag>
             <a-alert v-if="overSelectionLimit" type="warning" :show-icon="false">
               建议分批（单次 ≤ 200），可在「保存视图」后分次执行批量动作
             </a-alert>
-            <span class="batch-hint" v-else>可勾选变量发起探索课题或评估任务。</span>
+            <span class="batch-hint" v-else>可勾选特征发起探索课题或评估任务。</span>
           </a-space>
           <a-space>
             <!-- ========== 批量入口已合并到下方「批量操作」dropdown（用户反馈）============ -->
@@ -212,7 +212,7 @@
 
         <a-modal
           v-model:visible="incrementalModalVisible"
-          title="导入更新变量"
+          title="导入更新特征"
           width="600px"
           @ok="confirmIncrementalUpload"
           @cancel="incrementalModalVisible = false"
@@ -223,7 +223,7 @@
           <div style="margin-top: 12px">已解析记录数：{{ incrementalFileCount }}</div>
         </a-modal>
 
-    <!-- ============ 新增变量（B1 完整注册表单 / 即「注册为变量」入口）============ -->
+    <!-- ============ 新增特征（B1 完整注册表单 / 即「注册为特征」入口）============ -->
     <VariableRegisterDrawer
       v-model:visible="registerDrawerVisible"
       :existing-names="existingFeatureNames"
@@ -254,7 +254,7 @@
       @cancel="onlineApprovalForm.reason = ''; onlineApprovalForm.approver = 'dmt_admin'"
     >
       <a-alert type="info" :show-icon="false" style="margin-bottom: 12px;">
-        <p style="margin: 0; font-size: 13px;">变量 <strong>{{ onlineApprovalRecord?.name || '' }}</strong> 提交后将进入审批流程。</p>
+        <p style="margin: 0; font-size: 13px;">特征 <strong>{{ onlineApprovalRecord?.name || '' }}</strong> 提交后将进入审批流程。</p>
       </a-alert>
       <a-form :model="onlineApprovalForm" layout="vertical">
         <a-form-item label="启用原因" required>
@@ -302,25 +302,25 @@
         >
           <a-form :model="batchTopicForm" layout="vertical">
             <a-alert class="batch-modal-alert" :show-icon="false">
-              将基于已选 {{ selectedRows.length }} 个变量创建 1 个探索课题，并自动挂接数据源与关联变量。
+              将基于已选 {{ selectedRows.length }} 个特征创建 1 个探索课题，并自动挂接数据源与关联特征。
             </a-alert>
             <a-form-item label="课题名称">
-              <a-input v-model="batchTopicForm.name" placeholder="例如：行为变量批量探索_202606" />
+              <a-input v-model="batchTopicForm.name" placeholder="例如：行为特征批量探索_202606" />
             </a-form-item>
             <a-form-item label="业务问题">
               <a-textarea v-model="batchTopicForm.businessProblem" :max-length="120" show-word-limit />
             </a-form-item>
-            <a-form-item label="变量假设">
+            <a-form-item label="特征假设">
               <a-textarea v-model="batchTopicForm.hypothesis" :max-length="120" show-word-limit />
             </a-form-item>
             <a-form-item label="业务域">
               <a-select v-model="batchTopicForm.domain" :options="domainOptions" />
             </a-form-item>
-            <a-form-item label="目标变量类型">
-              <a-select v-model="batchTopicForm.variableTypeId" allow-clear :options="variableTypeOptions" placeholder="可选，混合变量时可暂不指定" />
+            <a-form-item label="目标特征类型">
+              <a-select v-model="batchTopicForm.variableTypeId" allow-clear :options="variableTypeOptions" placeholder="可选，混合特征时可暂不指定" />
             </a-form-item>
             <a-form-item label="探索分类">
-              <a-select v-model="batchTopicForm.exploreCategoryId" allow-clear :options="categoryOptions" placeholder="按变量类型选择探索分类" />
+              <a-select v-model="batchTopicForm.exploreCategoryId" allow-clear :options="categoryOptions" placeholder="按特征类型选择探索分类" />
             </a-form-item>
             <a-form-item label="可见性">
               <a-select v-model="batchTopicForm.visibility" :options="visibilityOptions" />
@@ -340,7 +340,7 @@
               任务将进入“评估任务中心”，可继续执行 mock 运行并查看覆盖率、IV、KS 等结果摘要。
             </a-alert>
             <a-form-item label="任务名称">
-              <a-input v-model="batchEvaluationForm.name" placeholder="例如：外数变量批量准入评估" />
+              <a-input v-model="batchEvaluationForm.name" placeholder="例如：外数特征批量准入评估" />
             </a-form-item>
             <a-form-item label="任务类型">
               <a-select v-model="batchEvaluationForm.taskType" :options="taskTypeOptions" />
@@ -401,7 +401,7 @@
                   </a-doption>
                 </template>
                 <a-doption v-if="getBatchAvailableActions().length === 0" disabled>
-                  当前选中的变量无状态机批量操作
+                  当前选中的特征无状态机批量操作
                 </a-doption>
               </template>
             </a-dropdown>
@@ -564,7 +564,7 @@
                 <a-tooltip
                   v-if="action.key === 'edit'"
                   :content="canEdit(record.midloanStatus || record.status)
-                    ? '编辑变量信息'
+                    ? '编辑特征信息'
                     : `编辑受限：${getEditLockReason(record.midloanStatus || record.status)}`"
                 >
                   <a-button
@@ -708,18 +708,98 @@
       <!-- 需求详情抽屉 -->
       <a-drawer
         :visible="derivationDetailVisible"
-        :width="720"
+        :width="820"
         :title="derivationDetail ? `需求详情 · ${derivationDetail.id}` : '需求详情'"
         @cancel="derivationDetailVisible = false"
       >
         <template v-if="derivationDetail">
-          <a-descriptions :column="2" :data="derivationDetailDesc" title="基础信息" />
-          <a-divider />
-          <a-descriptions :column="1" :data="derivationDetailFeatureDesc" title="特征核心属性" />
-          <a-divider />
-          <a-descriptions :column="2" :data="derivationDetailRegisterDesc" title="注册信息（B1）" />
-          <a-divider />
-          <a-descriptions :column="1" :data="derivationDetailTimeline" title="状态时间轴" />
+          <!-- 状态横幅 -->
+          <div class="detail-status-banner">
+            <a-tag :color="derivationDetailStatusColor" size="large">
+              {{ getDerivationStatusLabel(derivationDetail.status) }}
+            </a-tag>
+            <span class="detail-status-name">{{ derivationDetail.name }}</span>
+            <span class="detail-status-id">{{ derivationDetail.id }}</span>
+          </div>
+
+          <!-- 1. 需求信息 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>需求信息</template>
+            <a-descriptions :column="2" :data="derivationDetailBaseDesc" />
+          </a-card>
+
+          <!-- 2. 人员信息 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>人员信息</template>
+            <a-descriptions :column="2" :data="derivationDetailPeopleDesc" />
+          </a-card>
+
+          <!-- 3. 需求内容 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>需求内容</template>
+            <a-descriptions :column="1" :data="derivationDetailContentDesc" />
+          </a-card>
+
+          <!-- 4. 上传的 Excel 预览 -->
+          <a-card
+            v-if="derivationDetail.attachment || derivationDetail.excelData"
+            size="small"
+            :bordered="true"
+            class="detail-card"
+          >
+            <template #title>
+              <span>上传的 Excel</span>
+              <a-link v-if="derivationDetail.attachment" style="margin-left: 12px; font-size: 12px" @click="previewAttachment(derivationDetail.attachment)">
+                <icon-download />
+                {{ derivationDetail.attachment.name }}
+                <span class="attachment-meta">
+                  （{{ formatAttachmentSize(derivationDetail.attachment.size) }}，{{ derivationDetail.attachment.uploadedAt }}）
+                </span>
+              </a-link>
+            </template>
+            <a-table
+              v-if="derivationDetail.excelData && derivationDetail.excelData.length"
+              :data="derivationDetail.excelData"
+              :columns="excelPreviewColumns"
+              :pagination="{ pageSize: 5, simple: true }"
+              :scroll="{ x: 1800 }"
+              size="small"
+            >
+              <template #variableEnName="{ record }">
+                <span style="font-family: monospace">{{ record.variableEnName }}</span>
+              </template>
+              <template #expectedEffect="{ record }">
+                <span style="color: var(--color-text-2)">{{ record.expectedEffect || '—' }}</span>
+              </template>
+            </a-table>
+            <a-empty v-else description="无 Excel 行数据" style="padding: 12px 0" />
+          </a-card>
+
+          <!-- 5. 特征属性 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>特征属性</template>
+            <a-descriptions :column="2" :data="derivationDetailFeatureDesc" />
+            <a-divider style="margin: 8px 0" />
+            <a-descriptions :column="1" :data="derivationDetailLogicDesc" />
+          </a-card>
+
+          <!-- 6. 来源与分类 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>来源与分类</template>
+            <a-descriptions :column="2" :data="derivationDetailSourceDesc" />
+          </a-card>
+
+          <!-- 7. 注册信息（仅已注册时展示） -->
+          <a-card v-if="derivationDetailIsRegistered" size="small" :bordered="true" class="detail-card">
+            <template #title>注册信息（B1）</template>
+            <a-descriptions :column="2" :data="derivationDetailRegisterDesc" />
+          </a-card>
+
+          <!-- 8. 状态时间轴 -->
+          <a-card size="small" :bordered="true" class="detail-card">
+            <template #title>状态时间轴</template>
+            <a-descriptions :column="1" :data="derivationDetailTimeline" />
+          </a-card>
         </template>
       </a-drawer>
 
@@ -835,8 +915,8 @@ const activeTab = ref('features')
 const stats = computed(() => variableStore.variableStats)
 
 const statItems = computed(() => [
-  { title: '变量总数', value: stats.value.total, iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff', subtitle: '当前台账' },
-  { title: '活跃变量', value: stats.value.active, tag: 'active', tagColor: 'green', iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a', subtitle: '已发布可用' },
+  { title: '特征总数', value: stats.value.total, iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff', subtitle: '当前台账' },
+  { title: '活跃特征', value: stats.value.active, tag: 'active', tagColor: 'green', iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a', subtitle: '已发布可用' },
   { title: '待审核', value: stats.value.pending, tag: 'pending', tagColor: 'orange', iconText: '!', iconBg: '#fff7e8', iconColor: '#ff7d00', subtitle: '审批中' },
   { title: '已停用', value: stats.value.inactive, iconText: '×', iconBg: '#fff1f0', iconColor: '#f53f3f', subtitle: '已停用/归档' }
 ])
@@ -886,7 +966,7 @@ const variableList = computed(() => {
       return item.category === filterForm.riskCategory
     })
   }
-  // 变量来源筛选（2026-08-10 需求5：按内数/外数/行为/实时分类）
+  // 特征来源筛选（2026-08-10 需求5：按内数/外数/行为/实时分类）
   if (filterForm.sourceFilter) {
     const sf = filterForm.sourceFilter
     list = list.filter((item) => {
@@ -1018,8 +1098,8 @@ watch(
 )
 
 const columnsAll = [
-  { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
-  { title: '变量编码', dataIndex: 'code', width: 180 },
+  { title: '特征名称', dataIndex: 'name', slotName: 'name', width: 200 },
+  { title: '特征编码', dataIndex: 'code', width: 180 },
   { title: '品类', dataIndex: 'category', slotName: 'categoryCell', width: 110 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
   { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
@@ -1032,7 +1112,7 @@ const columnsAll = [
 ]
 
 const columnsEffect = [
-  { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
+  { title: '特征名称', dataIndex: 'name', slotName: 'name', width: 200 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
   { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
   { title: 'API调用状态', dataIndex: 'apiCallStatus', slotName: 'apiCallStatusCell', width: 140 },
@@ -1045,7 +1125,7 @@ const columnsEffect = [
 ]
 
 const columnsCost = [
-  { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
+  { title: '特征名称', dataIndex: 'name', slotName: 'name', width: 200 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
   { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
   { title: 'API调用状态', dataIndex: 'apiCallStatus', slotName: 'apiCallStatusCell', width: 140 },
@@ -1113,7 +1193,7 @@ const formatNumber = (value) => {
  *
  * 数据形态分两大类：
  * - 离线分析状态（阶段1-3）：需求提出→已注册→开发中→数仓已上线→待业务验证→业务已验证→管理员已确认
- * - API调用状态（阶段4-5）：参数准备→内数注册中→变量中心注册中→已上线→已下线
+ * - API调用状态（阶段4-5）：参数准备→内数注册中→特征中心注册中→已上线→已下线
  *
  * 每个状态对应：
  * - topActions：列表页顶层快捷按钮（详情/编辑/补充底表/外数档案/重试）
@@ -1190,7 +1270,7 @@ const handleQuickAction = (record, actionKey) => {
     return
   }
 
-  // 主流程5个 + OA审批2个 + 管理员状态修正 + 内数失败补表 + 变量归档 → 唤起 MidloanActionDrawer
+  // 主流程5个 + OA审批2个 + 管理员状态修正 + 内数失败补表 + 特征归档 → 唤起 MidloanActionDrawer
   const drawerActions = [
     'submit_requirement',
     'submit_dev_oa',
@@ -1235,7 +1315,7 @@ const handleQuickAction = (record, actionKey) => {
 }
 
 /**
- * 获取某行变量在当前状态+角色下的顶层快捷操作
+ * 获取某行特征在当前状态+角色下的顶层快捷操作
  * 从最外层 statusActionMap 读取，保证映射逻辑集中管理
  */
 const getTableTopActions = (record) => {
@@ -1250,7 +1330,7 @@ const getTableTopActions = (record) => {
 }
 
 /**
- * 获取某行变量在当前状态+角色下的主流程操作（dropdown）
+ * 获取某行特征在当前状态+角色下的主流程操作（dropdown）
  * 从最外层 statusActionMap 读取
  */
 const getTableMainActions = (record) => {
@@ -1354,7 +1434,7 @@ const triggerTableAction = (record, action) => {
     case 'supplement_table':
       // 跳详情页补充数据底表（带 query，详情页自动定位）
       handleViewDetail(record, { tab: 'basic', focusField: 'dataTableName' })
-      Message.info('请到变量详情页补充数据底表')
+      Message.info('请到特征详情页补充数据底表')
       break
     case 'external_archive':
       openExternalArchive(record)
@@ -1365,7 +1445,7 @@ const triggerTableAction = (record, action) => {
       break
     case 'evaluation':
       handleViewDetail(record, { tab: 'evaluation' })
-      Message.info('查看变量评估报告')
+      Message.info('查看特征评估报告')
       break
     case 'view_change_record':
       handleViewDetail(record, { tab: 'versions' })
@@ -1552,7 +1632,7 @@ const l1CategoryLabel = (key) => {
   return found ? found.label : (key || '—')
 }
 
-// 二级分类动态选项（从现有变量 l2Category 去重）
+// 二级分类动态选项（从现有特征 l2Category 去重）
 const l2CategoryOptionsForFilter = computed(() => {
   const set = new Set()
   const all = variableStore.variableList || []
@@ -1584,10 +1664,10 @@ function inferVariableTypeId(rows) {
 
 function buildBatchTopicPrefill() {
   const inferredTypeId = inferVariableTypeId(selectedRows.value)
-  const dsLabel = selectedDataSourceLabel.value || '变量'
+  const dsLabel = selectedDataSourceLabel.value || '特征'
   batchTopicForm.name = `${dsLabel}_批量探索_${new Date().toISOString().slice(0, 10)}`
-  batchTopicForm.businessProblem = `当前从变量台账中选中了 ${selectedRows.value.length} 个变量，需统一评估变量口径、可复用性与补充空间。`
-  batchTopicForm.hypothesis = '已选变量可进一步形成组合方案或衍生规则，需在课题内沉淀实验与决策证据链。'
+  batchTopicForm.businessProblem = `当前从特征台账中选中了 ${selectedRows.value.length} 个特征，需统一评估特征口径、可复用性与补充空间。`
+  batchTopicForm.hypothesis = '已选特征可进一步形成组合方案或衍生规则，需在课题内沉淀实验与决策证据链。'
   batchTopicForm.domain = '风控'
   batchTopicForm.visibility = 'team'
   batchTopicForm.variableTypeId = inferredTypeId
@@ -1595,12 +1675,12 @@ function buildBatchTopicPrefill() {
 }
 
 function buildBatchEvaluationPrefill() {
-  batchEvaluationForm.name = `变量批量评估_${new Date().toISOString().slice(0, 10)}`
+  batchEvaluationForm.name = `特征批量评估_${new Date().toISOString().slice(0, 10)}`
   batchEvaluationForm.taskType = 'access'
-  batchEvaluationForm.description = `基于变量台账已选 ${selectedRows.value.length} 个变量创建 mock 评估任务，后续在任务中心执行并沉淀评估结果。`
+  batchEvaluationForm.description = `基于特征台账已选 ${selectedRows.value.length} 个特征创建 mock 评估任务，后续在任务中心执行并沉淀评估结果。`
 }
 
-// 数据源过滤已移除：保留 dataSources 仅用于关联变量来源信息展示
+// 数据源过滤已移除：保留 dataSources 仅用于关联特征来源信息展示
 const fetchDataSources = async () => {
   // 兼容性保留：未来如需保留数据源概念，可重新启用
   // try {
@@ -1618,8 +1698,8 @@ const fetchVariableList = async () => {
       type: filterForm.type
     })
   } catch (error) {
-    console.error('获取变量列表失败:', error)
-    Message.error('获取变量列表失败')
+    console.error('获取特征列表失败:', error)
+    Message.error('获取特征列表失败')
   }
 }
 
@@ -1656,7 +1736,7 @@ const handleSelectionChange = (keys) => {
   if (keys.length > SELECTION_LIMIT) {
     // 截断：仅保留前 SELECTION_LIMIT 条，提示用户
     const limited = keys.slice(0, SELECTION_LIMIT)
-    Message.warning(`单次最多批量操作 ${SELECTION_LIMIT} 个变量，已自动截断超出部分。请保存视图后分批执行。`)
+    Message.warning(`单次最多批量操作 ${SELECTION_LIMIT} 个特征，已自动截断超出部分。请保存视图后分批执行。`)
     selectedRowKeys.value = limited
     selectedRows.value = variableList.value.filter((item) => limited.includes(item.id))
     return
@@ -1690,7 +1770,7 @@ const getBatchAvailableActions = () => {
   if (selectedRows.value.length === 0) return []
 
   const role = UserContext.get().role
-  // 文档 K1 明确下线是被动接收（变量中心发起），台账无主动申请下线，故移除 request_offline
+  // 文档 K1 明确下线是被动接收（特征中心发起），台账无主动申请下线，故移除 request_offline
   const allowedKeys = [
     'submit_requirement',
     'submit_dev_oa',
@@ -1748,7 +1828,7 @@ const handleBatchAction = (batchAction) => {
 
   Modal.confirm({
     title: `确认批量操作`,
-    content: `<div>将对 <strong>${ids.length}</strong> 个变量执行「<strong>${batchAction.label}</strong>」操作，是否继续？${drawerHint}</div>`,
+    content: `<div>将对 <strong>${ids.length}</strong> 个特征执行「<strong>${batchAction.label}</strong>」操作，是否继续？${drawerHint}</div>`,
     okText: '确认提交',
     cancelText: '取消',
     onOk: () => {
@@ -1788,16 +1868,16 @@ const handleToggleStatus = async (record) => {
     const isActive = record.status === 'active'
     if (!isActive) {
       // 启用：跳转到详情页"提交上线申请"
-      Message.info('请到变量详情页提交上线申请')
+      Message.info('请到特征详情页提交上线申请')
       router.push({ name: 'VariableAssetDetail', params: { id: record.id, mode: 'view' } })
       return
     }
     Modal.confirm({
       title: '确认停用',
-      content: `确定要停用变量"${record.name}"吗？停用后变量将不再对外提供，可重新启用。`,
+      content: `确定要停用特征"${record.name}"吗？停用后特征将不再对外提供，可重新启用。`,
       onOk: async () => {
         VariableStatusStore.setStatus(String(record.id), 'inactive', 'Demo 用户', '台账直接停用')
-        Message.success('变量已停用')
+        Message.success('特征已停用')
         fetchVariableList()
       }
     })
@@ -1818,7 +1898,7 @@ const showIncrementalModal = () => {
 
 const handleCreateMenuSelect = (val) => {
   if (val === 'add' || val === 'create') {
-    // 「注册为变量」=「新增」= 打开完整注册表单抽屉（B1 文档）
+    // 「注册为特征」=「新增」= 打开完整注册表单抽屉（B1 文档）
     registerDrawerRequirementData.value = null
     registerDrawerVisible.value = true
     return
@@ -1875,18 +1955,18 @@ const handleRegisterSaveDraft = (payload) => {
     name: payload.name || `DRAFT_${Date.now()}`,
     featureCnName: payload.featureCnName || '（未命名草稿）'
   })
-  Message.success('草稿已保存到「变量台账」底部，可在台账列表中查看')
+  Message.success('草稿已保存到「特征台账」底部，可在台账列表中查看')
 }
 
 const openBatchTopicModal = () => {
   if (!selectedRows.value.length) {
-    Message.warning('请先勾选变量')
+    Message.warning('请先勾选特征')
     return
   }
   if (selectedRows.value.length > 50) {
     Modal.confirm({
       title: '批量发起确认',
-      content: `已选 ${selectedRows.value.length} 个变量，过程信息将汇总在 1 个探索课题中。是否继续？`,
+      content: `已选 ${selectedRows.value.length} 个特征，过程信息将汇总在 1 个探索课题中。是否继续？`,
       okText: '继续',
       onOk: () => {
         buildBatchTopicPrefill()
@@ -1901,13 +1981,13 @@ const openBatchTopicModal = () => {
 
 const openBatchEvaluationModal = () => {
   if (!selectedRows.value.length) {
-    Message.warning('请先勾选变量')
+    Message.warning('请先勾选特征')
     return
   }
   if (selectedRows.value.length > 50) {
     Modal.confirm({
       title: '批量评估确认',
-      content: `已选 ${selectedRows.value.length} 个变量，评估执行可能需要较长时间。是否继续？`,
+      content: `已选 ${selectedRows.value.length} 个特征，评估执行可能需要较长时间。是否继续？`,
       okText: '继续',
       onOk: () => {
         buildBatchEvaluationPrefill()
@@ -1931,7 +2011,7 @@ const submitBatchTopic = () => {
     : undefined
   const relatedResources = []
   selectedRows.value.forEach((item) => {
-    relatedResources.push({ type: 'variable', name: item.id, displayName: `变量：${item.name}` })
+    relatedResources.push({ type: 'variable', name: item.id, displayName: `特征：${item.name}` })
   })
   const topic = ExploreStore.addTopic({
     name: batchTopicForm.name.trim(),
@@ -1946,7 +2026,7 @@ const submitBatchTopic = () => {
     relatedVariableIds: selectedRows.value.map((item) => item.id),
     relatedResources
   })
-  Message.success(`已基于 ${selectedRows.value.length} 个变量发起探索课题`)
+  Message.success(`已基于 ${selectedRows.value.length} 个特征发起探索课题`)
   batchTopicVisible.value = false
   clearSelection()
   router.push(`/explore/topics/${topic.id}`)
@@ -1995,8 +2075,8 @@ const parseExcelFile = async (file) => {
         const sheet = workbook.Sheets[sheetName]
         const json = XLSX.utils.sheet_to_json(sheet)
         const records = json.map((r) => ({
-          name: r.name || r.变量名称 || '',
-          code: r.code || r.变量编码 || '',
+          name: r.name || r.特征名称 || '',
+          code: r.code || r.特征编码 || '',
           type: r.type || r.类型 || '',
           status: r.status || r.状态 || 'draft',
           dataSource: r.dataSource || r.数据源 || '',
@@ -2142,10 +2222,27 @@ function onBulkImport(rows) {
   // 刷新列表（如有）
   fetchVariableList()
 }
-function onDerivationCreated(payload) {
-  const rec = DerivationStore.create(payload, '小李')
-  Message.success(`已创建需求 ${rec.id}，状态：需求受理`)
+function onDerivationCreated(payloads) {
+  if (!payloads || !payloads.length) {
+    Message.warning('没有可提交的数据')
+    return
+  }
+  let successCount = 0
+  let failedCount = 0
+  payloads.forEach((payload) => {
+    try {
+      DerivationStore.create(payload, '小李')
+      successCount++
+    } catch (err) {
+      failedCount++
+    }
+  })
   derivationCreateVisible.value = false
+  if (successCount > 0) {
+    Message.success(`成功创建 ${successCount} 条需求${failedCount > 0 ? `，失败 ${failedCount} 条` : ''}`)
+  } else {
+    Message.error('创建失败')
+  }
   refreshDerivations()
 }
 
@@ -2156,31 +2253,65 @@ const derivationRegisterTarget = ref(null)
 // 详情抽屉
 const derivationDetailVisible = ref(false)
 const derivationDetail = ref(null)
-const derivationDetailDesc = computed(() => derivationDetail.value ? [
-  { label: '需求ID', value: derivationDetail.value.id },
-  { label: '需求名称', value: derivationDetail.value.name },
-  { label: '业务场景', value: derivationDetail.value.businessScene },
-  { label: '预期效果', value: derivationDetail.value.expectedEffect },
+
+// 状态颜色映射
+const derivationStatusColorMap = {
+  requirement_accepted: 'green',
+  rejected: 'red'
+}
+const derivationDetailStatusColor = computed(() => {
+  if (!derivationDetail.value) return 'gray'
+  return derivationStatusColorMap[derivationDetail.value.status] || 'gray'
+})
+
+// 1. 需求信息（2 列）
+const derivationDetailBaseDesc = computed(() => derivationDetail.value ? [
+  { label: '需求ID', value: derivationDetail.value.id || '—' },
+  { label: '需求名称', value: derivationDetail.value.name || '—' },
+  { label: '业务场景', value: derivationDetail.value.businessScene || '—' },
   { label: '品类', value: '贷中行为' },
-  { label: '数据源', value: derivationDetail.value.dataSource },
-  { label: '开发人员', value: derivationDetail.value.developer },
-  { label: '提出人', value: derivationDetail.value.proposer },
-  { label: '处理人', value: derivationDetail.value.handler || '—' },
   { label: '业务同步等级', value: derivationDetail.value.syncLevel ? derivationDetail.value.syncLevel + '级' : '—' },
-  { label: '创建时间', value: derivationDetail.value.createdAt }
+  { label: '创建时间', value: derivationDetail.value.createdAt || '—' }
 ] : [])
+
+// 2. 人员信息（2 列）
+const derivationDetailPeopleDesc = computed(() => derivationDetail.value ? [
+  { label: '提出人', value: derivationDetail.value.proposer || '—' },
+  { label: '处理人', value: derivationDetail.value.handler || '—' },
+  { label: '开发人员', value: derivationDetail.value.developer || '—' },
+  { label: '数据源', value: derivationDetail.value.dataSource || '—' }
+] : [])
+
+// 3. 需求内容（1 列，长文本）
+const derivationDetailContentDesc = computed(() => derivationDetail.value ? [
+  { label: '需求描述', value: derivationDetail.value.requirementDescription || '—' },
+  { label: '预期效果', value: derivationDetail.value.expectedEffect || '—' }
+] : [])
+
+// 4. 特征属性（2 列）
 const derivationDetailFeatureDesc = computed(() => derivationDetail.value ? [
-  { label: '特征英文名', value: derivationDetail.value.featureEnName },
-  { label: '中文名', value: derivationDetail.value.featureCnName },
-  { label: '字段类型', value: derivationDetail.value.fieldType },
+  { label: '特征英文名', value: derivationDetail.value.featureEnName || '—' },
+  { label: '中文名', value: derivationDetail.value.featureCnName || '—' },
+  { label: '字段类型', value: derivationDetail.value.fieldType || '—' },
   { label: '默认值', value: derivationDetail.value.defaultValue || '—' },
-  { label: '加工逻辑', value: derivationDetail.value.processingLogic },
-  { label: '一级分类', value: derivationDetail.value.l1Category },
-  { label: '二级分类', value: derivationDetail.value.l2Category },
   { label: '数据时效', value: derivationDetail.value.dataFreshness || '—' },
-  { label: '标准化后来源表', value: derivationDetail.value.sourceTableAfter || '—' },
-  { label: '标准化前来源表', value: derivationDetail.value.sourceTableBefore || '—' }
+  { label: '原特征英文名', value: derivationDetail.value.originFeatureEnName || '—' }
 ] : [])
+
+// 4b. 加工逻辑（1 列，长文本）
+const derivationDetailLogicDesc = computed(() => derivationDetail.value ? [
+  { label: '加工逻辑', value: derivationDetail.value.processingLogic || '—' }
+] : [])
+
+// 5. 来源与分类（2 列）
+const derivationDetailSourceDesc = computed(() => derivationDetail.value ? [
+  { label: '一级分类', value: derivationDetail.value.l1Category || '—' },
+  { label: '二级分类', value: derivationDetail.value.l2Category || '—' },
+  { label: '标准化前来源表', value: derivationDetail.value.sourceTableBefore || '—' },
+  { label: '标准化后来源表', value: derivationDetail.value.sourceTableAfter || '—' }
+] : [])
+
+// 6. 注册信息（2 列，仅注册后展示）
 const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '数据底表名称', value: derivationDetail.value.dataTableName || '暂未补充' },
   { label: '数仓任务ID', value: derivationDetail.value.dwTaskId || '—' },
@@ -2191,6 +2322,11 @@ const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '备注', value: derivationDetail.value.remark || '—' },
   { label: '关联特征ID', value: derivationDetail.value.featureId || '尚未注册' }
 ] : [])
+
+// 是否已注册
+const derivationDetailIsRegistered = computed(() => {
+  return derivationDetail.value && (derivationDetail.value.featureId || derivationDetail.value.dataTableName)
+})
 const derivationDetailTimeline = computed(() => {
   if (!derivationDetail.value) return []
   const items = [
@@ -2211,6 +2347,36 @@ const derivationDetailTimeline = computed(() => {
 function openDerivationDetail(record) {
   derivationDetail.value = DerivationStore.get(record.id)
   derivationDetailVisible.value = true
+}
+
+// Excel 预览表格列定义
+const excelPreviewColumns = [
+  { title: '特征英文名', slotName: 'variableEnName', width: 200, ellipsis: true, tooltip: true },
+  { title: '中文名', dataIndex: 'variableCnName', width: 160, ellipsis: true, tooltip: true },
+  { title: '字段类型', dataIndex: 'fieldType', width: 100 },
+  { title: '特征含义', dataIndex: 'variableMeaning', width: 180, ellipsis: true, tooltip: true },
+  { title: '取数逻辑', dataIndex: 'processingLogic', width: 220, ellipsis: true, tooltip: true },
+  { title: '维度', dataIndex: 'dimension', width: 100 },
+  { title: '时效性', dataIndex: 'dataFreshness', width: 100 },
+  { title: '默认值', dataIndex: 'defaultValue', width: 80 },
+  { title: '需求人', dataIndex: 'proposer', width: 110, ellipsis: true, tooltip: true },
+  { title: '回溯时间段', dataIndex: 'backtrackPeriod', width: 160, ellipsis: true, tooltip: true },
+  { title: '逾期上线时间', dataIndex: 'expectedLaunchDate', width: 120 },
+  { title: '效果字段', slotName: 'expectedEffect', width: 180, ellipsis: true, tooltip: true }
+]
+
+// 需求附件预览
+function formatAttachmentSize(bytes) {
+  if (!bytes) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
+
+function previewAttachment(attachment) {
+  if (attachment?.name) {
+    Message.info(`附件：${attachment.name}（mock 环境，暂不支持下载）`)
+  }
 }
 
 // ============ 需求驳回 ============
@@ -2516,5 +2682,37 @@ refreshDerivations()
 .status-pending {
   color: var(--color-text-4, #c9cdd4);
   font-size: 12px;
+}
+
+.detail-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: var(--color-fill-1, #f7f8fa);
+  border-radius: 6px;
+}
+.detail-status-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--color-text-1);
+}
+.detail-status-id {
+  color: var(--color-text-4);
+  font-size: 13px;
+  margin-left: auto;
+  font-family: monospace;
+}
+.detail-card {
+  margin-bottom: 12px;
+}
+.detail-card :deep(.arco-card-body) {
+  padding: 12px 16px;
+}
+.attachment-meta {
+  color: var(--color-text-4);
+  font-size: 12px;
+  margin-left: 4px;
 }
 </style>

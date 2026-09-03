@@ -118,10 +118,10 @@
       </div>
     </div>
 
-    <!-- 变量面板 -->
+    <!-- 特征面板 -->
     <div class="variables-panel">
       <a-collapse :default-active-key="['variables']">
-        <a-collapse-item header="变量值设置" key="variables">
+        <a-collapse-item header="特征值设置" key="variables">
           <div class="variables-content">
             <div class="variables-grid">
               <div v-for="(variable, key) in variableValues" :key="key" class="variable-item">
@@ -139,7 +139,7 @@
             <div class="variables-actions">
               <a-space>
                 <a-button size="small" @click="resetVariables">重置默认值</a-button>
-                <a-button type="primary" size="small" @click="applyVariables">应用变量</a-button>
+                <a-button type="primary" size="small" @click="applyVariables">应用特征</a-button>
               </a-space>
             </div>
           </div>
@@ -159,7 +159,7 @@
           <div class="stat-value">{{ contentLength }}</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">变量数量</div>
+          <div class="stat-label">特征数量</div>
           <div class="stat-value">{{ variableCount }}</div>
         </div>
         <div class="stat-item">
@@ -217,9 +217,9 @@ const titleLength = computed(() => renderedTitle.value.length)
 const contentLength = computed(() => renderedContent.value.length)
 const variableCount = computed(() => extractVariables(title.value + content.value).length)
 const estimatedChars = computed(() => {
-  // 估算最终字符数（考虑变量替换后的长度变化）
+  // 估算最终字符数（考虑特征替换后的长度变化）
   const baseLength = titleLength.value + contentLength.value
-  const variableExpansion = variableCount.value * 10 // 假设每个变量平均扩展10个字符
+  const variableExpansion = variableCount.value * 10 // 假设每个特征平均扩展10个字符
   return baseLength + variableExpansion
 })
 
@@ -238,7 +238,7 @@ const renderTemplate = (template, values) => {
   
   vars.forEach(varStr => {
     const varName = varStr.replace(/\{\{|\}\}/g, '')
-    const value = values[varName] || varStr // 如果变量值不存在，保留原变量字符串
+    const value = values[varName] || varStr // 如果特征值不存在，保留原特征字符串
     const pattern = new RegExp(varStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
     rendered = rendered.replace(pattern, value)
   })
@@ -294,15 +294,15 @@ const resetVariables = () => {
     apiName: '用户登录接口',
     currentFailureRate: 15.5
   })
-  Message.success('变量值已重置为默认值')
+  Message.success('特征值已重置为默认值')
 }
 
 const applyVariables = () => {
-  // 触发自定义事件，通知父组件变量值已更新
-  Message.success('变量值已应用')
+  // 触发自定义事件，通知父组件特征值已更新
+  Message.success('特征值已应用')
 }
 
-// 监听变量变化
+// 监听特征变化
 watch(variableValues, () => {
   updatePreview()
 }, { deep: true })

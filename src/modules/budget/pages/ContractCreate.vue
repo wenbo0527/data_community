@@ -90,8 +90,8 @@
           </a-row>
           <a-row :gutter="12">
             <a-col :span="12">
-              <a-form-item field="supplier" label="对接渠道" required>
-                <a-input v-model="form.supplier" placeholder="例如：美团 / 蚂蚁" />
+              <a-form-item field="supplier" label="合作机构" required>
+                <a-select v-model="form.supplier" allow-clear allow-search placeholder="选择合作机构" :options="partnerOrgOptions" />
               </a-form-item>
             </a-col>
             <a-col :span="12" v-if="form.contractType === 'supplement'">
@@ -99,6 +99,20 @@
                 <a-select v-model="form.frameworkIds" multiple placeholder="选择一个或多个框架合同">
                   <a-option v-for="f in frameworkOptions" :key="f.value" :value="f.value">{{ f.label }}</a-option>
                 </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item field="signReportNo" label="签报号">
+                <a-select v-model="form.signReportNo" allow-clear allow-search placeholder="搜索选择已有签报（非必填，可后续补绑）">
+                  <a-option v-for="r in signReportOptions" :key="r.id" :value="r.reportNo">{{ r.reportNo }} - {{ r.title }}</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item field="initialOccupiedAmount" label="合同初始占用金额">
+                <a-input-number v-model="form.initialOccupiedAmount" :min="0" :step="1000" style="width:100%" placeholder="历史已使用金额，默认0" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -283,6 +297,7 @@ import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
+import { partnerOrgNames } from '@/modules/budget/api/supplierDictionary'
 import { IconUpload } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
 
@@ -295,6 +310,15 @@ const acceptTypes = 'application/pdf,application/msword,.doc,.docx'
 const uploadProgress = ref(0)
 const skipUploadSelected = ref(false)
 const newExternalList: any[] = []
+
+// PRD R08/R09: 合作机构选项列表
+const partnerOrgOptions = computed(() => partnerOrgNames.map(n => ({ label: n, value: n })))
+// PRD R10: 签报搜索选项（mock 数据，供合同创建时搜索选择）
+const signReportOptions = ref([
+  { id: 'SR-2026-001', reportNo: '签报〔2026〕69号', title: '关于采购朴道征信有限公司风控数据服务的签报' },
+  { id: 'SR-2026-002', reportNo: '签报〔2026〕72号', title: '关于采购百行征信有限公司与学信网数据服务的签报' },
+  { id: 'SR-2026-003', reportNo: '签报〔2026〕85号', title: '关于采购钱塘征信有限公司风控数据服务的签报' }
+])
 
 const frameworkOptions = computed(() => store.frameworkOptions)
 const products = computed(() => externalStore.products || [])
@@ -326,6 +350,8 @@ const form = reactive<any>({
   signDate: undefined,
   isGroupPurchase: false,
   supplier: '',
+  signReportNo: '',
+  initialOccupiedAmount: 0,
   frameworkIds: [] as Array<string>,
   external: {
     name: '',
@@ -373,7 +399,7 @@ const validateCurrentStep = async () => {
     if (!(skipUploadSelected && Array.isArray(form.fileList))) {
       try { await formRef.value?.validateField(['fileList'] as any) } catch { return false }
     }
-    try { await formRef.value?.validateField(['shortName','fullName','amount','signDate','supplier', ...(form.contractType === 'supplement' ? ['frameworkId'] : [])] as any) } catch { return false }
+    try { await formRef.value?.validateField(['shortName','fullName','amount','signDate','supplier', ...(form.contractType === 'supplement' ? ['frameworkIds'] : [])] as any) } catch { return false }
     return true
   }
   if (currentStep.value === 1) {
@@ -465,7 +491,9 @@ const submit = async () => {
     endDate: new Date(Date.now() + 180*86400000).toISOString(),
     status: 'active' as const,
     frameworkId: form.contractType === 'supplement' ? (form.frameworkIds?.[0] ?? null) : null,
-    frameworkIds: form.contractType === 'supplement' ? (form.frameworkIds ?? []) : []
+    frameworkIds: form.contractType === 'supplement' ? (form.frameworkIds ?? []) : [],
+    signReportNo: form.signReportNo || undefined,
+    initialOccupiedAmount: Number(form.initialOccupiedAmount) || 0
   }
   if (!selectedExternalIds.value.length) {
     Message.error('请至少选择一个外数进行关联')

@@ -23,8 +23,8 @@ const registry: any = {
       order: 1,
       children: [
         { key: 'risk-factor-workbench', label: '风险要素工作台', path: '/risk/variable-hub' },
-        { key: 'risk-factor-variable-mgmt', label: '变量台账', path: '/risk/variable-management' },
-        { key: 'risk-factor-variable-map', label: '变量全景', path: '/risk/explore/map' },
+        { key: 'risk-factor-variable-mgmt', label: '特征台账', path: '/risk/variable-management' },
+        { key: 'risk-factor-variable-map', label: '特征全景', path: '/risk/explore/map' },
         { key: 'risk-factor-eval', label: '评估任务中心', path: '/risk/evaluation/tasks' },
         { key: 'risk-factor-topics', label: '探索课题', path: '/risk/explore/topics' },
         { key: 'risk-factor-compare', label: '实验对比', path: '/risk/explore/compare' },
@@ -63,14 +63,14 @@ const registry: any = {
       component: './pages/index.vue',
       meta: { title: '数字风险' }
     },
-    // 风险要素（变量一体化）
+    // 风险要素（特征一体化）
     { path: 'variable-hub',                  name: 'VariableHub',            component: './modules/variable-hub/pages/workbench/index.vue', meta: { title: '风险要素工作台' } },
-    { path: 'variable-management',           name: 'VariableManagement',     component: './modules/variable-hub/pages/variable-management/index.vue', meta: { title: '变量台账' } },
-    { path: 'variable-management/detail/:id/:mode?', name: 'VariableAssetDetail', component: './modules/variable-hub/pages/variable-management/detail.vue', meta: { title: '变量详情' } },
+    { path: 'variable-management',           name: 'VariableManagement',     component: './modules/variable-hub/pages/variable-management/index.vue', meta: { title: '特征台账' } },
+    { path: 'variable-management/detail/:id/:mode?', name: 'VariableAssetDetail', component: './modules/variable-hub/pages/variable-management/detail.vue', meta: { title: '特征详情' } },
     { path: 'explore/topics',                name: 'ExploreTopics',          component: './modules/variable-hub/pages/explore/topics/index.vue', meta: { title: '探索课题' } },
     { path: 'explore/topics/:id',            name: 'ExploreTopicDetail',     component: './modules/variable-hub/pages/explore/topics/detail.vue', meta: { title: '课题详情' } },
     { path: 'explore/compare',               name: 'ExploreCompare',         component: './modules/variable-hub/pages/explore/compare/index.vue', meta: { title: '实验对比' } },
-    { path: 'explore/map',                   name: 'ExploreMap',             component: './modules/variable-hub/pages/explore/map/index.vue', meta: { title: '变量全景' } },
+    { path: 'explore/map',                   name: 'ExploreMap',             component: './modules/variable-hub/pages/explore/map/index.vue', meta: { title: '特征全景' } },
     { path: 'explore/taxonomy',              name: 'ExploreTaxonomy',        component: './modules/variable-hub/pages/explore/taxonomy/index.vue', meta: { title: '探索分类管理' } },
     { path: 'explore/audit',                 name: 'ExploreAudit',           component: './modules/variable-hub/pages/explore/audit/index.vue', meta: { title: '决策审计' } },
     { path: 'evaluation/tasks',              name: 'EvaluationTasks',        component: './modules/variable-hub/pages/evaluation/tasks/index.vue', meta: { title: '评估任务中心' } },

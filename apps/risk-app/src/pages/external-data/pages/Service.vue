@@ -13,7 +13,7 @@
             <a-option value="在线批量调用">在线批量调用</a-option>
             <a-option value="外数离线回溯申请">外数离线回溯申请</a-option>
             <a-option value="周期跑批任务申请">周期跑批任务申请</a-option>
-            <a-option value="全量变量回溯申请">全量变量回溯申请</a-option>
+            <a-option value="全量特征回溯申请">全量特征回溯申请</a-option>
             <a-option value="风险合规离线回溯申请">风险合规离线回溯申请</a-option>
             <a-option value="批量外数调用服务申请">批量外数调用服务申请</a-option>
           </a-select>
@@ -76,7 +76,7 @@ import ServiceApplicationDrawer from '../components/ServiceApplicationDrawer.vue
 const store = useExternalDataStore()
 const router = useRouter()
 
-type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '批量外数调用服务申请'
+type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量特征回溯申请' | '风险合规离线回溯申请' | '批量外数调用服务申请'
 
 const supplierOptions = ref(['供应商A', '供应商B']) // 简单 Mock，或者从 store 获取
 

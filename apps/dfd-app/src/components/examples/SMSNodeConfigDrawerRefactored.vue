@@ -42,7 +42,7 @@
           allow-clear
         />
         <div class="form-item-tip">
-          支持变量替换，如 {name}、{phone} 等
+          支持特征替换，如 {name}、{phone} 等
         </div>
       </a-form-item>
 

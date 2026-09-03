@@ -66,10 +66,10 @@
                 </a-form-item>
               </a-col>
             </a-row>
-            <a-form-item field="variableVersion" label="变量版本" required>
+            <a-form-item field="variableVersion" label="特征版本" required>
               <a-radio-group v-model="form.variableVersion" type="button">
-                <a-radio value="new">新变量模型</a-radio>
-                <a-radio value="old">老变量模型</a-radio>
+                <a-radio value="new">新特征模型</a-radio>
+                <a-radio value="old">老特征模型</a-radio>
               </a-radio-group>
             </a-form-item>
             <a-form-item field="description" label="描述">
@@ -236,7 +236,7 @@ const rules = {
   type: [{ required: true, message: '请选择模型类型' }],
   framework: [{ required: true, message: '请选择算法框架' }],
   version: [{ required: true, message: '请输入版本号' }],
-  variableVersion: [{ required: true, message: '请选择变量版本' }]
+  variableVersion: [{ required: true, message: '请选择特征版本' }]
 }
 
 const featureOptions = ref([])

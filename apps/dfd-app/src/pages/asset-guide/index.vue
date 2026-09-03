@@ -63,7 +63,7 @@
           <a-col :span="6">
             <a-card class="stat-card" :bordered="false" hoverable @click="navigateTo('variable-dict')">
               <a-statistic
-                title="变量管理"
+                title="特征管理"
                 :value="1002"
                 :value-style="{ color: 'rgb(var(--primary-6))', fontSize: '24px', fontWeight: 600 }"
                 show-group-separator
@@ -193,7 +193,7 @@ const domainData = [
 const updateLog = [
   { title: '用户基础信息表结构变更', time: '2026-04-28 10:30', type: '更新' },
   { title: '新增订单流水表 user_orders_202604', time: '2026-04-27 16:45', type: '新增' },
-  { title: '新增客户画像变量 35 个', time: '2026-04-26 11:20', type: '新增' },
+  { title: '新增客户画像特征 35 个', time: '2026-04-26 11:20', type: '新增' },
   { title: '交易域指标口径调整', time: '2026-04-25 09:00', type: '更新' },
   { title: '接入外部工商数据源', time: '2026-04-24 14:30', type: '新增' }
 ]

@@ -49,7 +49,7 @@
               <a-option value="dws">汇总表</a-option>
               <a-option value="dwd">明细表</a-option>
               <a-option value="metric">指标</a-option>
-              <a-option value="variable">变量</a-option>
+              <a-option value="variable">特征</a-option>
               <a-option value="feature">特征</a-option>
             </a-select>
           </div>
@@ -278,7 +278,7 @@ const getAssetType = (record: TableItem) => {
   // 这里根据 record 的属性来判断具体类型
   // 暂时主要根据 type 字段映射
   if (record.type === '指标') return 'metric'
-  if (record.type === '变量') return 'variable'
+  if (record.type === '特征') return 'variable'
   if (record.type === '特征') return 'feature'
   return 'table' // 默认为 table，Card 内部会进一步处理 dim/fact 等
 }

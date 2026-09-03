@@ -151,7 +151,7 @@ const metadataCollectionPrd: PrdInfo = {
 1. 数据工程师新增**数据源**（HIVE / MySQL / Oracle），触发连接测试确认健康
 2. 在「元数据采集 → 创建任务」配置采集规则（任务名 / 资产类型 / 数据源），提交后自动运行
 3. 任务列表 1s 自动刷新，状态变化可见（pending → running → success | failed）
-4. 任务成功后自动登记产物：表 → listing，业务指标 / API / 变量 → listing metrics
+4. 任务成功后自动登记产物：表 → listing，业务指标 / API / 特征 → listing metrics
 5. 在业务系统台账点「同步元数据」会反向触发采集任务（triggeredBy='shelf'）
 6. 进入任务列表查看来源资产、触发人、错误信息
 
@@ -660,7 +660,7 @@ const taskListPrd: PrdInfo = {
 ## 核心交互
 
 - **任务列表**：状态色标（pending / running / success / failed）+ 1s 自动刷新
-- **筛选**：关键字 / 数据源 / 对象类型（指标 / API / 变量 / 表）
+- **筛选**：关键字 / 数据源 / 对象类型（指标 / API / 特征 / 表）
 - **触发来源标签**：人工触发（triggeredBy='user'）/ 上下架同步（triggeredBy='shelf'）
 - **单任务操作**：运行 / 重跑 / 删除
 

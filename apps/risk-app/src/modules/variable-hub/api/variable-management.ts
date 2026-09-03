@@ -6,8 +6,8 @@ import { VariableStatusStore } from '@/modules/variable-hub/mock/variable-manage
 
 /**
  * 合并"评估任务中心 → 外数评估"已生成的报告 ID
- * 在评估任务执行后，external 报告会回写到对应变量的 sourceRefs.externalEvaluationId
- * 变量档案页的"关联分析报告"会自动展示新增的外数评估报告
+ * 在评估任务执行后，external 报告会回写到对应特征的 sourceRefs.externalEvaluationId
+ * 特征档案页的"关联分析报告"会自动展示新增的外数评估报告
  */
 function withExternalBinding(item: any) {
   if (!item) return item
@@ -98,7 +98,7 @@ export const getVariableList = async (params: any = {}) => {
 export const getVariableDetail = async (id: string | number) => {
   const item = [...VariableDraftStore.list(), ...variableAssets].map(withExternalBinding).map(withStatusAndEvaluation).find((v: any) => String(v.id) === String(id))
   if (!item) {
-    return { code: 404, message: '变量不存在', data: null }
+    return { code: 404, message: '特征不存在', data: null }
   }
   return { code: 200, data: item }
 }

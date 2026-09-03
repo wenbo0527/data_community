@@ -132,12 +132,12 @@
                     @click="handleInsertVariable"
                   >
                     <template #icon><IconPlus /></template>
-                    插入变量
+                    插入特征
                   </a-button>
                 </div>
                 <a-textarea
                   v-model="formData.content"
-                  placeholder="在这里输入正文，单击插入按钮添加变量代码"
+                  placeholder="在这里输入正文，单击插入按钮添加特征代码"
                   :auto-size="{ minRows: 8, maxRows: 15 }"
                   allow-clear
                   class="content-textarea"
@@ -148,7 +148,7 @@
                     <span>字符数：{{ contentLength }}/500</span>
                   </div>
                   <div class="editor-hint">
-                    提示：在这里输入正文，单击插入按钮添加变量代码
+                    提示：在这里输入正文，单击插入按钮添加特征代码
                   </div>
                 </div>
               </div>
@@ -175,19 +175,19 @@
       </a-form>
     </a-card>
     
-    <!-- 插入变量弹窗 -->
+    <!-- 插入特征弹窗 -->
     <a-modal
       v-model:visible="variableModalVisible"
-      title="选择变量"
+      title="选择特征"
       width="500px"
       @ok="handleVariableOk"
       @cancel="handleVariableCancel"
     >
       <div class="variable-modal-content">
-        <a-form-item label="变量列表">
+        <a-form-item label="特征列表">
           <a-select 
             v-model="selectedVariable" 
-            placeholder="请选择需要插入的变量" 
+            placeholder="请选择需要插入的特征" 
             size="large"
             allow-search
           >
@@ -226,7 +226,7 @@
         
         <a-alert type="info" :show-icon="false">
           <template #icon><IconInfoCircle /></template>
-          选择变量后，将在光标位置插入对应的变量代码
+          选择特征后，将在光标位置插入对应的特征代码
         </a-alert>
       </div>
     </a-modal>
@@ -280,13 +280,13 @@ function handleInsertVariable() {
 
 function handleVariableOk() {
   if (selectedVariable.value) {
-    // 在当前光标位置插入变量
+    // 在当前光标位置插入特征
     formData.content = (formData.content || '') + selectedVariable.value
-    Message.success('变量已插入')
+    Message.success('特征已插入')
     variableModalVisible.value = false
     selectedVariable.value = ''
   } else {
-    Message.warning('请选择要插入的变量')
+    Message.warning('请选择要插入的特征')
   }
 }
 
@@ -468,7 +468,7 @@ function handleCancel() {
   justify-content: center;
 }
 
-/* 变量选择弹窗样式 */
+/* 特征选择弹窗样式 */
 .variable-modal-content {
   padding: 8px 0;
 }

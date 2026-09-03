@@ -118,6 +118,15 @@ import { getDataModelsList } from '@/api/dataModels'
 import HistorySliceQuery from './HistorySliceQuery.vue'
 import CustomQueryPanel from './CustomQueryPanel.vue'
 
+function hashStr(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash = hash & hash
+  }
+  return Math.abs(hash)
+}
+
 // Props
 const props = defineProps({
   userId: {
@@ -134,7 +143,7 @@ const props = defineProps({
 const loading = ref(false)
 const drawerVisible = ref(false)
 const drawerTabKey = ref<string>('custom-query')
-const sessionId = ref(`S-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
+const sessionId = ref(`S-${Date.now()}-${hashStr('session' + Date.now()).toString(36).padStart(6, '0').slice(0, 6)}`)
 const resultModalVisible = ref(false)
 const resultLoading = ref(false)
 
@@ -340,42 +349,43 @@ const generateMockResultData = (modelType, count) => {
 }
 
 const generateMockValue = (field, index) => {
+  const h = (suffix) => hashStr(field + index + suffix)
   const mockValues = {
     customerId: `C${String(index + 1).padStart(6, '0')}`,
     name: `客户${index + 1}`,
-    phone: `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
-    idCard: `${Math.floor(Math.random() * 900000) + 100000}${Math.floor(Math.random() * 90) + 10}0101${Math.floor(Math.random() * 9000) + 1000}`,
-    age: Math.floor(Math.random() * 50) + 20,
-    gender: Math.random() > 0.5 ? '男' : '女',
-    residence: ['北京市', '上海市', '广州市', '深圳市', '杭州市'][Math.floor(Math.random() * 5)],
+    phone: `138${String(h('phone') % 100000000).padStart(8, '0')}`,
+    idCard: `${h('idCard1') % 900000 + 100000}${h('idCard2') % 90 + 10}0101${h('idCard3') % 9000 + 1000}`,
+    age: h('age') % 50 + 20,
+    gender: h('gender') % 2 === 0 ? '男' : '女',
+    residence: ['北京市', '上海市', '广州市', '深圳市', '杭州市'][h('residence') % 5],
     productId: `P${String(index + 1).padStart(6, '0')}`,
-    productName: ['储蓄卡', '信用卡', '理财产品', '贷款产品'][Math.floor(Math.random() * 4)],
-    productType: ['自营', '助贷'][Math.floor(Math.random() * 2)],
-    balance: (Math.random() * 100000).toFixed(2),
-    status: ['正常', '冻结', '注销'][Math.floor(Math.random() * 3)],
+    productName: ['储蓄卡', '信用卡', '理财产品', '贷款产品'][h('productName') % 4],
+    productType: ['自营', '助贷'][h('productType') % 2],
+    balance: (h('balance') / 2147483647 * 100000).toFixed(2),
+    status: ['正常', '冻结', '注销'][h('status') % 3],
     creditId: `CR${String(index + 1).padStart(6, '0')}`,
-    creditDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    channel: ['线上', '线下', '电话'][Math.floor(Math.random() * 3)],
-    result: ['通过', '拒绝', '待审核'][Math.floor(Math.random() * 3)],
-    initialLimit: (Math.random() * 50000).toFixed(2),
-    currentLimit: (Math.random() * 50000).toFixed(2),
-    riskLevel: ['低', '中', '高'][Math.floor(Math.random() * 3)],
+    creditDate: new Date(Date.now() - h('creditDate') / 2147483647 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    channel: ['线上', '线下', '电话'][h('channel') % 3],
+    result: ['通过', '拒绝', '待审核'][h('result') % 3],
+    initialLimit: (h('initialLimit') / 2147483647 * 50000).toFixed(2),
+    currentLimit: (h('currentLimit') / 2147483647 * 50000).toFixed(2),
+    riskLevel: ['低', '中', '高'][h('riskLevel') % 3],
     loanId: `LN${String(index + 1).padStart(6, '0')}`,
-    loanDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    amount: (Math.random() * 100000).toFixed(2),
-    installments: Math.floor(Math.random() * 36) + 1,
+    loanDate: new Date(Date.now() - h('loanDate') / 2147483647 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    amount: (h('amount') / 2147483647 * 100000).toFixed(2),
+    installments: h('installments') % 36 + 1,
     collectionId: `CL${String(index + 1).padStart(6, '0')}`,
-    collectionTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    collectionType: ['电话', '短信', '上门'][Math.floor(Math.random() * 3)],
+    collectionTime: new Date(Date.now() - h('collectionTime') / 2147483647 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    collectionType: ['电话', '短信', '上门'][h('collectionType') % 3],
     collector: `催收员${index + 1}`,
-    overdueAmount: (Math.random() * 10000).toFixed(2),
-    overdueDays: Math.floor(Math.random() * 90) + 1,
+    overdueAmount: (h('overdueAmount') / 2147483647 * 10000).toFixed(2),
+    overdueDays: h('overdueDays') % 90 + 1,
     recordId: `MR${String(index + 1).padStart(6, '0')}`,
-    marketingTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    marketingType: ['短信', '电话', '邮件'][Math.floor(Math.random() * 3)],
+    marketingTime: new Date(Date.now() - h('marketingTime') / 2147483647 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    marketingType: ['短信', '电话', '邮件'][h('marketingType') % 3],
     content: `营销内容${index + 1}`,
     operator: `营销员${index + 1}`,
-    openTime: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+    openTime: new Date(Date.now() - h('openTime') / 2147483647 * 365 * 24 * 60 * 60 * 1000).toISOString(),
     updateTime: new Date().toISOString()
   }
   

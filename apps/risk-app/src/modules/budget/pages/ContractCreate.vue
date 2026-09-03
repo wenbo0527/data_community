@@ -7,7 +7,7 @@
     <a-row :gutter="12">
       <a-col :span="24">
         <a-form ref="formRef" :model="form" :rules="rules" layout="vertical" :size="'large'">
-          <a-collapse :bordered="false">
+          <a-collapse :bordered="false" :default-active-key="['contract', 'external']">
             <a-collapse-item key="contract" header="合同信息与上传">
                 <a-row :gutter="12">
                   <a-col :span="24">
@@ -107,22 +107,19 @@
                     </a-space>
                     <!-- PRD D1: 穿梭框（Transfer）+ 接口号搜索 + 已关联不可取消 -->
                     <a-transfer
-                      v-model:target-keys="selectedExternalIds"
+                      v-model="selectedExternalIds"
                       :data="externalTransferData"
-                      :allow-search="true"
-                      :search-placeholder="'搜索外数名称或接口号'"
-                      :titles="['可选外数', '已关联外数']"
-                      :filter-option="filterExternal"
-                      show-check-all
-                      :virtual-list-props="{ height: 360 }"
+                      show-search
+                      :source-input-search-props="{ placeholder: '搜索外数名称或接口号' }"
+                      :target-input-search-props="{ placeholder: '搜索外数名称或接口号' }"
+                      :title="['可选外数', '已关联外数']"
+                      show-select-all
                       style="width: 100%"
                     />
                   </a-space>
                 </a-form-item>
                 <div class="step-actions"><a-space><a-button @click="skipUpload">跳过上传</a-button></a-space></div>
             </a-collapse-item>
-          </a-collapse>
-          <a-collapse :bordered="false">
             <a-collapse-item key="external" header="外数信息配置">
               <a-alert type="info" content="已选择外数后，在此维护价格体系与备注。" style="margin-bottom:8px" />
               <a-divider orientation="left">按外数维护价格与备注</a-divider>
@@ -341,15 +338,18 @@ const externalOptions = computed(() => {
 const externalTransferData = computed(() => {
   const sup = String(form.supplier || '').trim()
   const base = (products.value || []).filter((p: any) => !sup || String(p.supplier || '').trim() === sup)
-  return base.map((p: any) => ({
-    value: String(p.id),
-    label: p.name || p.productName || p.code,
-    disabled: false,
-    // 自定义搜索字段（接口号）
-    interfaceNo: p.interfaceNo || '',
-    supplier: p.supplier || '—',
-    tag: p.interfaceNo ? `接口号:${p.interfaceNo}` : '待补充接口号'
-  }))
+  return base.map((p: any) => {
+    const name = p.name || p.productName || p.code
+    const supplier = p.supplier || '—'
+    const interfaceNo = p.interfaceNo || ''
+    // 将供应商和接口号拼入 label，使 Arco 默认搜索可按名称/接口号/供应商匹配
+    const label = `${name}（${supplier}${interfaceNo ? ' / 接口号:' + interfaceNo : ''}）`
+    return {
+      value: String(p.id),
+      label,
+      disabled: false,
+    }
+  })
 })
 // PRD D1: 穿梭框搜索（名称/接口号/合作机构）
 const filterExternal = (inputValue: string, item: any) => {
@@ -393,13 +393,27 @@ const rules = {
 
 const goBack = () => router.push('/budget/contracts')
 const skipUpload = () => { Message.info('已跳过上传'); skipUploadSelected.value = true }
-// 供应商变更后，联动清空关联数据
+// 供应商变更后，联动过滤外数选择（仅清除与新合作机构不匹配的，保留匹配项，避免清空由外数选择自动回填的合作机构对应的选项）
 watch(() => form.supplier, (val) => {
   if (Array.isArray(form.frameworkIds)) form.frameworkIds = []
   if (Array.isArray(form.supplementIds)) form.supplementIds = []
-  selectedExternalIds.value = []
-  activeExternalId.value = undefined
-  Object.keys(externalConfigs).forEach(k => { delete externalConfigs[k] })
+  const sup = String(val || '').trim()
+  const kept = selectedExternalIds.value.filter(id => {
+    const p = products.value.find((x: any) => String(x.id) === String(id))
+    return !sup || !p || String(p.supplier || '').trim() === sup
+  })
+  if (kept.length !== selectedExternalIds.value.length) {
+    selectedExternalIds.value = kept
+  }
+  // 清理已移除外数的价格配置
+  Object.keys(externalConfigs).forEach(k => {
+    if (!kept.some(id => String(id) === k)) delete externalConfigs[k]
+  })
+  if (kept.length && (!activeExternalId.value || !kept.some(id => String(id) === String(activeExternalId.value)))) {
+    activeExternalId.value = kept[0]
+  } else if (!kept.length) {
+    activeExternalId.value = undefined
+  }
 })
 // 计费类型变更时的处理
 const onBillingTypeChange = (extKey: string) => {

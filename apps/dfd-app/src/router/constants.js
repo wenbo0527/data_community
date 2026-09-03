@@ -259,7 +259,7 @@ export const BREADCRUMB_CONFIG = {
   [ROUTE_NAMES.MANAGEMENT.SERVICE.BACKTRACK]: [
     { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },
     { title: '服务管理', path: ROUTE_PATHS.MANAGEMENT.SERVICE.ROOT },
-    { title: '全量变量回溯申请', path: ROUTE_PATHS.MANAGEMENT.SERVICE.BACKTRACK }
+    { title: '全量特征回溯申请', path: ROUTE_PATHS.MANAGEMENT.SERVICE.BACKTRACK }
   ],
   [ROUTE_NAMES.MANAGEMENT.ACCOMPANY.ROOT]: [
     { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },

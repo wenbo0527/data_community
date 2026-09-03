@@ -76,7 +76,7 @@ const getTypeConfig = (type: string) => {
   const map: Record<string, any> = {
     'table': { icon: IconFile, label: '数据表', colorClass: 'arcoblue', tagColor: 'arcoblue' },
     'metric': { icon: IconTrophy, label: '指标', colorClass: 'orangered', tagColor: 'orangered' },
-    'variable': { icon: IconCode, label: '变量', colorClass: 'purple', tagColor: 'purple' },
+    'variable': { icon: IconCode, label: '特征', colorClass: 'purple', tagColor: 'purple' },
     'feature': { icon: IconMindMapping, label: '特征', colorClass: 'magenta', tagColor: 'magenta' },
     'file': { icon: IconDriveFile, label: '文件', colorClass: 'gray', tagColor: 'gray' },
     'api': { icon: IconApps, label: 'API', colorClass: 'green', tagColor: 'green' },

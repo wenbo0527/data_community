@@ -81,7 +81,7 @@
 import { ref, computed, watch } from 'vue'
 import { Modal as AModal } from '@arco-design/web-vue'
 import BaseForm from './BaseForm.vue'
-import { businessMessage } from '@/utils/message'
+import { businessMessage } from '@app/shared-utils'
 
 export default {
   name: 'BaseModal',

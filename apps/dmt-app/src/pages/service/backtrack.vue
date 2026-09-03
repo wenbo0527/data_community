@@ -2,7 +2,7 @@
   <!-- @prd: service -->
   <div class="content">
     <div class="page-header">
-      <h2>全量变量回溯申请</h2>
+      <h2>全量特征回溯申请</h2>
       <a-button type="primary" @click="showAddModal">
         <template #icon>
           <IconPlus />
@@ -65,9 +65,9 @@
       @cancel="handleCancel"
     >
       <div class="modal-content">
-        <!-- 变量范围 -->
+        <!-- 特征范围 -->
         <div class="form-section">
-          <div class="section-title">变量范围</div>
+          <div class="section-title">特征范围</div>
           <a-radio-group v-model="formData.variableScope" class="radio-group">
             <a-radio value="all">全部</a-radio>
             <a-radio value="custom">自定义</a-radio>

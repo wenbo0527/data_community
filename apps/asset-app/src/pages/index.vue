@@ -75,7 +75,7 @@ const modules = [
     color: 'purple',
     tag: '核心',
     description: '数据资产编目、注册与发布',
-    features: ['表管理', '指标管理', '变量管理', '元素管理']
+    features: ['表管理', '指标管理', '特征管理', '元素管理']
   },
   {
     key: 'data-map',

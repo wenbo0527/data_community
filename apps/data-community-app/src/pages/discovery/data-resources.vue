@@ -70,6 +70,13 @@
         </a-spin>
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 

@@ -22,7 +22,7 @@
               <a-option value="">全部类型</a-option>
               <a-option value="table">数据表</a-option>
               <a-option value="metric">指标</a-option>
-              <a-option value="variable">变量</a-option>
+              <a-option value="variable">特征</a-option>
               <a-option value="external_data">外部数据</a-option>
               <a-option value="collection">集合</a-option>
               <a-option value="service">服务</a-option>

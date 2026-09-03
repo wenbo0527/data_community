@@ -21,8 +21,8 @@
             <a-card title="基础配置信息" :bordered="false" class="panel-card">
               <a-form-item label="特征大类" required field="majorCategory">
                 <a-radio-group v-model="form.majorCategory" type="button" size="small">
-                  <a-radio value="credit">征信变量</a-radio>
-                  <a-radio value="behavior">行为变量</a-radio>
+                  <a-radio value="credit">征信特征</a-radio>
+                  <a-radio value="behavior">行为特征</a-radio>
                   <a-radio value="model_output">模型输出</a-radio>
                 </a-radio-group>
               </a-form-item>

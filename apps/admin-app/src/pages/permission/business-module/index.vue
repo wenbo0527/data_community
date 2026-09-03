@@ -147,7 +147,7 @@
               <a-select v-model="bindForm.type" placeholder="选择类型">
                 <a-option value="table">表</a-option>
                 <a-option value="metric">指标</a-option>
-                <a-option value="variable">变量</a-option>
+                <a-option value="variable">特征</a-option>
                 <a-option value="api">API</a-option>
                 <a-option value="collection">常用表集合</a-option>
                 <a-option value="flow">核心业务流程</a-option>

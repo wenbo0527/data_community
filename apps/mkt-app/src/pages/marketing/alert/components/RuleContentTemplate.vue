@@ -32,7 +32,7 @@
       >
         <a-textarea
           v-model="formData.title"
-          placeholder="请输入消息标题，支持变量替换"
+          placeholder="请输入消息标题，支持特征替换"
           :max-length="200"
           show-word-limit
           :auto-size="{ minRows: 2, maxRows: 4 }"
@@ -48,7 +48,7 @@
         <div class="content-editor">
           <a-textarea
             v-model="formData.content"
-            placeholder="请输入消息内容，支持变量替换"
+            placeholder="请输入消息内容，支持特征替换"
             :max-length="1000"
             show-word-limit
             :auto-size="{ minRows: 6, maxRows: 12 }"
@@ -58,7 +58,7 @@
             <a-dropdown @select="insertVariable">
               <a-button type="text" size="mini">
                 <template #icon><IconPlus /></template>
-                插入变量
+                插入特征
               </a-button>
               <template #content>
                 <a-doption
@@ -77,10 +77,10 @@
         </div>
       </a-form-item>
 
-      <!-- 变量说明 -->
-      <a-form-item label="可用变量">
+      <!-- 特征说明 -->
+      <a-form-item label="可用特征">
         <a-collapse :default-active-key="['variables']">
-          <a-collapse-item header="变量说明" key="variables">
+          <a-collapse-item header="特征说明" key="variables">
             <div class="variable-list">
               <div
                 v-for="category in variableCategories"
@@ -153,7 +153,7 @@
         </div>
         <a-divider />
         <div class="preview-variables">
-          <div class="variables-title">使用到的变量：</div>
+          <div class="variables-title">使用到的特征：</div>
           <div class="variables-list">
             <a-tag
               v-for="variable in getTemplateVariables(selectedTemplate)"
@@ -224,7 +224,7 @@ const templateOptions = ref([
   }
 ])
 
-// 可用变量
+// 可用特征
 const availableVariables = computed(() => {
   const baseVars = [
     { key: '{{ruleName}}', label: '规则名称', type: 'text' },
@@ -253,7 +253,7 @@ const availableVariables = computed(() => {
   return baseVars
 })
 
-// 变量分类
+// 特征分类
 const variableCategories = computed(() => [
   {
     key: 'basic',
@@ -332,7 +332,7 @@ const renderTemplate = (template) => {
     currentFailureRate: 15.5
   }
 
-  // 替换变量
+  // 替换特征
   Object.keys(data).forEach(key => {
     const pattern = new RegExp(`{{${key}}}`, 'g')
     rendered = rendered.replace(pattern, data[key])

@@ -174,7 +174,7 @@
                 <div class="template-text content">{{ formData.contentTemplate.content || '无内容' }}</div>
               </div>
               <div v-if="formData.contentTemplate.variables?.length" class="variables-section">
-                <div class="section-label">使用变量：</div>
+                <div class="section-label">使用特征：</div>
                 <a-space wrap>
                   <a-tag
                     v-for="variable in formData.contentTemplate.variables"

@@ -144,7 +144,7 @@ const routes: RouteRecordRaw[] = [
         path: 'variable-map',
         name: 'VariableMap',
         component: () => import('./pages/variable-map/index.vue'),
-        meta: { title: '变量地图' }
+        meta: { title: '特征地图' }
       },
       {
         path: 'feature-map',
@@ -197,12 +197,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '指标字典' }
       },
 
-      // --- 变量字典 ---
+      // --- 特征字典 ---
       {
         path: 'variable-dict',
         name: 'VariableDict',
         component: () => import('./pages/variable-dict/index.vue'),
-        meta: { title: '变量字典' }
+        meta: { title: '特征字典' }
       },
 
       // --- 特征字典 ---
@@ -275,7 +275,7 @@ const routes: RouteRecordRaw[] = [
 
       // --- 指标地图详情 ---
       {
-        path: 'metrics-map/detail',
+        path: 'metrics-map/detail/:id',
         name: 'MetricsMapDetail',
         component: () => import('./pages/metrics-map/detail.vue'),
         meta: { title: '指标详情' }
@@ -341,7 +341,7 @@ const routes: RouteRecordRaw[] = [
     path: '/variable-dict',
     name: 'VariableDictFlat',
     component: () => import('./pages/variable-dict/index.vue'),
-    meta: { title: '变量字典' }
+    meta: { title: '特征字典' }
   },
   {
     path: '/indicator-dict',

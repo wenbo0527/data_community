@@ -1,8 +1,8 @@
 <template>
   <PageContainer>
     <PageHeader
-      :title="focusVariable ? `变量字典 · ${focusVariable}` : '变量字典'"
-      sub-title="所有变量的标准定义 · 字典视图与地图视图合一"
+      :title="focusVariable ? `特征字典 · ${focusVariable}` : '特征字典'"
+      sub-title="所有特征的标准定义 · 字典视图与地图视图合一"
     >
       <template #extra>
         <a-button @click="goOverview">
@@ -13,19 +13,19 @@
     </PageHeader>
     <div class="content-wrapper">
       <a-alert v-if="focusVariable" type="info" :show-icon="true" style="margin-bottom: 16px">
-        正在查看「{{ focusVariable }}」的变量定义
+        正在查看「{{ focusVariable }}」的特征定义
       </a-alert>
 
       <a-card :bordered="false">
         <a-tabs v-model:activeKey="viewMode">
           <a-tab-pane key="dict" title="字典视图">
-            <a-input-search v-model="keyword" placeholder="搜索变量名/编码" size="large" allow-clear style="margin-bottom: 16px" />
+            <a-input-search v-model="keyword" placeholder="搜索特征名/编码" size="large" allow-clear style="margin-bottom: 16px" />
             <a-collapse :default-active-key="['population', 'behavior', 'finance', 'risk']">
               <a-collapse-item v-for="t in types" :key="t.code" :header="`${t.name} (${t.variables.length})`">
                 <a-table :data="filtered(t.variables)" :pagination="false" row-key="code" size="small">
                   <template #columns>
                     <a-table-column title="编码" data-index="code" :width="100" />
-                    <a-table-column title="变量名" data-index="name">
+                    <a-table-column title="特征名" data-index="name">
                       <template #cell="{ record }">
                         <a-link @click="focusVariableInfo = record; focusVariable = record.name">{{ record.name }}</a-link>
                       </template>
@@ -49,9 +49,9 @@
 
           <a-tab-pane key="map" title="地图视图">
             <a-row :gutter="[16, 16]" style="margin-bottom: 16px">
-              <a-col :span="6"><a-card :bordered="false"><a-statistic title="变量总数" :value="variablesTotal" /></a-card></a-col>
+              <a-col :span="6"><a-card :bordered="false"><a-statistic title="特征总数" :value="variablesTotal" /></a-card></a-col>
               <a-col :span="6"><a-card :bordered="false"><a-statistic title="平均覆盖率" :value="avgCoverage" suffix="%" /></a-card></a-col>
-              <a-col :span="6"><a-card :bordered="false"><a-statistic title="衍生变量" :value="derivedCount" /></a-card></a-col>
+              <a-col :span="6"><a-card :bordered="false"><a-statistic title="衍生特征" :value="derivedCount" /></a-card></a-col>
               <a-col :span="6"><a-card :bordered="false"><a-statistic title="枚举值" :value="enumCount" /></a-card></a-col>
             </a-row>
 
@@ -120,9 +120,9 @@ const types = ref(
         byType[key] = {
           name:
             key === 'population' ? '人口属性' :
-            key === 'behavior' ? '行为变量' :
+            key === 'behavior' ? '行为特征' :
             key === 'finance' ? '金融属性' :
-            '风险变量',
+            '风险特征',
           variables: []
         }
       }

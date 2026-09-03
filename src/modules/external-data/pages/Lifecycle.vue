@@ -131,7 +131,7 @@ const statusLabel = (s?: string) => s === 'pending' ? '待处理' : s === 'in_pr
 const statusTag = (s?: string) => s === 'pending' ? 'default' : s === 'in_progress' ? 'warning' : s === 'completed' ? 'success' : s === 'failed' ? 'danger' : 'default'
 const formatDate = (d?: string) => { try { return new Date(d || '').toLocaleDateString() } catch { return '—' } }
 
-const load = async () => { try { await store.fetchProducts(); await store.fetchLifecycleData({}); await store.fetchBurndown({ range: 'month' }); await store.fetchTasks(); Message.success('已加载生命周期数据') } catch { Message.error('加载失败') } }
+const load = async () => { try { await Promise.all([store.fetchProducts(), store.fetchLifecycleData({}), store.fetchBurndown({ range: 'month' }), store.fetchTasks()]); Message.success('已加载生命周期数据') } catch { Message.error('加载失败') } }
 onMounted(load)
 const goArchive = (status: string) => { router.push({ path: '/risk/external-data/archive', query: { status } }) }
 const goNav = (path: string) => { router.push(path) }

@@ -75,10 +75,10 @@ const INITIAL: ShelfItem[] = [
   // ───── 要素类 ─────
   { id: 'ELM-001', kind: 'element', subType: '指标', name: 'DAU(日活跃用户)', description: '日活指标', code: 'M001', owner: '王运营', status: 'active', onShelfAt: '2025-03-01', tags: ['核心', 'DAU'], history: [] },
   { id: 'ELM-002', kind: 'element', subType: '指标', name: '首逾率', description: '首逾率 FPD30', code: 'M020', owner: '张风控', status: 'active', onShelfAt: '2025-04-15', tags: ['风控'], history: [] },
-  { id: 'ELM-003', kind: 'element', subType: '变量', name: '近 30 天活跃天数', description: '用户活跃天数', code: 'V101', owner: '王运营', status: 'active', onShelfAt: '2025-03-15', tags: ['活跃'], history: [] },
+  { id: 'ELM-003', kind: 'element', subType: '特征', name: '近 30 天活跃天数', description: '用户活跃天数', code: 'V101', owner: '王运营', status: 'active', onShelfAt: '2025-03-15', tags: ['活跃'], history: [] },
   { id: 'ELM-004', kind: 'element', subType: '特征', name: '设备指纹风险分', description: '设备指纹综合风险分', code: 'F005', owner: '张风控', status: 'active', onShelfAt: '2025-05-20', tags: ['反欺诈'], history: [] },
   { id: 'ELM-005', kind: 'element', subType: '指标', name: 'GMV(成交总额)', description: '日 GMV', code: 'M010', owner: '李产品', status: 'active', onShelfAt: '2025-03-10', tags: ['核心'], history: [] },
-  { id: 'ELM-006', kind: 'element', subType: '变量', name: '历史最大逾期金额', description: '历史最大逾期金额', code: 'V205', owner: '张风控', status: 'inactive', onShelfAt: '2025-04-01', offShelfAt: '2026-08-03', tags: ['敏感'], history: [{ ts: '2026-08-03 16:00', actor: '张风控', action: 'off', from: 'active', to: 'inactive', comment: '合规审查' }] }
+  { id: 'ELM-006', kind: 'element', subType: '特征', name: '历史最大逾期金额', description: '历史最大逾期金额', code: 'V205', owner: '张风控', status: 'inactive', onShelfAt: '2025-04-01', offShelfAt: '2026-08-03', tags: ['敏感'], history: [{ ts: '2026-08-03 16:00', actor: '张风控', action: 'off', from: 'active', to: 'inactive', comment: '合规审查' }] }
 ]
 
 // ───────────────────────────── 状态 ─────────────────────────────
@@ -148,4 +148,4 @@ export const SHELF_KIND_LABEL: Record<ShelfKind, string> = {
 
 export const SHELF_RESOURCE_SUBTYPES = ['业务系统', '文件导入', '日志数据', '实时数据']
 export const SHELF_ASSET_SUBTYPES = ['集合', '表', '外数']
-export const SHELF_ELEMENT_SUBTYPES = ['指标', '变量', '特征']
+export const SHELF_ELEMENT_SUBTYPES = ['指标', '特征', '特征']

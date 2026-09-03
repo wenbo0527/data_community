@@ -17,7 +17,7 @@
       >
         <a-select-option value="table">数据表</a-select-option>
         <a-select-option value="metric">指标</a-select-option>
-        <a-select-option value="variable">变量</a-select-option>
+        <a-select-option value="variable">特征</a-select-option>
         <a-select-option value="external_data">外部数据</a-select-option>
         <a-select-option value="collection">集合</a-select-option>
         <a-select-option value="service">服务</a-select-option>
@@ -199,7 +199,7 @@ export default {
       const typeMap = {
         table: '数据表',
         metric: '指标',
-        variable: '变量',
+        variable: '特征',
         external_data: '外部数据',
         collection: '集合',
         service: '服务'

@@ -73,7 +73,7 @@ import { Message, Modal } from '@arco-design/web-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import { IconFile, IconUser, IconLock, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
-import mockData from '@/mock/data-map.js'
+import mockData from '@/mock/data-map'
 
 interface TableField {
   name: string

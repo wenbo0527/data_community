@@ -64,7 +64,7 @@
                 </a-table>
               </a-tab-pane>
 
-              <a-tab-pane key="variables" :title="`变量(${variables.length})`">
+              <a-tab-pane key="variables" :title="`特征(${variables.length})`">
                 <a-table
                   :columns="variableColumns"
                   :data="variables"

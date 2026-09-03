@@ -73,7 +73,7 @@
           <AAlert
             type="info"
             message="字段映射说明"
-            description="请为上传的样本文件定义字段类型。样本日期字段用于确定分析时间跨度，平台产品字段用于识别数据来源，变量字段用于后续的分析计算。在Demo模式下，您可以跳过文件上传直接进入此步骤。"
+            description="请为上传的样本文件定义字段类型。样本日期字段用于确定分析时间跨度，平台产品字段用于识别数据来源，特征字段用于后续的分析计算。在Demo模式下，您可以跳过文件上传直接进入此步骤。"
             show-icon
             style="margin-bottom: 16px"
           />
@@ -124,13 +124,13 @@
                 </ARow>
               </div>
 
-              <!-- 变量字段配置 -->
+              <!-- 特征字段配置 -->
               <div class="variable-fields">
-                <h5>变量字段配置</h5>
+                <h5>特征字段配置</h5>
                 <div class="field-selection">
                   <ASelect
                     v-model="fieldMapping.variableFields"
-                    placeholder="请选择变量字段"
+                    placeholder="请选择特征字段"
                     multiple
                     :max-tag-count="3"
                   >
@@ -168,10 +168,10 @@
                   <ADescriptionsItem label="平台产品字段">
                     <ATag color="green">{{ fieldMapping.platformField || '未设置' }}</ATag>
                   </ADescriptionsItem>
-                  <ADescriptionsItem label="变量字段数量">
+                  <ADescriptionsItem label="特征字段数量">
                     <ATag color="orange">{{ fieldMapping.variableFields.length }} 个</ATag>
                   </ADescriptionsItem>
-                  <ADescriptionsItem label="变量字段列表">
+                  <ADescriptionsItem label="特征字段列表">
                     <div class="variable-fields-list">
                       <ATag 
                         v-for="field in fieldMapping.variableFields" 
@@ -240,7 +240,7 @@
                 <div v-if="fieldMapping">
                   <p>样本日期字段: {{ fieldMapping.dateField }}</p>
                   <p>平台产品字段: {{ fieldMapping.platformField }}</p>
-                  <p>变量字段: {{ fieldMapping.variableFields.join(', ') }}</p>
+                  <p>特征字段: {{ fieldMapping.variableFields.join(', ') }}</p>
                 </div>
                 <div v-else>未配置</div>
               </ADescriptionsItem>
@@ -405,7 +405,7 @@ interface FieldMapping {
   variableFields: string[];
 }
 
-// 可用的变量字段（排除已选择的日期和平台字段）
+// 可用的特征字段（排除已选择的日期和平台字段）
 const availableVariableFields = computed(() => {
   return detectedFields.value.filter((field: string) => 
     field !== fieldMapping.value.dateField && 
@@ -517,7 +517,7 @@ const smartRecommendMapping = () => {
     fieldMapping.value.platformField = platformField;
   }
 
-  // 推荐变量字段（数值型字段）
+  // 推荐特征字段（数值型字段）
   const numericKeywords = ['count', 'amount', 'value', 'rate', 'ratio', '数量', '金额', '比率'];
   const variableFields = fields.filter((field: string) => 
     field !== dateField && 

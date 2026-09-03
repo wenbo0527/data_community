@@ -1,7 +1,7 @@
 import request from '@/utils/mockRequest'
 
 /**
- * 获取变量关系图
+ * 获取特征关系图
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */
@@ -14,8 +14,8 @@ export function getVariableGraph(params) {
 }
 
 /**
- * 获取变量血缘信息
- * @param {string} variableId - 变量ID
+ * 获取特征血缘信息
+ * @param {string} variableId - 特征ID
  * @returns {Promise}
  */
 export function getVariableLineage(variableId) {
@@ -39,7 +39,7 @@ export function analyzePath(data) {
 }
 
 /**
- * 获取变量关系类型
+ * 获取特征关系类型
  * @returns {Promise}
  */
 export function getRelationTypes() {
@@ -50,8 +50,8 @@ export function getRelationTypes() {
 }
 
 /**
- * 获取变量依赖关系
- * @param {string} variableId - 变量ID
+ * 获取特征依赖关系
+ * @param {string} variableId - 特征ID
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */
@@ -64,8 +64,8 @@ export function getVariableDependencies(variableId, params) {
 }
 
 /**
- * 获取变量影响分析
- * @param {string} variableId - 变量ID
+ * 获取特征影响分析
+ * @param {string} variableId - 特征ID
  * @returns {Promise}
  */
 export function getVariableImpact(variableId) {

@@ -1,8 +1,8 @@
 <template>
   <div class="variable-hub-page">
-    <DmtPageHeader title="变量一体化管理" subtitle="以变量台账为中心，把关系探索、评估与治理动作收口在同一资产域中。">
+    <DmtPageHeader title="特征一体化管理" subtitle="以特征台账为中心，把关系探索、评估与治理动作收口在同一资产域中。">
       <template #extra>
-        <a-button type="primary" @click="router.push('/variable-management')">进入变量台账</a-button>
+        <a-button type="primary" @click="router.push('/variable-management')">进入特征台账</a-button>
       </template>
     </DmtPageHeader>
 
@@ -25,7 +25,7 @@
     <a-row :gutter="12">
       <a-col :span="14">
         <a-card title="当前治理焦点" :bordered="false" class="panel-card">
-          <a-empty v-if="!focusItems.length" description="暂无需要关注的变量" />
+          <a-empty v-if="!focusItems.length" description="暂无需要关注的特征" />
           <a-list v-else :bordered="false">
             <a-list-item v-for="item in focusItems" :key="item.variableId">
               <a-list-item-meta :title="getVariableName(item.variableId)" :description="item.latestFocus">
@@ -73,13 +73,13 @@ const riskBg = (level) => ({ high: '#f53f3f', medium: '#ff7d00', low: '#00b42a' 
 const riskAvatar = (level) => ({ high: '高', medium: '中', low: '低' }[level] || '—')
 
 const entries = [
-  { key: 'ledger', title: '变量台账', desc: '权威台账，状态/分类/详情档案', path: '/variable-management', iconText: '账', color: '#165dff', bg: '#f0f7ff' },
+  { key: 'ledger', title: '特征台账', desc: '权威台账，状态/分类/详情档案', path: '/variable-management', iconText: '账', color: '#165dff', bg: '#f0f7ff' },
   { key: 'eval', title: '评估任务中心', desc: '批量评估/外数/内部报告回写', path: '/evaluation/tasks', iconText: '评', color: '#0fc6c2', bg: '#e6fffb' }
 ]
 
 const positioning = [
-  { title: '变量台账', desc: '沉淀变量主数据、分类、状态、审批与评估结果。血缘关系可在变量详情页查看。' },
-  { title: '评估任务中心', desc: '外数/内部评估能力收口，报告自动回写变量档案。' },
+  { title: '特征台账', desc: '沉淀特征主数据、分类、状态、审批与评估结果。血缘关系可在特征详情页查看。' },
+  { title: '评估任务中心', desc: '外数/内部评估能力收口，报告自动回写特征档案。' },
   { title: '探索过程', desc: '把问题、风险、结论回流为正式动作和证据链。' }
 ]
 
@@ -98,8 +98,8 @@ const summary = computed(() => {
 })
 
 const statItems = computed(() => [
-  { title: '变量总数', value: summary.value.total, subtitle: '已纳入台账', link: '/variable-management', iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff' },
-  { title: '高风险变量', value: summary.value.high, subtitle: '待治理', link: '/variable-management', iconText: '!', iconBg: '#fff1f0', iconColor: '#f53f3f' },
+  { title: '特征总数', value: summary.value.total, subtitle: '已纳入台账', link: '/variable-management', iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff' },
+  { title: '高风险特征', value: summary.value.high, subtitle: '待治理', link: '/variable-management', iconText: '!', iconBg: '#fff1f0', iconColor: '#f53f3f' },
   { title: '待处理动作', value: summary.value.pending, subtitle: '未闭环治理项', link: '/evaluation/tasks', iconText: '…', iconBg: '#fff7e8', iconColor: '#ff7d00' },
   { title: '已形成结论', value: summary.value.resolved, subtitle: '想法已闭环', iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a' }
 ])

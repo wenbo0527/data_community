@@ -35,6 +35,16 @@ export const useSignReportStore = defineStore('signReport', {
   },
 
   actions: {
+    // PRD V2: 签报总金额 ≥ SUM(签报/成交通知书金额)
+    validateV2(data: { totalAmount: number; partnerOrgs: SignReportPartnerOrg[] }): { valid: boolean; diff?: number } {
+      const total = Number(data.totalAmount || 0)
+      const sum = (data.partnerOrgs || []).reduce((acc, p) => acc + (Number(p.noticeAmount) || 0), 0)
+      if (total < sum) {
+        return { valid: false, diff: sum - total }
+      }
+      return { valid: true }
+    },
+
     async fetchList() {
       this.loading = true
       try {
@@ -67,6 +77,12 @@ export const useSignReportStore = defineStore('signReport', {
     },
 
     async create(payload: Omit<SignReport, 'id' | 'createdAt'>) {
+      // PRD V2: 签报总金额 ≥ SUM(签报/成交通知书金额)
+      const v2 = this.validateV2({ totalAmount: payload.totalAmount, partnerOrgs: payload.partnerOrgs })
+      if (!v2.valid) {
+        this.error = { code: 'SIGN_REPORT_V2_ERROR', message: `签报总金额不足，差额${v2.diff!.toLocaleString('zh-CN')}元` }
+        return false
+      }
       this.loading = true
       try {
         const item = await apiCreateSignReport(payload)
@@ -83,6 +99,14 @@ export const useSignReportStore = defineStore('signReport', {
     },
 
     async update(id: string, data: Partial<SignReport>) {
+      // PRD V2: 签报总金额 ≥ SUM(签报/成交通知书金额)（仅当包含金额数据时校验）
+      if (data.totalAmount !== undefined && data.partnerOrgs !== undefined) {
+        const v2 = this.validateV2({ totalAmount: data.totalAmount, partnerOrgs: data.partnerOrgs })
+        if (!v2.valid) {
+          this.error = { code: 'SIGN_REPORT_V2_ERROR', message: `签报总金额不足，差额${v2.diff!.toLocaleString('zh-CN')}元` }
+          return false
+        }
+      }
       this.loading = true
       try {
         const ok = await apiUpdateSignReport(id, data)

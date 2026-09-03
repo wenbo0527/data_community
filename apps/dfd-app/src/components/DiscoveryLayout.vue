@@ -44,7 +44,7 @@
             <span><icon-mind-mapping /> 数据要素发现</span>
           </template>
           <a-menu-item key="/discovery/metrics-map">指标地图</a-menu-item>
-          <a-menu-item key="/discovery/variable-map">变量地图</a-menu-item>
+          <a-menu-item key="/discovery/variable-map">特征地图</a-menu-item>
           <a-menu-item key="/discovery/feature-map">特征地图</a-menu-item>
           <a-menu-item key="/discovery/api-market">其他</a-menu-item>
         </a-sub-menu>

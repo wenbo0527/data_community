@@ -396,6 +396,16 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+// 确定性哈希函数，用于生成基于种子的确定性随机值
+function hashStr(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash = hash & hash
+  }
+  return Math.abs(hash)
+}
+
 // 步骤控制
 const currentStep = ref(0)
 const nextStep = () => {
@@ -746,22 +756,23 @@ const searchLoans = () => {
           loans: specificLoans
         })
       } else {
-        // 其他用户生成随机数据
-        const loanCount = Math.floor(Math.random() * 3) + 1
+        // 基于种子的确定性数据生成
+        const seed = idNumber
+        const loanCount = hashStr(seed + customerIndex + '_count') % 3 + 1
         for (let i = 0; i < loanCount; i++) {
-          const usageDate = new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
-          const dueDate = new Date(usageDate.getTime() + (Math.floor(Math.random() * 365) + 30) * 24 * 60 * 60 * 1000)
+          const usageDate = new Date(2023, hashStr(seed + customerIndex + '_' + i + '_month') % 12, hashStr(seed + customerIndex + '_' + i + '_day') % 28 + 1)
+          const dueDate = new Date(usageDate.getTime() + (hashStr(seed + customerIndex + '_' + i + '_dueDays') % 365 + 30) * 24 * 60 * 60 * 1000)
           
           mockLoans.push({
             id: `loan-${customerIndex}-${i}`,
             customerName: customerNames[customerIndex % customerNames.length],
             idNumber: idNumber,
             loanNumber: `JJ${String(customerIndex + 1).padStart(3, '0')}${String(i + 1).padStart(3, '0')}`,
-            loanAmount: Math.floor(Math.random() * 1000000) + 50000,
+            loanAmount: hashStr(seed + customerIndex + '_' + i + '_amount') % 1000000 + 50000,
             usageTime: usageDate.toISOString().split('T')[0],
             dueTime: dueDate.toISOString().split('T')[0],
-            status: statuses[Math.floor(Math.random() * statuses.length)],
-            fundPurpose: fundPurposes[Math.floor(Math.random() * fundPurposes.length)]
+            status: statuses[hashStr(seed + customerIndex + '_' + i + '_status') % statuses.length],
+            fundPurpose: fundPurposes[hashStr(seed + customerIndex + '_' + i + '_purpose') % fundPurposes.length]
           })
         }
         console.log(`=== 为身份证号${idNumber}生成随机数据 ===`, {

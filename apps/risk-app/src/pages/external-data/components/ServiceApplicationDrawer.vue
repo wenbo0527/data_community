@@ -26,7 +26,7 @@
                   <a-option value="在线批量调用">在线批量调用</a-option>
                   <a-option value="外数离线回溯申请">外数离线回溯申请</a-option>
                   <a-option value="周期跑批任务申请">周期跑批任务申请</a-option>
-                  <a-option value="全量变量回溯申请">全量变量回溯申请</a-option>
+                  <a-option value="全量特征回溯申请">全量特征回溯申请</a-option>
                   <a-option value="风险合规离线回溯申请">风险合规离线回溯申请</a-option>
                   <a-option value="批量外数调用服务申请">批量外数调用服务申请</a-option>
                 </a-select>
@@ -84,12 +84,12 @@
             <a-form-item label="脚本配置"><a-textarea placeholder="输入执行脚本或SQL" /></a-form-item>
           </div>
 
-          <!-- 全量变量回溯申请配置 -->
-          <div v-if="createForm.serviceType === '全量变量回溯申请'">
-            <a-alert type="info" style="margin-bottom: 16px">适用于全量变量的历史回溯。</a-alert>
-            <a-form-item label="变量选择" required>
-              <a-select multiple placeholder="选择变量">
-                <a-option>变量A</a-option><a-option>变量B</a-option><a-option>变量C</a-option>
+          <!-- 全量特征回溯申请配置 -->
+          <div v-if="createForm.serviceType === '全量特征回溯申请'">
+            <a-alert type="info" style="margin-bottom: 16px">适用于全量特征的历史回溯。</a-alert>
+            <a-form-item label="特征选择" required>
+              <a-select multiple placeholder="选择特征">
+                <a-option>特征A</a-option><a-option>特征B</a-option><a-option>特征C</a-option>
               </a-select>
             </a-form-item>
             <a-form-item label="时间范围" required>
@@ -237,7 +237,7 @@ import { useExternalDataStore } from '@/modules/external-data/stores'
 
 const store = useExternalDataStore()
 
-type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '批量外数调用服务申请'
+type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量特征回溯申请' | '风险合规离线回溯申请' | '批量外数调用服务申请'
 
 const props = defineProps<{
   visible: boolean

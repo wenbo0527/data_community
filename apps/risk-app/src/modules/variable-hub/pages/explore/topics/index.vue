@@ -93,14 +93,14 @@
         <a-form-item label="业务问题">
           <a-textarea v-model="createForm.businessProblem" placeholder="描述具体的业务痛点" :max-length="120" show-word-limit />
         </a-form-item>
-        <a-form-item label="变量假设">
+        <a-form-item label="特征假设">
           <a-textarea v-model="createForm.hypothesis" placeholder="描述要验证的假设" :max-length="120" show-word-limit />
         </a-form-item>
         <a-form-item label="业务域标签">
           <a-select v-model="createForm.domain" :options="domainOptions" placeholder="选择业务域" />
         </a-form-item>
-        <a-form-item label="目标变量类型">
-          <a-select v-model="createForm.variableTypeId" placeholder="选择变量类型" :options="variableTypeOptions" allow-clear />
+        <a-form-item label="目标特征类型">
+          <a-select v-model="createForm.variableTypeId" placeholder="选择特征类型" :options="variableTypeOptions" allow-clear />
         </a-form-item>
         <a-form-item label="探索分类">
           <a-select v-model="createForm.exploreCategoryId" placeholder="选择探索分类" :options="categoryOptions" allow-clear />
@@ -108,13 +108,13 @@
         <a-form-item label="关联数据源">
           <a-select v-model="createForm.dataSourceId" placeholder="选择数据源" :options="dataSourceOptions" allow-clear />
         </a-form-item>
-        <a-form-item label="关联已有变量">
+        <a-form-item label="关联已有特征">
           <a-select
             v-model="createForm.relatedVariableIds"
             multiple
             allow-search
             allow-clear
-            placeholder="选择可复用/对比的变量（可多选）"
+            placeholder="选择可复用/对比的特征（可多选）"
             :options="variableOptions"
           />
         </a-form-item>
@@ -173,7 +173,7 @@ const summary = computed(() => {
 const statItems = computed(() => [
   { title: '课题总数', value: summary.value.total, iconText: '#', iconBg: '#f0f7ff', iconColor: '#165dff', subtitle: '当前可见' },
   { title: '探索中', value: summary.value.statusCounts.exploring, iconText: '○', iconBg: '#e6fffb', iconColor: '#0fc6c2', subtitle: '进行中' },
-  { title: '已采纳', value: summary.value.statusCounts.adopted, iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a', subtitle: '进入变量台账' },
+  { title: '已采纳', value: summary.value.statusCounts.adopted, iconText: '✓', iconBg: '#e8ffea', iconColor: '#00b42a', subtitle: '进入特征台账' },
   { title: '已否决/暂缓', value: summary.value.statusCounts.rejected + summary.value.statusCounts.paused, iconText: '×', iconBg: '#fff1f0', iconColor: '#f53f3f', subtitle: '暂不推进' }
 ])
 
@@ -321,16 +321,16 @@ const columns = [
   { title: '关联特征ID', dataIndex: 'featureId', slotName: 'featureIdCell', width: 170 },
   { title: '优先级', dataIndex: 'priority', slotName: 'priorityCell', width: 100 },
   { title: '可见性', dataIndex: 'visibility', slotName: 'visibilityCell', width: 120 },
-  { title: '变量同步', dataIndex: 'variableSync', slotName: 'syncStatusCell', width: 130 },
+  { title: '特征同步', dataIndex: 'variableSync', slotName: 'syncStatusCell', width: 130 },
   { title: '负责人', dataIndex: 'owner', width: 100 },
   { title: '关联资源', dataIndex: 'relatedResources', slotName: 'resourcesCell' },
   { title: '更新时间', dataIndex: 'updatedAt', width: 150 },
   { title: '操作', dataIndex: 'action', slotName: 'actionCell', width: 140 }
 ]
 
-// §6.5 变量同步状态映射
+// §6.5 特征同步状态映射
 const syncStatusLabel = (value: VariableSyncStatus): string => ({
-  none: '无关联变量',
+  none: '无关联特征',
   pending_approval: '待审批',
   pending_deploy: '待部署',
   online: '已上线',
@@ -423,7 +423,7 @@ const handleCreateSubmit = () => {
   if (ds) relatedResources.push({ type: 'data_source', name: ds.value, displayName: ds.label })
   createForm.relatedVariableIds.forEach((id) => {
     const name = variableMap.get(id) || id
-    relatedResources.push({ type: 'variable', name: id, displayName: `变量：${name}` })
+    relatedResources.push({ type: 'variable', name: id, displayName: `特征：${name}` })
   })
 
   const topic = ExploreStore.addTopic({

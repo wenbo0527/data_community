@@ -7,7 +7,7 @@
           <a-select v-model="form.serviceType" placeholder="请选择服务类型" @change="handleServiceTypeChange">
             <a-option>在线批量调用</a-option>
             <a-option>外数离线回溯申请</a-option>
-            <a-option>全量变量回溯申请</a-option>
+            <a-option>全量特征回溯申请</a-option>
             <a-option>风险合规离线回溯申请</a-option>
           </a-select>
         </a-form-item>

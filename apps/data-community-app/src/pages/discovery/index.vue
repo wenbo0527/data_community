@@ -26,6 +26,9 @@
           <a-button class="action-btn" size="large" @click="handleFollow">
             <template #icon><icon-heart /></template>关注
           </a-button>
+          <a-button class="action-btn" size="large" @click="showMissingTicket({ assetType: 'table', pageSource: '数据发现门户' })">
+            <template #icon><icon-plus /></template>缺失工单
+          </a-button>
         </div>
 
         <div v-if="showAdvancedFilter" class="advanced-filter-panel">
@@ -87,6 +90,76 @@
                 </div>
               </div>
             </a-card>
+          </a-col>
+        </a-row>
+      </div>
+
+      <!-- 业务系统接入概览 -->
+      <div class="content-section" style="margin-top: 24px;">
+        <div class="section-header">
+          <h3 class="section-title">业务系统接入概览</h3>
+          <a-link class="more-link" @click="safePush('discovery/data-resources')">查看全部 <icon-right /></a-link>
+        </div>
+
+        <!-- 统计摘要 -->
+        <div class="bs-summary-row">
+          <div class="bs-summary-item">
+            <span class="bs-summary-value">{{ bsTotalSystems }}</span>
+            <span class="bs-summary-label">接入系统</span>
+          </div>
+          <div class="bs-summary-divider"></div>
+          <div class="bs-summary-item">
+            <span class="bs-summary-value">{{ bsTotalTables.toLocaleString() }}</span>
+            <span class="bs-summary-label">源表总数</span>
+          </div>
+          <div class="bs-summary-divider"></div>
+          <div class="bs-summary-item">
+            <span class="bs-summary-value">6</span>
+            <span class="bs-summary-label">数据库类型</span>
+          </div>
+          <div class="bs-summary-divider"></div>
+          <div class="bs-summary-item">
+            <span class="bs-summary-value" style="color: #00b42a;">6</span>
+            <span class="bs-summary-label">同步中</span>
+          </div>
+        </div>
+
+        <!-- 系统卡片列表 -->
+        <a-row :gutter="[16, 16]" style="margin-top: 20px;">
+          <a-col v-for="sys in businessSystems" :key="sys.id" :xs="24" :sm="12" :md="8" :lg="8">
+            <div class="bs-card" @click="safePush(sys.path)">
+              <div class="bs-card-header">
+                <a-tag :color="dbTypeColor(sys.dbType)" size="small">{{ sys.dbTypeLabel }}</a-tag>
+                <span class="bs-card-name">{{ sys.name }}</span>
+                <a-tag size="small" color="green" bordered>
+                  <span class="bs-sync-dot"></span>同步中
+                </a-tag>
+              </div>
+              <div class="bs-card-body">
+                <div class="bs-card-info">
+                  <div class="bs-info-item">
+                    <span class="bs-info-label">系统类型</span>
+                    <span class="bs-info-value">{{ sys.systemTypeLabel }}</span>
+                  </div>
+                  <div class="bs-info-item">
+                    <span class="bs-info-label">数据库</span>
+                    <span class="bs-info-value">{{ sys.database }}</span>
+                  </div>
+                  <div class="bs-info-item">
+                    <span class="bs-info-label">表数量</span>
+                    <span class="bs-info-value bs-table-count">{{ sys.tableCount }} 张</span>
+                  </div>
+                  <div class="bs-info-item">
+                    <span class="bs-info-label">负责人</span>
+                    <span class="bs-info-value">{{ sys.owner }}</span>
+                  </div>
+                  <div class="bs-info-item">
+                    <span class="bs-info-label">更新时间</span>
+                    <span class="bs-info-value">{{ sys.updatedAt }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </a-col>
         </a-row>
       </div>
@@ -217,6 +290,13 @@
         </div>
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
@@ -229,11 +309,15 @@ import {
   IconApps, IconCloud, IconStorage, IconUserGroup, IconBulb,
   IconTrophy, IconSettings, IconBook, IconFile, IconDesktop,
   IconBarChart, IconTags, IconCalendar, IconCodeBlock, IconSafe,
-  IconBranch, IconLink, IconCommon
+  IconBranch, IconLink, IconCommon, IconPlus
 } from '@arco-design/web-vue/es/icon'
 
 import { onMounted, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 const router = useRouter()
 const route = useRoute()
 
@@ -262,9 +346,9 @@ const normalizePath = (raw: string): string => {
   if (!raw) return ''
   let p = raw.trim()
   // 去掉子应用 BASE 前缀(/dca、/dca/)
-  p = p.replace(/^\/dca\/?/, '')
-  // 统一去掉前导 '/'
-  if (p.startsWith('/')) p = p.substring(1)
+  p = p.replace(/^\/dca\/?/, '/')
+  // 确保以 / 开头（绝对路径，vue-router 需要绝对路径才能正确匹配）
+  if (!p.startsWith('/')) p = '/' + p
   return p
 }
 
@@ -344,12 +428,27 @@ const collections = ref([
 // icon 字段用字符串 key(避免组件对象被 ref reactive 化时报警告)
 // 渲染时由 iconMap 通过 markRaw 解析成组件
 const dataResources = ref([
-  { name: '业务系统', count: 12, description: '核心 ERP/CRM/信贷系统', iconKey: 'desktop', path: 'discovery/asset-catalog?source=system' },
+  { name: '业务系统', count: 6, description: '核心 ERP/CRM/信贷系统', iconKey: 'desktop', path: 'discovery/data-resources' },
   { name: '外部数据', count: 8, description: '三方征信/银联/同盾', iconKey: 'cloud', path: 'discovery/external' },
   { name: '文件导入', count: 5, description: 'Excel/CSV 线下数据', iconKey: 'file', path: 'discovery/asset-catalog?source=file' },
   { name: '日志数据', count: 6, description: '埋点/应用/操作日志', iconKey: 'code-block', path: 'discovery/asset-catalog?source=log' },
   { name: '实时数据', count: 4, description: 'Kafka/CDC 流式接入', iconKey: 'bar-chart', path: 'discovery/asset-catalog?source=realtime' }
 ])
+
+// ========== 业务系统接入概览(6 个业务系统)==========
+const businessSystems = ref([
+  { id: 'BS001', name: '核心交易系统', dbType: 'mysql', dbTypeLabel: 'MySQL', systemType: 'core', systemTypeLabel: '核心交易', database: 'core_trade', tableCount: 320, owner: '李开发', updatedAt: '今天 10:30', status: 'syncing', path: 'discovery/data-resources' },
+  { id: 'BS002', name: '风控决策引擎', dbType: 'doris', dbTypeLabel: 'Doris', systemType: 'risk', systemTypeLabel: '风控系统', database: 'risk_decision', tableCount: 180, owner: '张风控', updatedAt: '今天 09:15', status: 'syncing', path: 'discovery/data-resources' },
+  { id: 'BS003', name: '用户中心', dbType: 'pg', dbTypeLabel: 'PostgreSQL', systemType: 'core', systemTypeLabel: '核心交易', database: 'user_center', tableCount: 95, owner: '王运营', updatedAt: '今天 11:20', status: 'syncing', path: 'discovery/data-resources' },
+  { id: 'BS004', name: '营销活动平台', dbType: 'hive', dbTypeLabel: 'Hive', systemType: 'marketing', systemTypeLabel: '营销系统', database: 'mkt_platform', tableCount: 420, owner: '陈营销', updatedAt: '今天 08:45', status: 'syncing', path: 'discovery/data-resources' },
+  { id: 'BS005', name: '财务核算系统', dbType: 'oracle', dbTypeLabel: 'Oracle', systemType: 'finance', systemTypeLabel: '财务系统', database: 'fin_acc', tableCount: 220, owner: '吴财务', updatedAt: '昨天 17:30', status: 'syncing', path: 'discovery/data-resources' },
+  { id: 'BS006', name: '数据分析平台', dbType: 'clickhouse', dbTypeLabel: 'ClickHouse', systemType: 'core', systemTypeLabel: '核心交易', database: 'olap', tableCount: 180, owner: '王运营', updatedAt: '今天 14:15', status: 'syncing', path: 'discovery/data-resources' }
+])
+
+// 业务系统统计
+const bsTotalSystems = computed(() => businessSystems.value.length)
+const bsTotalTables = computed(() => businessSystems.value.reduce((s, r: any) => s + r.tableCount, 0))
+const dbTypeColor = (t: string) => ({ mysql: 'arcoblue', doris: 'green', pg: 'cyan', hive: 'orange', oracle: 'red', clickhouse: 'purple' }[t] || 'gray')
 
 // ========== 数据资产(6 个域)==========
 const dataAssets = ref([
@@ -365,7 +464,7 @@ const dataAssets = ref([
 const dataElements = ref([
   { name: '核心指标', count: 48, description: '北极星/业务结果指标', iconKey: 'bar-chart', path: 'discovery/unified-metrics' },
   { name: '业务标签', count: 156, description: '客户/产品/事件标签', iconKey: 'tags', path: 'management/asset-management/asset-tags' },
-  { name: '数据变量', count: 312, description: '原子/衍生变量', iconKey: 'code-block', path: 'discovery/variable-dict' },
+  { name: '数据特征', count: 312, description: '原子/衍生特征', iconKey: 'code-block', path: 'discovery/variable-dict' },
   { name: '模型特征', count: 89, description: 'AI/ML 特征工程', iconKey: 'bulb', path: 'discovery/feature-dict' },
   { name: '指标地图', count: 28, description: '指标口径/口径图谱', iconKey: 'branch', path: 'discovery/indicator-dict' }
 ])
@@ -509,4 +608,25 @@ const goItem = (item: { path: string }) => safePush(item.path)
 .governance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; flex: 1; }
 .governance-item { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 16px; border-radius: 6px; transition: all 0.2s; cursor: pointer; }
 .governance-item:hover { background: #fff; border-color: #ffccc7; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
+
+/* 业务系统接入概览 */
+.bs-summary-row { display: flex; align-items: center; gap: 0; background: #f7f8fa; border-radius: 8px; padding: 20px 24px; }
+.bs-summary-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 32px; }
+.bs-summary-value { font-size: 28px; font-weight: 700; color: #1d2129; line-height: 1.2; }
+.bs-summary-label { font-size: 13px; color: #86909c; }
+.bs-summary-divider { width: 1px; height: 32px; background: #e5e6eb; }
+
+.bs-card { background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; padding: 16px 20px; cursor: pointer; transition: all 0.2s; height: 100%; box-sizing: border-box; }
+.bs-card:hover { border-color: #165dff; box-shadow: 0 4px 12px rgba(22,93,255,0.12); transform: translateY(-2px); }
+
+.bs-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f2f3f5; }
+.bs-card-name { font-size: 15px; font-weight: 600; color: #1d2129; flex: 1; }
+.bs-sync-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #00b42a; margin-right: 4px; }
+
+.bs-card-body { padding-top: 4px; }
+.bs-card-info { display: flex; flex-direction: column; gap: 8px; }
+.bs-info-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.bs-info-label { color: #86909c; }
+.bs-info-value { color: #4e5969; font-weight: 500; }
+.bs-table-count { color: #165dff; font-weight: 600; }
 </style>

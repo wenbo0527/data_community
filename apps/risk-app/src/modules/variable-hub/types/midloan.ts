@@ -17,12 +17,12 @@ export type MidloanStatus =
   | 'admin_confirmed'         // 管理员已确认
   | 'param_preparing'         // 参数准备
   | 'syncing_internal'        // 内数同步中
-  | 'syncing_variable'        // 变量中心同步中
+  | 'syncing_variable'        // 特征中心同步中
   | 'online'                  // 已上线
   | 'offline'                 // 已下线
   // 4 异常状态
   | 'internal_sync_failed'    // 内数同步失败
-  | 'variable_sync_failed'    // 变量中心同步失败
+  | 'variable_sync_failed'    // 特征中心同步失败
   | 'dw_online_failed'        // 数仓开发失败
   | 'offline_failed'          // 下线接收失败
 
@@ -42,11 +42,11 @@ export const MIDLOAN_STATUS_LABELS: Record<MidloanStatus, string> = {
   admin_confirmed: '管理员已确认',
   param_preparing: '参数准备',
   syncing_internal: '内数注册中',
-  syncing_variable: '变量中心注册中',
+  syncing_variable: '特征中心注册中',
   online: '已上线',
   offline: '已下线',
   internal_sync_failed: '内数注册失败',
-  variable_sync_failed: '变量中心注册失败',
+  variable_sync_failed: '特征中心注册失败',
   dw_online_failed: '数仓上线失败',
   offline_failed: '下线接收失败'
 }

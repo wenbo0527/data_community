@@ -228,6 +228,40 @@
             <a-empty description="暂无关联的服务校验模板" />
           </a-card>
         </a-tab-pane>
+
+        <!-- 7. 效果评估 -->
+        <a-tab-pane key="evaluation" title="效果评估">
+          <div class="eval-filter-bar" style="margin-bottom: 16px;">
+            <a-space wrap>
+              <a-select v-model="evalSelectedChannels" multiple style="min-width: 260px" placeholder="选择渠道（可多选）" allow-clear>
+                <a-option v-for="ch in evalChannels" :key="ch" :value="ch">{{ ch }}</a-option>
+              </a-select>
+              <a-checkbox v-model="evalAllChannels">全选</a-checkbox>
+              <a-select v-model="evalMonthStart" style="width: 150px" placeholder="起始月份">
+                <a-option v-for="m in evalMonths" :key="m" :value="m">{{ m }}</a-option>
+              </a-select>
+              <span style="color: var(--color-text-3);">~</span>
+              <a-select v-model="evalMonthEnd" style="width: 150px" placeholder="结束月份">
+                <a-option v-for="m in evalMonths" :key="m" :value="m">{{ m }}</a-option>
+              </a-select>
+            </a-space>
+            <a-alert type="info" style="margin-top: 8px;">
+              支持单月多渠道对比 或 单渠道多月趋势，不可同时多选渠道和多选月份。
+            </a-alert>
+          </div>
+
+          <a-card class="detail-card" title="外数调用样本情况分析" :bordered="false">
+            <a-table :columns="evalSampleColumns" :data="evalSampleTableData" :pagination="false" :scroll="{ x: 'max-content' }">
+              <template #empty><a-empty description="暂无样本数据" /></template>
+            </a-table>
+          </a-card>
+
+          <a-card class="detail-card" title="外数效果分析" :bordered="false" style="margin-top: 16px;">
+            <a-table :columns="evalEffectColumns" :data="evalEffectTableData" :pagination="false" :scroll="{ x: 'max-content' }">
+              <template #empty><a-empty description="暂无效果数据" /></template>
+            </a-table>
+          </a-card>
+        </a-tab-pane>
       </a-tabs>
     </div>
     <a-modal v-model:visible="editVisible" title="编辑档案" :width="800" :footer="false" :mask-closable="false">
@@ -415,7 +449,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, h, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExternalDataStore } from '@/modules/external-data/stores'
 import { useContractStore } from '../../budget/stores/contract'
@@ -618,6 +652,164 @@ const getRuleTypeName = (type: string) => {
   return map[type] || type
 }
 
+// ===== 效果评估 =====
+const evalSelectedChannels = ref<string[]>([])
+const evalMonthStart = ref('')
+const evalMonthEnd = ref('')
+const evaluationData = ref<any>({})
+
+const evalChannels = computed(() => evaluationData.value.channels || [])
+const evalMonths = computed(() => evaluationData.value.months || [])
+
+// 选中区间内的月份
+const evalSelectedMonths = computed(() => {
+  const months = evalMonths.value
+  if (!evalMonthStart.value || !evalMonthEnd.value) return months.slice(-1)
+  const si = months.indexOf(evalMonthStart.value)
+  const ei = months.indexOf(evalMonthEnd.value)
+  if (si === -1 || ei === -1) return months.slice(-1)
+  return months.slice(Math.min(si, ei), Math.max(si, ei) + 1)
+})
+
+// 当前生效的渠道（默认取第一个）
+const activeChannels = computed(() =>
+  evalSelectedChannels.value.length > 0
+    ? evalSelectedChannels.value
+    : (evalChannels.value.length > 0 ? [evalChannels.value[0]] : [])
+)
+
+// 全选渠道
+const evalAllChannels = computed({
+  get: () => evalChannels.value.length > 0 && evalSelectedChannels.value.length === evalChannels.value.length,
+  set: (val: boolean) => { evalSelectedChannels.value = val ? [...evalChannels.value] : [] }
+})
+
+// 样本指标定义
+const sampleMetricDefs = [
+  { key: 'callCount', label: '调用人数', fmt: (v: number) => v.toLocaleString('zh-CN'), desc: '调用该外数的总客户数' },
+  { key: 'goodCount', label: '好客户', fmt: (v: number) => v.toLocaleString('zh-CN'), desc: '好客户数量' },
+  { key: 'badCount', label: '坏客户', fmt: (v: number) => v.toLocaleString('zh-CN'), desc: '坏客户数量' },
+  { key: 'grayCount', label: '灰客户', fmt: (v: number) => v.toLocaleString('zh-CN'), desc: '灰度/不确定客户数量' },
+  { key: 'badRate', label: '坏占比', fmt: (v: number) => `${v.toFixed(2)}%`, desc: '坏客户/总调用人数' },
+  { key: 'nullRate', label: '空值率', fmt: (v: number) => `${v.toFixed(2)}%`, desc: '外数返回空值占比' },
+]
+
+// 效果指标定义
+const effectMetricDefs = [
+  { key: 'psi', label: 'PSI', fmt: (v: number) => v.toFixed(4), desc: '群体稳定性指标，<0.1稳定，0.1-0.25轻微偏移，>0.25不稳定' },
+  { key: 'ks', label: 'KS', fmt: (v: number) => v.toFixed(4), desc: '区分好坏客户能力，>0.3良好，>0.5很强' },
+  { key: 'lift', label: 'LIFT', fmt: (v: number) => v.toFixed(2), desc: '相比随机选择，坏客户识别效率的提升倍数' },
+]
+
+// 样本值颜色
+function sampleColor(key: string, v: number): string {
+  if (key === 'badRate' && v > 15) return 'rgb(var(--red-6))'
+  if (key === 'nullRate' && v > 5) return 'rgb(var(--orange-6))'
+  return 'var(--color-text-1)'
+}
+
+// 效果值颜色
+function effectColor(key: string, v: number): string {
+  if (key === 'psi') { if (v > 0.25) return 'rgb(var(--red-6))'; if (v > 0.1) return 'rgb(var(--orange-6))'; return 'rgb(var(--green-6))' }
+  if (key === 'ks') { if (v < 0.3) return 'rgb(var(--orange-6))'; if (v < 0.5) return 'rgb(var(--arcoblue-6))'; return 'rgb(var(--green-6))' }
+  if (key === 'lift') { if (v < 1.5) return 'rgb(var(--orange-6))'; if (v < 3) return 'rgb(var(--arcoblue-6))'; return 'rgb(var(--green-6))' }
+  return 'var(--color-text-1)'
+}
+
+// 构建 render 函数
+function makeSampleRender(ch: string, m: string) {
+  return ({ record }: any) => {
+    const raw = record[`${ch}__${m}`]
+    if (raw == null) return '—'
+    const def = sampleMetricDefs.find(d => d.key === record.metricKey)
+    return h('span', { style: { color: sampleColor(record.metricKey, raw), fontWeight: 600 } }, def ? def.fmt(raw) : String(raw))
+  }
+}
+function makeEffectRender(ch: string, m: string) {
+  return ({ record }: any) => {
+    const raw = record[`${ch}__${m}`]
+    if (raw == null) return '—'
+    const def = effectMetricDefs.find(d => d.key === record.metricKey)
+    return h('span', { style: { color: effectColor(record.metricKey, raw), fontWeight: 600 } }, def ? def.fmt(raw) : String(raw))
+  }
+}
+
+// 样本表格列（动态，渠道多月时分组表头）
+const evalSampleColumns = computed(() => {
+  const channels = activeChannels.value
+  const months = evalSelectedMonths.value
+  const cols: any[] = [{ title: '指标', dataIndex: 'metric', width: 100, fixed: 'left', render: ({ record }: any) => h('span', { title: record.metricDesc || '' }, record.metric) }]
+  for (const ch of channels) {
+    if (months.length <= 1) {
+      const m = months[0] || ''
+      cols.push({ title: ch, dataIndex: `${ch}__${m}`, width: 130, align: 'center', render: makeSampleRender(ch, m) })
+    } else {
+      cols.push({ title: ch, children: months.map((m: string) => ({ title: m, dataIndex: `${ch}__${m}`, width: 100, align: 'center', render: makeSampleRender(ch, m) })) })
+    }
+  }
+  return cols
+})
+
+// 样本表格数据
+const evalSampleTableData = computed(() => {
+  const data = evaluationData.value
+  if (!data.sampleData) return []
+  const channels = activeChannels.value
+  const months = evalSelectedMonths.value
+  return sampleMetricDefs.map(def => {
+    const row: any = { metric: def.label, metricKey: def.key, metricDesc: def.desc }
+    for (const ch of channels) for (const m of months) {
+      const s = data.sampleData[ch]?.[m]
+      row[`${ch}__${m}`] = s ? s[def.key] : null
+    }
+    return row
+  })
+})
+
+// 效果表格列
+const evalEffectColumns = computed(() => {
+  const channels = activeChannels.value
+  const months = evalSelectedMonths.value
+  const cols: any[] = [{ title: '指标', dataIndex: 'metric', width: 100, fixed: 'left', render: ({ record }: any) => h('span', { title: record.metricDesc || '' }, record.metric) }]
+  for (const ch of channels) {
+    if (months.length <= 1) {
+      const m = months[0] || ''
+      cols.push({ title: ch, dataIndex: `${ch}__${m}`, width: 130, align: 'center', render: makeEffectRender(ch, m) })
+    } else {
+      cols.push({ title: ch, children: months.map((m: string) => ({ title: m, dataIndex: `${ch}__${m}`, width: 100, align: 'center', render: makeEffectRender(ch, m) })) })
+    }
+  }
+  return cols
+})
+
+// 效果表格数据
+const evalEffectTableData = computed(() => {
+  const data = evaluationData.value
+  if (!data.effectData) return []
+  const channels = activeChannels.value
+  const months = evalSelectedMonths.value
+  return effectMetricDefs.map(def => {
+    const row: any = { metric: def.label, metricKey: def.key, metricDesc: def.desc }
+    for (const ch of channels) for (const m of months) {
+      const e = data.effectData[ch]?.[m]
+      row[`${ch}__${m}`] = e ? e[def.key] : null
+    }
+    return row
+  })
+})
+
+// 互斥限制：多渠道时强制单月，多月时强制单渠道
+watch(evalSelectedChannels, (channels) => {
+  if (channels.length > 1 && evalMonthStart.value && evalMonthEnd.value && evalMonthStart.value !== evalMonthEnd.value) {
+    evalMonthEnd.value = evalMonthStart.value
+  }
+})
+watch([evalMonthStart, evalMonthEnd], () => {
+  if (evalMonthStart.value && evalMonthEnd.value && evalMonthStart.value !== evalMonthEnd.value && evalSelectedChannels.value.length > 1) {
+    evalSelectedChannels.value = [evalSelectedChannels.value[0]]
+  }
+})
+
 const loadDetail = async () => {
   try {
     await store.fetchProducts()
@@ -627,7 +819,8 @@ const loadDetail = async () => {
     const base = fromStore || { id: dataId.value, name: '外数产品', supplier: '供应商', status: 'online' }
     
     // 模拟外数类型逻辑，偶数ID为离线批量，奇数ID为在线实时
-    const isOffline = parseInt(dataId.value) % 2 === 0
+    const numericId = parseInt(String(dataId.value).replace(/\D/g, '')) || 0
+    const isOffline = numericId % 2 === 0
     const externalDataType = isOffline ? '离线批量调用' : '在线实时调用'
 
     header.value = { 
@@ -767,6 +960,36 @@ const loadDetail = async () => {
       }
     }
     contractInfo.value.writeoffs = writeoffList.sort((a, b) => b.month.localeCompare(a.month))
+
+    // 效果评估 mock 数据生成
+    const evalChannelsList = ['蚂蚁', '京东', '美团', '字节', 'SU贷']
+    const evalMonthsList = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06']
+    const evalSampleData: any = {}
+    const evalEffectData: any = {}
+    for (const ch of evalChannelsList) {
+      evalSampleData[ch] = {}
+      evalEffectData[ch] = {}
+      for (const m of evalMonthsList) {
+        const monthIdx = parseInt(m.split('-')[1]) || 1
+        const channelFactor = ch === '全部渠道' ? 1 : 0.25 + (monthIdx / 12)
+        const callCount = Math.floor(8000 * channelFactor + Math.random() * 3000)
+        const badRate = 6 + Math.random() * 14
+        const nullRate = 0.5 + Math.random() * 6
+        const badCount = Math.floor(callCount * badRate / 100)
+        const goodCount = Math.floor(callCount * 0.72)
+        const grayCount = callCount - badCount - goodCount
+        evalSampleData[ch][m] = { callCount, goodCount, badCount, grayCount, badRate, nullRate }
+        evalEffectData[ch][m] = {
+          psi: 0.02 + Math.random() * 0.35,
+          ks: 0.15 + Math.random() * 0.45,
+          lift: 1.1 + Math.random() * 3.2,
+        }
+      }
+    }
+    evaluationData.value = { channels: evalChannelsList, months: evalMonthsList, sampleData: evalSampleData, effectData: evalEffectData }
+    evalSelectedChannels.value = [evalChannelsList[0]]
+    evalMonthStart.value = evalMonthsList[0]
+    evalMonthEnd.value = evalMonthsList[evalMonthsList.length - 1]
   } catch { Message.error('加载详情失败') }
 }
 onMounted(loadDetail)
@@ -802,4 +1025,7 @@ const saveEdit = () => { editVisible.value = false; Message.success('档案已�
 /* 描述列表基础间距 */
 :deep(.arco-descriptions-item-label-inline) { color: var(--color-text-3); font-weight: 400; }
 :deep(.arco-descriptions-item-value-inline) { color: var(--color-text-1); }
+
+/* 效果评估 */
+.eval-filter-bar { display: flex; align-items: center; }
 </style>

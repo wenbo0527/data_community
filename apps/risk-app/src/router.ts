@@ -15,7 +15,7 @@ console.log('[Risk] routerBase:', routerBase)
  *
  * 路由结构：
  *  /                              → /variable-hub（风险要素工作台）
- *  /variable-hub                  → 风险要素（变量一体化）
+ *  /variable-hub                  → 风险要素（特征一体化）
  *    /variable-hub/external-data  → 外数生命周期管理（子模块）
  *  /budget/*                      → 预算管理
  *  /model-offline-analysis/*      → 离线模型分析
@@ -26,10 +26,10 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('./layout/MainLayout.vue'),
     children: [
-      // ========== 入口重定向：默认进入风险要素（变量一体化工作台）==========
+      // ========== 入口重定向：默认进入风险要素（特征一体化工作台）==========
       { path: '/', redirect: '/variable-hub' },
 
-      // ========== 风险要素（变量一体化）==========
+      // ========== 风险要素（特征一体化）==========
       {
         path: '/variable-hub',
         name: 'VariableHub',
@@ -40,13 +40,13 @@ const routes: RouteRecordRaw[] = [
         path: '/variable-management',
         name: 'VariableManagement',
         component: () => import('./modules/variable-hub/pages/variable-management/index.vue'),
-        meta: { title: '变量台账' }
+        meta: { title: '特征台账' }
       },
       {
         path: '/variable-management/detail/:id/:mode?',
         name: 'VariableAssetDetail',
         component: () => import('./modules/variable-hub/pages/variable-management/detail.vue'),
-        meta: { title: '变量详情' }
+        meta: { title: '特征详情' }
       },
       {
         path: '/explore/topics',
@@ -70,7 +70,7 @@ const routes: RouteRecordRaw[] = [
         path: '/explore/map',
         name: 'ExploreMap',
         component: () => import('./modules/variable-hub/pages/explore/map/index.vue'),
-        meta: { title: '变量全景' }
+        meta: { title: '特征全景' }
       },
       {
         path: '/explore/taxonomy',

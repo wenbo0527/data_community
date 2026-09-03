@@ -263,11 +263,11 @@
           </div>
         </a-tab-pane>
 
-        <!-- 变量监视 -->
-        <a-tab-pane key="variables" title="变量">
+        <!-- 特征监视 -->
+        <a-tab-pane key="variables" title="特征">
           <div class="variables-container">
             <div v-if="!currentSession || currentSession.variables.size === 0" class="empty-variables">
-              <a-empty description="暂无变量" :image-style="{ height: '60px' }" />
+              <a-empty description="暂无特征" :image-style="{ height: '60px' }" />
             </div>
             
             <div v-else class="variables-list">

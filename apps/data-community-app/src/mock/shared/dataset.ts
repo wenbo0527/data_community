@@ -2,7 +2,7 @@
  * dataset.ts —— 数据消费侧的公共 mock 数据集
  *
  * 设计意图:
- *   1. 把 6 类常用 mock(指标 / 变量 / 特征 / 数据表 / API / 监管报表)
+ *   1. 把 6 类常用 mock(指标 / 特征 / 特征 / 数据表 / API / 监管报表)
  *      集中到一个文件,各页面 import 即用,避免散落硬编码
  *   2. 提供「按 code 查找 / 按关键字过滤 / 按 owner 查找 / 按 domain 查找」通用方法
  *   3. 后续接真实 API 时,只需把这些方法替换为 HTTP 调用,业务代码不动
@@ -56,7 +56,7 @@ export const METRICS: MetricItem[] = [
   { code: 'M033', name: '触达成本', layer: 'L1', type: 'atomic', owner: '陈营销', formula: 'SUM(投放成本) / SUM(触达人数)', category: '营销域', domain: '营销域', unit: '元/人', updateFrequency: 'daily' }
 ]
 
-// ───────────────────────────── 2. 变量集(variables) ─────────────────────────────
+// ───────────────────────────── 2. 特征集(variables) ─────────────────────────────
 export interface VariableItem {
   code: string
   name: string
@@ -76,7 +76,7 @@ export const VARIABLES: VariableItem[] = [
   { code: 'V004', name: '婚姻状况', type: 'population', dataType: 'enum', coverage: 75, owner: '王运营', description: '未婚 / 已婚 / 离异 / 丧偶' },
   { code: 'V005', name: '教育程度', type: 'population', dataType: 'enum', coverage: 82, owner: '王运营', description: '高中 / 大专 / 本科 / 硕士 / 博士' },
 
-  // ── 行为变量 ──
+  // ── 行为特征 ──
   { code: 'V101', name: '近30天活跃天数', type: 'behavior', dataType: 'number', coverage: 92, owner: '王运营', description: '近30天内有活跃行为的天数' },
   { code: 'V102', name: '近30天登录次数', type: 'behavior', dataType: 'number', coverage: 88, owner: '王运营', description: '近30天内登录APP次数' },
   { code: 'V103', name: '最近下单距今', type: 'behavior', dataType: 'number', coverage: 92, owner: '李产品', description: '距离最近一次下单的天数' },
@@ -89,7 +89,7 @@ export const VARIABLES: VariableItem[] = [
   { code: 'V203', name: '理财余额', type: 'finance', dataType: 'number', coverage: 65, owner: '陈营销', description: '理财账户余额' },
   { code: 'V204', name: '近30天入金', type: 'finance', dataType: 'number', coverage: 88, owner: '陈营销', description: '近30天累计入金金额' },
 
-  // ── 风险变量 ──
+  // ── 风险特征 ──
   { code: 'V301', name: '信用分', type: 'risk', dataType: 'number', coverage: 78, owner: '张风控', description: '基于XGBoost模型计算' },
   { code: 'V302', name: '风险等级', type: 'risk', dataType: 'enum', coverage: 85, owner: '张风控', description: 'low / medium / high' },
   { code: 'V303', name: '近1年逾期次数', type: 'risk', dataType: 'number', coverage: 100, owner: '张风控', description: '近365天内逾期次数' },
@@ -237,7 +237,7 @@ export const MetricStore = {
   search: (kw: string) => filterByKeyword(METRICS, kw, ['code', 'name', 'category', 'owner', 'description', 'formula'])
 }
 
-// 变量
+// 特征
 export const VariableStore = {
   all: () => VARIABLES,
   byCode: (code: string) => byCode(VARIABLES, code),

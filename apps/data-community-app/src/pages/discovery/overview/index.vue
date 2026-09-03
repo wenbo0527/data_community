@@ -26,7 +26,7 @@
             <a-statistic title="数据要素(业务形态)" :value="elementStats.total" :value-style="{ color: '#00b42a' }">
               <template #suffix>条</template>
             </a-statistic>
-            <div class="kpi-sub">指标 {{ elementStats.metric }} · 变量 {{ elementStats.variable }} · 特征 {{ elementStats.feature }}</div>
+            <div class="kpi-sub">指标 {{ elementStats.metric }} · 特征 {{ elementStats.variable }} · 特征 {{ elementStats.feature }}</div>
           </a-card>
         </a-col>
         <a-col :span="6">
@@ -203,7 +203,7 @@ const elementTabs = computed(() => {
   const features = FeatureStore.all().slice(0, 5).map(f => ({ code: f.code, name: f.name, path: `discovery/feature-dict` }))
   return [
     { code: 'metric', name: '指标', items: metrics, color: 'arcoblue' },
-    { code: 'variable', name: '变量', items: variables, color: 'green' },
+    { code: 'variable', name: '特征', items: variables, color: 'green' },
     { code: 'feature', name: '特征', items: features, color: 'purple' }
   ]
 })
@@ -213,7 +213,7 @@ const favorites = ref([
   { name: 'DAU 指标', type: 'metric', owner: '王运营', path: 'discovery/unified-metrics' },
   { name: '贷前分析 集合', type: 'asset', owner: '王运营', path: 'discovery/collection/1' },
   { name: '用户画像查询 API', type: 'api', owner: '王运营', path: 'discovery/api-market' },
-  { name: '信用分 变量', type: 'variable', owner: '张风控', path: 'discovery/variable-dict' }
+  { name: '信用分 特征', type: 'variable', owner: '张风控', path: 'discovery/variable-dict' }
 ])
 const recentlyViewed = ref([
   { name: 'DAU', type: 'metric', time: '5 分钟前', path: 'discovery/unified-metrics' },
@@ -225,7 +225,7 @@ function typeColor(t: string) {
   return { metric: 'arcoblue', variable: 'green', feature: 'purple', asset: 'purple', api: 'orange' }[t] || 'gray'
 }
 function typeLabel(t: string) {
-  return { metric: '指标', variable: '变量', feature: '特征', asset: '资产', api: 'API' }[t] || t
+  return { metric: '指标', variable: '特征', feature: '特征', asset: '资产', api: 'API' }[t] || t
 }
 
 // 跳转入口

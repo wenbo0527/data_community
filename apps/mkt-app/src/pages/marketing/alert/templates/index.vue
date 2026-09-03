@@ -86,7 +86,7 @@
                     {{ template.preview }}
                   </div>
                   <div class="template-variables">
-                    <span class="variables-label">可用变量：</span>
+                    <span class="variables-label">可用特征：</span>
                     <a-space wrap>
                       <a-tag
                         v-for="variable in template.variables.slice(0, 3)"
@@ -214,7 +214,7 @@
           </div>
           <a-divider />
           <div class="preview-variables">
-            <h4>可用变量：</h4>
+            <h4>可用特征：</h4>
             <a-space wrap>
               <a-tag
                 v-for="variable in currentTemplate?.variables"
@@ -438,7 +438,7 @@ const handlePreviewTemplate = (template) => {
     checkInterval: '10分钟'
   }
   
-  // 简单的变量替换
+  // 简单的特征替换
   let rendered = template.content
   template.variables.forEach(variable => {
     const regex = new RegExp(`{{${variable}}}`, 'g')
@@ -458,11 +458,11 @@ const handleUseTemplate = (template) => {
   })
 }
 
-// 插入变量
+// 插入特征
 const handleInsertVariable = (variable) => {
   // 这里可以实现复制到剪贴板功能
   navigator.clipboard.writeText(`{{${variable}}}`)
-  Message.success(`已复制变量 {{${variable}}} 到剪贴板`)
+  Message.success(`已复制特征 {{${variable}}} 到剪贴板`)
 }
 
 // 导入模板

@@ -81,7 +81,7 @@
 
           <template #variableVersion="{ record }">
             <a-tag :color="(record.variableVersion || 'new') === 'old' ? 'orange' : 'green'">
-              {{ (record.variableVersion || 'new') === 'old' ? '老变量模型' : '新变量模型' }}
+              {{ (record.variableVersion || 'new') === 'old' ? '老特征模型' : '新特征模型' }}
             </a-tag>
           </template>
           
@@ -172,7 +172,7 @@ const columns = [
     width: 120
   },
   {
-    title: '变量版本',
+    title: '特征版本',
     dataIndex: 'variableVersion',
     slotName: 'variableVersion',
     width: 120

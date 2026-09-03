@@ -28,11 +28,10 @@
       </div>
     </div>
 
-    <!-- 展开按钮 -->
+    <!-- 展开按钮：纯视觉指示器，点击穿透到 X6 由坐标判断 -->
     <div 
       v-if="showLeftExpand" 
       class="expand-btn left" 
-      @click.stop="handleExpand('left')"
       title="展开上游"
     >
       <IconPlus />
@@ -40,7 +39,6 @@
     <div 
       v-if="showRightExpand" 
       class="expand-btn right" 
-      @click.stop="handleExpand('right')"
       title="展开下游"
     >
       <IconPlus />
@@ -49,7 +47,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { IconApps, IconArrowLeft, IconArrowRight, IconStorage, IconPlus, IconCode, IconDashboard, IconFile } from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({
@@ -58,9 +56,6 @@ const props = defineProps({
     required: true
   }
 })
-
-// 注入 Graph 实例的方法（需要在父组件 provide）
-const expandNode = inject('expandNode', () => {})
 
 // 获取节点数据
 const getNodeData = () => {
@@ -145,12 +140,6 @@ const showRightExpand = computed(() => {
   // 主节点或下游节点可以展开右侧，且未展开过
   return (type === 'main' || type === 'downstream') && !downstreamExpanded
 })
-
-const handleExpand = (direction) => {
-  const data = getNodeData()
-  props.node.setData({ ...data, __expandAction: direction })
-  expandNode(props.node.id, direction)
-}
 </script>
 
 <style scoped>
@@ -174,31 +163,25 @@ const handleExpand = (direction) => {
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid #165dff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   color: #165dff;
   font-size: 12px;
   z-index: 10;
-  transition: all 0.2s;
-}
-
-.expand-btn:hover {
-  background: #165dff;
-  color: #fff;
-  transform: translateY(-50%) scale(1.1);
+  pointer-events: none; /* 点击穿透到 X6，由坐标判断是否点击了加号 */
+  box-shadow: 0 1px 4px rgba(22, 93, 255, 0.15);
 }
 
 .expand-btn.left {
-  left: -10px;
+  left: 2px;
 }
 
 .expand-btn.right {
-  right: -10px;
+  right: 2px;
 }
 
 .lineage-node:hover {

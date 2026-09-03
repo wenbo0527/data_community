@@ -16,6 +16,9 @@
               <a-option value="名单类">名单类</a-option>
               <a-option value="价格评估类">价格评估类</a-option>
             </a-select>
+            <a-button class="action-btn" size="large" @click="showMissingTicket({ assetType: 'external', pageSource: '外部数据' })">
+              <template #icon><icon-plus /></template>缺失工单
+            </a-button>
           </div>
         </div>
       </div>
@@ -25,7 +28,7 @@
       <div class="content-section">
         <a-row :gutter="[16, 16]">
           <a-col v-for="item in filteredList" :key="item.interfaceId" :xs="24" :sm="12" :md="8" :lg="6">
-            <a-card hoverable :bordered="false">
+            <a-card hoverable :bordered="false" :data-interface-id="item.interfaceId" :class="{ 'external-card-selected': selectedId === item.interfaceId }">
               <template #title>
                 <a-space>
                   <a-tag :color="getTagColor(item.dataType)">{{ item.dataType }}</a-tag>
@@ -51,27 +54,47 @@
         <a-empty v-if="filteredList.length === 0" description="暂无外部数据" />
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+import { externalResources } from '@/mock/external-resources'
 
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
+
+const route = useRoute()
 const search = ref('')
 const dataType = ref<string | undefined>(undefined)
 
-const allData = ref([
-  { interfaceId: 'IF001', dataName: '身份证二要素核验', dataType: '核验类', subType: '', supplier: '公安系统', dataManagement: '实时', onlineTime: '2024-01-15', isFavorite: true },
-  { interfaceId: 'IF002', dataName: '手机号三要素核验', dataType: '核验类', subType: '', supplier: '运营商', dataManagement: '实时', onlineTime: '2024-01-20', isFavorite: false },
-  { interfaceId: 'IF003', dataName: '人行征信评分', dataType: '评分类', subType: '信用分', supplier: '人行征信', dataManagement: 'T+1', onlineTime: '2024-02-01', isFavorite: true },
-  { interfaceId: 'IF004', dataName: '同盾欺诈分', dataType: '评分类', subType: '欺诈分', supplier: '同盾科技', dataManagement: '实时', onlineTime: '2024-02-10', isFavorite: false },
-  { interfaceId: 'IF005', dataName: '银联消费标签', dataType: '标签类', subType: '消费能力', supplier: '银联', dataManagement: 'T+1', onlineTime: '2024-03-01', isFavorite: false },
-  { interfaceId: 'IF006', dataName: '黑名单核查', dataType: '名单类', subType: '多头借贷', supplier: '百融', dataManagement: '实时', onlineTime: '2024-03-15', isFavorite: true },
-  { interfaceId: 'IF007', dataName: '房产评估价', dataType: '价格评估类', subType: '抵押估值', supplier: '中估联', dataManagement: 'T+1', onlineTime: '2024-04-01', isFavorite: false },
-  { interfaceId: 'IF008', dataName: '车辆评估价', dataType: '价格评估类', subType: '车辆估值', supplier: '车300', dataManagement: '实时', onlineTime: '2024-04-10', isFavorite: false }
-])
+// 复用共享数据源,与全局搜索保持一致
+const allData = ref(externalResources)
+// 搜索结果点击跳转进入时高亮定位的项(interfaceId)
+const selectedId = ref<string>('')
+
+onMounted(() => {
+  const focus = route.query.focus
+  if (focus) {
+    selectedId.value = String(focus)
+    // 滚动到选中项
+    nextTick(() => {
+      const el = document.querySelector(`[data-interface-id="${selectedId.value}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+})
 
 const filteredList = computed(() => {
   let result = allData.value
@@ -84,7 +107,10 @@ const filteredList = computed(() => {
 })
 
 function getTagColor(t: string) { return { '核验类': 'blue', '评分类': 'green', '标签类': 'orange', '名单类': 'red', '价格评估类': 'purple' }[t] || 'gray' }
-function viewDetail(item: any) { Message.info(`查看外部数据: ${item.dataName}`) }
+function viewDetail(item: any) {
+  selectedId.value = item.interfaceId
+  Message.info(`查看外部数据: ${item.dataName}`)
+}
 function toggleFavorite(item: any) {
   item.isFavorite = !item.isFavorite
   Message.success(item.isFavorite ? `已收藏: ${item.dataName}` : `已取消收藏: ${item.dataName}`)
@@ -107,4 +133,5 @@ function toggleFavorite(item: any) {
 .decoration-cube { position: absolute; top: 40px; right: 100px; width: 200px; height: 200px; background: linear-gradient(135deg, #e8f3ff 0%, #cce4ff 100%); transform: rotate(-15deg) skew(-10deg); border-radius: 20px; box-shadow: -20px 20px 40px rgba(22, 93, 255, 0.1); }
 .main-content { padding: 0 40px 40px; width: 100%; max-width: 1800px; margin: -40px auto 0; position: relative; z-index: 3; }
 .content-section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+.external-card-selected { border: 2px solid #165DFF !important; box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.15); }
 </style>

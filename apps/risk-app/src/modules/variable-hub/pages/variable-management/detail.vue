@@ -9,14 +9,14 @@
     <template v-else>
     <div class="page-header">
       <a-breadcrumb class="breadcrumb">
-        <a-breadcrumb-item @click="handleBackToList">变量中心</a-breadcrumb-item>
-        <a-breadcrumb-item>变量详情</a-breadcrumb-item>
+        <a-breadcrumb-item @click="handleBackToList">特征中心</a-breadcrumb-item>
+        <a-breadcrumb-item>特征详情</a-breadcrumb-item>
       </a-breadcrumb>
 
       <div class="header-content">
         <div class="title-section">
           <div class="title-wrapper">
-            <h1 class="title">{{ variableData.name || '变量详情' }}</h1>
+            <h1 class="title">{{ variableData.name || '特征详情' }}</h1>
             <!-- 文档 v2.1 K1 R08：详情页展示「阶段 · 状态」格式 -->
             <template v-if="variableData.category === 'midloan_behavior' && variableData.midloanStatus">
               <a-tag v-if="getPhaseByStatus(variableData.midloanStatus)" color="gray" size="small">
@@ -39,8 +39,8 @@
           <!-- 顶部公共信息（永久可见：全品类公共·注册即确定） -->
           <div class="header-public-grid">
             <div class="public-row">
-              <div class="public-item"><span class="label">变量编码</span><span class="value mono">{{ headerPublic.code }}</span></div>
-              <div class="public-item"><span class="label">变量类型</span><span class="value">{{ headerPublic.variableType }}</span></div>
+              <div class="public-item"><span class="label">特征编码</span><span class="value mono">{{ headerPublic.code }}</span></div>
+              <div class="public-item"><span class="label">特征类型</span><span class="value">{{ headerPublic.variableType }}</span></div>
               <div class="public-item"><span class="label">字段类型</span><span class="value">{{ headerPublic.fieldType }}</span></div>
               <div class="public-item"><span class="label">默认值</span><span class="value mono">{{ headerPublic.defaultValue }}</span></div>
             </div>
@@ -119,7 +119,7 @@
       </a-alert>
 
       <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-        <a-tab-pane key="basic" title="变量基础信息">
+        <a-tab-pane key="basic" title="特征基础信息">
 
           <!-- ========= 基础人员信息（注册即有 + 后期部分回填） ========= -->
           <a-card title="基础与人员信息" class="detail-card">
@@ -312,7 +312,7 @@
           </template>
         </a-tab-pane>
 
-        <a-tab-pane key="evaluation" title="变量评估">
+        <a-tab-pane key="evaluation" title="特征评估">
           <EvaluationCard
             :analysis-reports="analysisReports"
             :analysis-report-columns="analysisReportColumns"
@@ -352,10 +352,10 @@
 
     <a-drawer v-model:visible="enableApprovalVisible" title="启用审批（提交上线申请）" :width="640">
       <a-form :model="enableApprovalForm" layout="vertical">
-        <a-form-item label="变量名称">
+        <a-form-item label="特征名称">
           <a-input :model-value="variableData.name" disabled />
         </a-form-item>
-        <a-form-item label="变量编码">
+        <a-form-item label="特征编码">
           <a-input :model-value="variableData.code" disabled />
         </a-form-item>
         <a-form-item field="reason" label="启用原因" required>
@@ -377,7 +377,7 @@
       </a-form>
 
       <a-alert type="info" :show-icon="false" style="margin-top: 8px">
-        提交后 Demo 流程：自动通过审批 → 状态置为「已发布」→ 变量进入运营监控阶段。真实生产需走 OA 审批。
+        提交后 Demo 流程：自动通过审批 → 状态置为「已发布」→ 特征进入运营监控阶段。真实生产需走 OA 审批。
       </a-alert>
 
       <a-divider style="margin: 12px 0" />
@@ -426,13 +426,13 @@
       </a-table>
     </a-modal>
 
-    <a-modal v-model:visible="deriveVisible" title="衍生变量（Demo）" ok-text="继续" cancel-text="取消" @ok="confirmDerive">
+    <a-modal v-model:visible="deriveVisible" title="衍生特征（Demo）" ok-text="继续" cancel-text="取消" @ok="confirmDerive">
       <a-space direction="vertical" fill>
         <a-alert type="info" :show-icon="false">
-          衍生变量可选择“发起探索课题”沉淀过程证据链，或“直接上线”进入上线与治理流程。
+          衍生特征可选择“发起探索课题”沉淀过程证据链，或“直接上线”进入上线与治理流程。
         </a-alert>
         <a-form :model="deriveForm" layout="vertical">
-          <a-form-item label="新变量名称">
+          <a-form-item label="新特征名称">
             <a-input v-model="deriveForm.name" allow-clear placeholder="例如：xxx_衍生" />
           </a-form-item>
           <a-form-item label="路径选择">
@@ -515,7 +515,7 @@ const activeTab = ref('basic')
 // 头部辅助信息（创建人/更新时间）默认折叠，避免首屏过密
 const headerInfoExpanded = ref([])
 
-// 变量数据：使用 shallowRef 持有本地副本，mutation 后通过 reset/refresh 同步 store 变更
+// 特征数据：使用 shallowRef 持有本地副本，mutation 后通过 reset/refresh 同步 store 变更
 // 注意：必须用 ref 而非 computed，否则后续给 .value 赋值会触发"Maximum recursive updates"
 const EMPTY_VARIABLE = {
   id: '',
@@ -543,7 +543,7 @@ const EMPTY_VARIABLE = {
 
 const variableData = shallowRef(structuredCloneSafe(variableStore.currentVariable) || EMPTY_VARIABLE)
 
-/** 把 store 中的当前变量复制到本地 ref（mutation 后调用）*/
+/** 把 store 中的当前特征复制到本地 ref（mutation 后调用）*/
 function syncVariableFromStore() {
   const cur = variableStore.currentVariable
   if (!cur) return
@@ -583,8 +583,8 @@ const variableCategory = computed(() => {
 
 const typedProfileTitle = computed(() => {
   if (variableCategory.value === 'external') return '外数字段基础信息'
-  if (variableCategory.value === 'credit') return '征信变量基础信息'
-  return '行为变量基础信息'
+  if (variableCategory.value === 'credit') return '征信特征基础信息'
+  return '行为特征基础信息'
 })
 
 /** 当前品类的 profile 原始对象（方便各分层卡直接取字段） */
@@ -627,7 +627,7 @@ const longtextMeaning = computed(() => {
   const p = profile.value
   const parts = []
   if (v.description) parts.push(v.description)
-  if (v.definition) parts.push(`【变量定义】\n${v.definition}`)
+  if (v.definition) parts.push(`【特征定义】\n${v.definition}`)
   if (p.meaning && !parts.some(x => x.includes(p.meaning))) parts.push(`【业务解释】\n${p.meaning}`)
   return parts.join('\n\n') || '暂无业务含义说明'
 })
@@ -840,7 +840,7 @@ const submitEnableApproval = async () => {
       reason: enableApprovalForm.reason.trim()
     })
   }
-  // 刷新当前变量数据
+  // 刷新当前特征数据
   await variableStore.fetchVariableDetail(variableId.value)
   enableApprovalSubmitting.value = false
   enableApprovalVisible.value = false
@@ -848,13 +848,13 @@ const submitEnableApproval = async () => {
 }
 
 const handleDerive = () => {
-  deriveForm.name = `${variableData.value.name || '变量'}_衍生`
+  deriveForm.name = `${variableData.value.name || '特征'}_衍生`
   deriveForm.mode = 'topic'
   deriveVisible.value = true
 }
 
 const confirmDerive = () => {
-  const name = deriveForm.name?.trim() || `${variableData.value.name || '变量'}_衍生`
+  const name = deriveForm.name?.trim() || `${variableData.value.name || '特征'}_衍生`
   if (deriveForm.mode === 'topic') {
     Message.info('已进入探索课题列表，可在课题详情内决策采纳后生成草稿回到台账')
     router.push('/explore/topics')
@@ -865,8 +865,8 @@ const confirmDerive = () => {
     code: `DERIVE_${Date.now()}`,
     category: variableCategory.value,
     sourceType: variableData.value.sourceType,
-    dataSourceName: '变量中心（Demo）',
-    description: `由 ${variableData.value.id} 衍生生成的变量草稿（Demo）`,
+    dataSourceName: '特征中心（Demo）',
+    description: `由 ${variableData.value.id} 衍生生成的特征草稿（Demo）`,
     draftSource: { derivedFromId: variableData.value.id }
   })
   router.push({ name: 'VariableAssetDetail', params: { id: draft.id, mode: 'edit' }, query: { action: 'online' } })
@@ -883,7 +883,7 @@ const handleViewAnalysisReport = (record) => {
       { label: '报告类型', value: record.type || '—' },
       { label: '来源', value: record.source || '—' },
       { label: '更新时间', value: record.updatedAt || '—' },
-      { label: '关联变量', value: variableData.value.name || '—' }
+      { label: '关联特征', value: variableData.value.name || '—' }
     ]
     reportPreviewFindings.value = Array.isArray(record.preview.findings) ? record.preview.findings : []
     reportPreviewVisible.value = true
@@ -921,15 +921,15 @@ const buildAnalysisReports = () => {
 
   list.push({
     id: 'var-eval-001',
-    name: '变量质量评估报告',
-    type: '变量评估',
+    name: '特征质量评估报告',
+    type: '特征评估',
     source: 'dmt-app',
     updatedAt: v?.updatedAt || '—',
     preview: {
       findings: [
         { id: 'f1', item: '数据质量', result: v?.dataQuality != null ? `${v.dataQuality}%` : '—', desc: '基于缺失率、唯一值数量等规则的综合评分' },
         { id: 'f2', item: '缺失率', result: v?.missingRate != null ? `${v.missingRate}%` : '—', desc: '缺失值比例越低越好' },
-        { id: 'f3', item: '唯一值数量', result: v?.uniqueValueCount ?? '—', desc: '用于评估变量区分度与稳定性' }
+        { id: 'f3', item: '唯一值数量', result: v?.uniqueValueCount ?? '—', desc: '用于评估特征区分度与稳定性' }
       ]
     }
   })
@@ -1164,18 +1164,18 @@ const fieldMappingColumns = [
   { title: '描述', dataIndex: 'description' }
 ]
 
-// 获取变量详情
+// 获取特征详情
 const fetchVariableDetail = async () => {
   try {
     const variableId = route.params.id
     
     if (!variableId) {
-      Message.error('变量ID不能为空')
+      Message.error('特征ID不能为空')
       return
     }
     
     await variableStore.fetchVariableDetail(variableId)
-    // 404 处理：变量ID不存在（文档 B2 E1）
+    // 404 处理：特征ID不存在（文档 B2 E1）
     if (!variableStore.currentVariable) {
       notFound.value = true
       return
@@ -1220,8 +1220,8 @@ const fetchVariableDetail = async () => {
     ]
 
   } catch (error) {
-    console.error('获取变量详情失败:', error)
-    Message.error('获取变量详情失败')
+    console.error('获取特征详情失败:', error)
+    Message.error('获取特征详情失败')
   }
 }
 
@@ -1298,7 +1298,7 @@ const fetchVersionHistory = async () => {
         version: 'v1.0.0',
         isCurrent: false,
         description: '初始版本',
-        changes: ['创建用户年龄变量', '配置基础数据质量规则'],
+        changes: ['创建用户年龄特征', '配置基础数据质量规则'],
         creator: '张三',
         createdAt: '2024-01-01 10:00:00'
       }
@@ -1320,7 +1320,7 @@ const handleMoreSelect = (val) => {
   if (val === 'delete') handleDelete()
 }
 
-// 编辑变量
+// 编辑特征
 const handleEdit = () => {
   Message.info('编辑功能开发中...')
 }
@@ -1337,14 +1337,14 @@ const handleToggleStatus = async () => {
 
     Modal.confirm({
       title: '确认操作',
-      content: `确定要${action}变量"${variableData.value.name}"吗？`,
+      content: `确定要${action}特征"${variableData.value.name}"吗？`,
       onOk: async () => {
         try {
           VariableStatusStore.setStatus(variableId.value, 'inactive', 'Demo 用户', '台账直接停用')
           if (variableStore.currentVariable) {
             variableStore.currentVariable = { ...variableStore.currentVariable, status: 'inactive' }
           }
-          Message.success(`变量已${action}`)
+          Message.success(`特征已${action}`)
         } catch (error) {
           Message.error('状态更新失败')
         }
@@ -1355,17 +1355,17 @@ const handleToggleStatus = async () => {
   }
 }
 
-// 删除变量
+// 删除特征
 const handleDelete = async () => {
   try {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除变量"${variableData.value.name}"吗？此操作不可恢复。`,
+      content: `确定要删除特征"${variableData.value.name}"吗？此操作不可恢复。`,
       okText: '删除',
       okButtonProps: { status: 'danger' },
       onOk: async () => {
         try {
-          Message.success('变量已删除')
+          Message.success('特征已删除')
           router.push('/variable-management')
         } catch (error) {
           Message.error('删除失败')
@@ -1595,7 +1595,7 @@ const onRetry = () => {
     return
   }
   const r = MidloanStateEngine.retrySync(fid)
-  if (r.ok) Message.success('已重新同步，等待内数/变量中心回调')
+  if (r.ok) Message.success('已重新同步，等待内数/特征中心回调')
   else Message.error(r.reason || '重试失败')
   refreshAfterMutation()
 }
@@ -1608,7 +1608,7 @@ const onManualBatchRetry = () => {
     return
   }
   const r = MidloanStateEngine.retrySync(fid)
-  if (r.ok) Message.success('已手动触发变量中心下线批次重试')
+  if (r.ok) Message.success('已手动触发特征中心下线批次重试')
   refreshAfterMutation()
 }
 
@@ -1619,7 +1619,7 @@ const onAction = (action) => {
     registerDrawerVisible.value = true
     return
   }
-  // 走抽屉的动作（文档 A0 / C1 / E0 / E1 / F0 / 管理员状态修正 / 内数失败补表 / 变量归档）
+  // 走抽屉的动作（文档 A0 / C1 / E0 / E1 / F0 / 管理员状态修正 / 内数失败补表 / 特征归档）
   if ([
     'submit_dev_oa',
     'business_verify_pass',

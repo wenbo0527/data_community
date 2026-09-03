@@ -19,6 +19,9 @@
               <a-option value="pboc_financial_base">人行-金融基础数据</a-option>
               <a-option value="pboc_interest_rate">人行-利率报备检测</a-option>
             </a-select>
+            <a-button class="action-btn" size="large" @click="showMissingTicket({ assetType: 'metric', pageSource: '指标字典' })">
+              <template #icon><icon-plus /></template>缺失工单
+            </a-button>
           </div>
         </div>
       </div>
@@ -53,13 +56,24 @@
         <a-empty v-if="filteredList.length === 0" description="暂无指标数据" />
       </div>
     </div>
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="ticketContext"
+      @confirm="handleMissingTicketConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon'
+import MissingTicketModal from '@/pages/search/MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 
 const search = ref('')
 const indicatorType = ref<string | undefined>(undefined)

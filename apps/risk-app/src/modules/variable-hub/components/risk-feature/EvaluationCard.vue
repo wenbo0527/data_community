@@ -1,5 +1,5 @@
 <!--
-  变量评估 Tab（v3 精简版）
+  特征评估 Tab（v3 精简版）
   - 关联分析报告
   - 分支报告（Excel 上传 + 历史记录）
   - 关联外数评估中心
@@ -11,7 +11,7 @@
       <a-table :data="analysisReports" :columns="analysisReportColumns" row-key="id" :pagination="false">
         <template #source="{ record }">
           <a-tag v-if="record.source === 'risk-app'" color="arcoblue">外数评估中心</a-tag>
-          <a-tag v-else-if="record.source === 'dmt-app'" color="green">变量评估</a-tag>
+          <a-tag v-else-if="record.source === 'dmt-app'" color="green">特征评估</a-tag>
           <a-tag v-else color="purple">分支报告</a-tag>
         </template>
         <template #actions="{ record }">
@@ -89,7 +89,7 @@
         <a-row v-else :gutter="12" align="center">
           <a-col :span="16">
             <a-alert type="warning" :show-icon="false">
-              当前变量来自外数来源，尚未关联外数评估中心。点击下方按钮跳转到外数评估中心完成评估后将自动回填关联。
+              当前特征来自外数来源，尚未关联外数评估中心。点击下方按钮跳转到外数评估中心完成评估后将自动回填关联。
             </a-alert>
           </a-col>
           <a-col :span="8" style="text-align: right">
@@ -99,7 +99,7 @@
           </a-col>
         </a-row>
       </template>
-      <a-empty v-else description="当前变量非外数来源，无需关联外数评估中心" />
+      <a-empty v-else description="当前特征非外数来源，无需关联外数评估中心" />
     </a-card>
   </div>
 </template>
@@ -125,7 +125,7 @@ interface Props {
   onUnlinkExternalEvaluation?: () => void
   /** 关联外数评估回调（生成新的评估单号）*/
   onLinkExternalEvaluation?: () => Promise<string> | string
-  /** 用于唯一标识分支报告（通常为变量ID）*/
+  /** 用于唯一标识分支报告（通常为特征ID）*/
   branchStorageKey?: string
 }
 
@@ -274,7 +274,7 @@ function openExternalEvaluation() {
 function unlinkExternalEvaluation() {
   Modal.confirm({
     title: '确认解除关联？',
-    content: '解除后将无法在变量评估页直接查看外数评估结果。',
+    content: '解除后将无法在特征评估页直接查看外数评估结果。',
     okText: '确认解除',
     cancelText: '取消',
     okButtonProps: { status: 'danger' },

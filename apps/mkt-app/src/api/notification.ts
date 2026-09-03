@@ -59,7 +59,7 @@ export interface NotificationTemplateParams {
   status?: string
 }
 
-/** 通知变量 */
+/** 通知特征 */
 export interface NotificationVariable {
   key: string
   name: string

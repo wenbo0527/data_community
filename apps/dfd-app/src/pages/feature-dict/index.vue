@@ -162,7 +162,7 @@ const getTypeLabel = (type) => typeMap[type]?.label || type
 const getTypeColor = (type) => typeMap[type]?.color || 'gray'
 
 // 分类映射
-const getMajorCategoryLabel = (mc) => ({ credit: '征信变量', behavior: '行为变量' }[mc] || mc || '—')
+const getMajorCategoryLabel = (mc) => ({ credit: '征信特征', behavior: '行为特征' }[mc] || mc || '—')
 const level1Label = (l1) => ({
   credit_report: '征信报告',
   credit_history: '信贷记录',
@@ -178,7 +178,7 @@ const getQualityColor = (q) => q >= 90 ? 'green' : q >= 70 ? 'orange' : 'red'
 const categoryTree = [
   {
     key: 'credit',
-    title: '征信变量',
+    title: '征信特征',
     children: [
       { key: 'credit_report', title: '征信报告' },
       { key: 'credit_history', title: '信贷记录' }
@@ -186,7 +186,7 @@ const categoryTree = [
   },
   {
     key: 'behavior',
-    title: '行为变量',
+    title: '行为特征',
     children: [
       { key: 'transaction_behavior', title: '交易行为' },
       { key: 'activity', title: '活跃度' }
@@ -196,14 +196,14 @@ const categoryTree = [
 
 // 样例数据
 const sampleRows = [
-  { id: 'feat_0701', name: '征信查询次数', code: 'credit_credit_report_query_count', description: '征信报告近半年查询次数', majorCategory: 'credit', majorCategoryLabel: '征信变量', level1: 'credit_report', level1Label: '征信报告', level2: 'query_count', type: 'numerical', status: 'active', dataSource: '用户基础信息表', creator: '李明', createdAt: '2026-03-01 10:00:00', quality: 95.5 },
-  { id: 'feat_0702', name: '征信逾期次数', code: 'credit_credit_report_overdue_count', description: '征信报告历史逾期次数', majorCategory: 'credit', majorCategoryLabel: '征信变量', level1: 'credit_report', level1Label: '征信报告', level2: 'overdue_count', type: 'numerical', status: 'active', dataSource: '用户基础信息表', creator: '李明', createdAt: '2026-03-01 10:00:00', quality: 92.0 },
-  { id: 'feat_0703', name: '贷款次数', code: 'credit_credit_history_loan_times', description: '信贷记录贷款次数', majorCategory: 'credit', majorCategoryLabel: '征信变量', level1: 'credit_history', level1Label: '信贷记录', level2: 'loan_times', type: 'numerical', status: 'active', dataSource: '订单数据表', creator: '王芳', createdAt: '2026-03-02 11:00:00', quality: 88.5 },
-  { id: 'feat_0704', name: '还款比率', code: 'credit_credit_history_repay_ratio', description: '信贷记录还款比率', majorCategory: 'credit', majorCategoryLabel: '征信变量', level1: 'credit_history', level1Label: '信贷记录', level2: 'repay_ratio', type: 'numerical', status: 'pending', dataSource: '订单数据表', creator: '王芳', createdAt: '2026-03-02 11:00:00', quality: 85.0 },
-  { id: 'feat_0711', name: '平均交易额', code: 'behavior_transaction_avg_amount', description: '近三个月平均交易额', majorCategory: 'behavior', majorCategoryLabel: '行为变量', level1: 'transaction_behavior', level1Label: '交易行为', level2: 'avg_amount', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '张伟', createdAt: '2026-03-03 09:00:00', quality: 91.0 },
-  { id: 'feat_0712', name: '交易频次', code: 'behavior_transaction_frequency', description: '近一周交易次数', majorCategory: 'behavior', majorCategoryLabel: '行为变量', level1: 'transaction_behavior', level1Label: '交易行为', level2: 'frequency', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '张伟', createdAt: '2026-03-03 09:00:00', quality: 93.5 },
-  { id: 'feat_0713', name: '登录天数', code: 'behavior_activity_login_days', description: '近一月登录天数', majorCategory: 'behavior', majorCategoryLabel: '行为变量', level1: 'activity', level1Label: '活跃度', level2: 'login_days', type: 'numerical', status: 'draft', dataSource: '行为日志表', creator: '赵丽', createdAt: '2026-03-04 14:00:00', quality: 78.0 },
-  { id: 'feat_0714', name: '会话次数', code: 'behavior_activity_session_count', description: '近一周会话次数', majorCategory: 'behavior', majorCategoryLabel: '行为变量', level1: 'activity', level1Label: '活跃度', level2: 'session_count', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '赵丽', createdAt: '2026-03-04 14:00:00', quality: 89.0 }
+  { id: 'feat_0701', name: '征信查询次数', code: 'credit_credit_report_query_count', description: '征信报告近半年查询次数', majorCategory: 'credit', majorCategoryLabel: '征信特征', level1: 'credit_report', level1Label: '征信报告', level2: 'query_count', type: 'numerical', status: 'active', dataSource: '用户基础信息表', creator: '李明', createdAt: '2026-03-01 10:00:00', quality: 95.5 },
+  { id: 'feat_0702', name: '征信逾期次数', code: 'credit_credit_report_overdue_count', description: '征信报告历史逾期次数', majorCategory: 'credit', majorCategoryLabel: '征信特征', level1: 'credit_report', level1Label: '征信报告', level2: 'overdue_count', type: 'numerical', status: 'active', dataSource: '用户基础信息表', creator: '李明', createdAt: '2026-03-01 10:00:00', quality: 92.0 },
+  { id: 'feat_0703', name: '贷款次数', code: 'credit_credit_history_loan_times', description: '信贷记录贷款次数', majorCategory: 'credit', majorCategoryLabel: '征信特征', level1: 'credit_history', level1Label: '信贷记录', level2: 'loan_times', type: 'numerical', status: 'active', dataSource: '订单数据表', creator: '王芳', createdAt: '2026-03-02 11:00:00', quality: 88.5 },
+  { id: 'feat_0704', name: '还款比率', code: 'credit_credit_history_repay_ratio', description: '信贷记录还款比率', majorCategory: 'credit', majorCategoryLabel: '征信特征', level1: 'credit_history', level1Label: '信贷记录', level2: 'repay_ratio', type: 'numerical', status: 'pending', dataSource: '订单数据表', creator: '王芳', createdAt: '2026-03-02 11:00:00', quality: 85.0 },
+  { id: 'feat_0711', name: '平均交易额', code: 'behavior_transaction_avg_amount', description: '近三个月平均交易额', majorCategory: 'behavior', majorCategoryLabel: '行为特征', level1: 'transaction_behavior', level1Label: '交易行为', level2: 'avg_amount', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '张伟', createdAt: '2026-03-03 09:00:00', quality: 91.0 },
+  { id: 'feat_0712', name: '交易频次', code: 'behavior_transaction_frequency', description: '近一周交易次数', majorCategory: 'behavior', majorCategoryLabel: '行为特征', level1: 'transaction_behavior', level1Label: '交易行为', level2: 'frequency', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '张伟', createdAt: '2026-03-03 09:00:00', quality: 93.5 },
+  { id: 'feat_0713', name: '登录天数', code: 'behavior_activity_login_days', description: '近一月登录天数', majorCategory: 'behavior', majorCategoryLabel: '行为特征', level1: 'activity', level1Label: '活跃度', level2: 'login_days', type: 'numerical', status: 'draft', dataSource: '行为日志表', creator: '赵丽', createdAt: '2026-03-04 14:00:00', quality: 78.0 },
+  { id: 'feat_0714', name: '会话次数', code: 'behavior_activity_session_count', description: '近一周会话次数', majorCategory: 'behavior', majorCategoryLabel: '行为特征', level1: 'activity', level1Label: '活跃度', level2: 'session_count', type: 'numerical', status: 'active', dataSource: '行为日志表', creator: '赵丽', createdAt: '2026-03-04 14:00:00', quality: 89.0 }
 ]
 
 // 展示数据

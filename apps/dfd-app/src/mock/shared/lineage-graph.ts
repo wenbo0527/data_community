@@ -137,8 +137,7 @@ export function buildLineageFromTable(tableName: string): LineageGraph {
           id: `e_field_to_element_${actualTableName}_${field.name}`,
           source: `field:${actualTableName}.${field.name}`,
           target: `element:${link.businessElementId}`,
-          type: 'field_links_element',
-          evidence: link.evidence
+          type: 'field_links_element'
         })
       }
       if (link.standardCode) {

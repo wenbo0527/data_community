@@ -163,7 +163,7 @@
 import { ref, computed, watch } from 'vue'
 import { TrendingUp, RefreshCw, Download, Copy, Eye } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
-import { exportToExcel } from '@/utils/export'
+import { exportToExcel } from '@app/shared-utils'
 
 interface LimitAdjustment {
   customerNo: string

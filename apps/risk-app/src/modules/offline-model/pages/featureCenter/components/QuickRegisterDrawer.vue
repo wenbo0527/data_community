@@ -30,8 +30,8 @@
           </a-form-item>
           <a-form-item label="特征分类(大类)" required field="majorCategories">
             <a-select v-model="createForm.majorCategories" multiple placeholder="请选择特征分类">
-              <a-option value="credit">征信变量</a-option>
-              <a-option value="behavior">行为变量</a-option>
+              <a-option value="credit">征信特征</a-option>
+              <a-option value="behavior">行为特征</a-option>
             </a-select>
           </a-form-item>
           <a-space>

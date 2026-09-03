@@ -42,7 +42,7 @@ export const DemoFlags = {
   isOADown: () => flags.oaDown ?? false,
   /** 检测：内数 API 是否故障 */
   isInternalDown: () => flags.internalDown ?? false,
-  /** 检测：变量中心是否故障 */
+  /** 检测：特征中心是否故障 */
   isVariableDown: () => flags.variableDown ?? false,
   /** 检测：数仓任务是否故障 */
   isDwDown: () => flags.dwDown ?? false

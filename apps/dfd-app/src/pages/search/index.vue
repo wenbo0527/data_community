@@ -14,7 +14,7 @@
       <!-- 缺失工单弹窗 -->
       <MissingTicketModal 
         v-model:visible="showMissingTicketModal" 
-        :initial-name="searchQuery"
+        :context="ticketContext"
         @confirm="handleMissingTicketConfirm"
       />
       
@@ -34,7 +34,7 @@
             >
               <IconFilter />高级搜索
             </a-button>
-            <a-button type="text" @click="showMissingTicket">
+            <a-button type="text" @click="showMissingTicket({ pageSource: '全局搜索', assetName: searchQuery || undefined })">
               <IconPlus />缺失工单
             </a-button>
             <a-button type="text" @click="toggleHistory">
@@ -73,7 +73,7 @@
               >
                 <a-option value="table">数据表</a-option>
                 <a-option value="metric">指标</a-option>
-                <a-option value="external">外部数据</a-option>
+                <a-option value="concept">业务概念</a-option>
               </a-select>
             </a-col>
             <a-col :span="6">
@@ -87,6 +87,12 @@
                 <a-option value="交易域">交易域</a-option>
                 <a-option value="产品域">产品域</a-option>
                 <a-option value="风控域">风控域</a-option>
+                <a-option value="授信域">授信域</a-option>
+                <a-option value="还款域">还款域</a-option>
+                <a-option value="支用域">支用域</a-option>
+                <a-option value="贷后域">贷后域</a-option>
+                <a-option value="财务域">财务域</a-option>
+                <a-option value="营销域">营销域</a-option>
               </a-select>
             </a-col>
             <a-col :span="6">
@@ -103,11 +109,22 @@
               </a-select>
             </a-col>
             <a-col :span="6">
-              <a-button type="outline" @click="resetFilters">
-                重置筛选
-              </a-button>
+              <a-select 
+                v-model="filters.sourceType" 
+                placeholder="数据来源" 
+                allow-clear
+                @change="handleFilterChange"
+              >
+                <a-option value="hive">HIVE 数仓表</a-option>
+                <a-option value="business">业务系统源表</a-option>
+              </a-select>
             </a-col>
           </a-row>
+          <div class="filter-actions">
+            <a-button type="outline" size="small" @click="resetFilters">
+              重置筛选
+            </a-button>
+          </div>
         </div>
         
         <!-- 搜索历史 -->
@@ -139,32 +156,12 @@
             <span>为您找到 {{ totalResults }} 个搜索结果</span>
           </div>
           
-          <!-- 结果类型切换 -->
+          <!-- 结果类型切换（基于实际搜索结果动态展示） -->
           <div class="result-type-tabs">
             <a-tabs v-model:active-key="activeResultType" @change="handleResultTypeChange">
-              <a-tab-pane key="all" title="全部">
+              <a-tab-pane v-for="tab in visibleTabs" :key="tab.key" :title="tab.label">
                 <template #title>
-                  全部 <a-badge :count="allResults.length" :max-count="99" />
-                </template>
-              </a-tab-pane>
-              <a-tab-pane key="table" title="数据表">
-                <template #title>
-                  数据表 <a-badge :count="tableResults.length" :max-count="99" />
-                </template>
-              </a-tab-pane>
-              <a-tab-pane key="metric" title="指标">
-                <template #title>
-                  指标 <a-badge :count="metricResults.length" :max-count="99" />
-                </template>
-              </a-tab-pane>
-              <a-tab-pane key="external" title="外部数据">
-                <template #title>
-                  外部数据 <a-badge :count="externalResults.length" :max-count="99" />
-                </template>
-              </a-tab-pane>
-              <a-tab-pane key="concept" title="业务概念">
-                <template #title>
-                  业务概念 <a-badge :count="conceptResults.length" :max-count="99" />
+                  {{ tab.label }} <a-badge :count="tab.results().length" :max-count="99" />
                 </template>
               </a-tab-pane>
             </a-tabs>
@@ -203,6 +200,12 @@
               <div class="item-header">
                 <div class="item-type">
                   <a-tag :color="getTypeColor(item.type)">{{ getTypeLabel(item.type) }}</a-tag>
+                  <template v-if="item.type === 'table'">
+                    <a-tag v-if="item.sourceType === 'hive'" size="small" color="arcoblue" bordered>HIVE</a-tag>
+                    <a-tag v-else-if="item.sourceType === 'business'" size="small" color="orangered" bordered>
+                      {{ item.dbType ? item.dbType.toUpperCase() : '业务系统' }}
+                    </a-tag>
+                  </template>
                 </div>
                 <div class="item-actions">
                   <a-button type="text" size="mini" @click.stop="toggleFavorite(item)">
@@ -235,6 +238,9 @@
                   </span>
                   <span v-if="item.domain" class="meta-item">
                     <IconApps />{{ item.domain }}
+                  </span>
+                  <span v-if="item.sourceSystem" class="meta-item">
+                    <IconDesktop />{{ item.sourceSystem }}
                   </span>
                 </div>
               </div>
@@ -274,12 +280,16 @@ import {
   IconUser, 
   IconClockCircle, 
   IconApps,
+  IconDesktop,
   IconPlus
 } from '@arco-design/web-vue/es/icon'
 
 // 导入组件
 import LoadingState from '../data-map/components/LoadingState.vue'
 import MissingTicketModal from './MissingTicketModal.vue'
+import { useMissingTicket } from '@/composables/useMissingTicket'
+
+const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 
 // 导入模拟数据
 import { tableMockData } from '@/mock/tableData.ts'
@@ -291,19 +301,23 @@ interface SearchFilters {
   type?: string
   domain?: string
   updateFrequency?: string
+  sourceType?: string  // hive | business
 }
 
 interface SearchResult {
   id: string
   name: string
   description: string
-  type: 'table' | 'metric' | 'external'
+  type: 'table' | 'metric' | 'external' | 'concept'
   owner: string
   updateTime: string
   domain?: string
   isFavorite?: boolean
   businessScenarios?: string[]
   recommendedUsage?: string[]
+  sourceType?: string       // hive | business
+  sourceSystem?: string    // 业务系统名称
+  dbType?: string          // 数据库类型
   [key: string]: any
 }
 
@@ -316,7 +330,6 @@ const searchLoading = ref(false)
 const searchQuery = ref('')
 const showAdvancedFilter = ref(false)
 const showHistory = ref(false)
-const showMissingTicketModal = ref(false)
 const activeResultType = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(12)
@@ -435,19 +448,39 @@ const performSearch = async (query?: string) => {
     if (res.code === 200 && res.data) {
       const data = res.data
       
-      // 处理数据表结果
+      // 处理数据表结果（数据资源）
       tableResults.value = (data.tables || []).map((t: any) => ({
         id: `table_${t.name}`,
         name: t.name,
         description: t.description,
         type: 'table',
         owner: t.owner,
-        updateTime: t.lastModified || '2024-01-15',
+        updateTime: t.lastModified || t.updateTime || '2024-01-15',
         domain: t.domain,
-        isFavorite: false
+        isFavorite: false,
+        businessScenarios: t.tags,
+        heat: t.qualityScore || 0,
+        sourceType: t.sourceType || 'hive',
+        sourceSystem: t.sourceSystem || '',
+        dbType: t.dbType || ''
       }))
 
-      // 处理业务概念结果
+      // 处理指标结果（数据资产）
+      // id 用裸 id/code，与 metrics-map/detail.vue 的 m.id === route.params.id 严格匹配对齐
+      metricResults.value = (data.metrics || []).map((m: any) => ({
+        id: String(m.id || m.code),
+        name: m.name,
+        description: m.businessDefinition ? m.businessDefinition.replace(/<[^>]+>/g, '') : m.name,
+        type: 'metric',
+        owner: m.owner || m.businessOwner || '系统',
+        updateTime: m.statisticalPeriod || '实时',
+        domain: m.businessDomain || m.category,
+        isFavorite: m.isFavorite || false,
+        recommendedUsage: m.useCase ? [m.useCase] : [],
+        heat: 0
+      }))
+
+      // 处理业务概念结果（业务要素：域/实体/要素）
       const concepts = data.concepts || { domains: [], entities: [], elements: [] }
       conceptResults.value = [
         ...concepts.domains.map((d: any) => ({ ...d, id: d.code, type: 'concept', conceptType: '业务域' })),
@@ -461,15 +494,28 @@ const performSearch = async (query?: string) => {
         owner: c.owner || '系统',
         updateTime: '实时',
         isFavorite: false,
-        conceptType: c.conceptType
+        conceptType: c.conceptType,
+        heat: 0
       }))
 
-      // 模拟其他类型数据（保持原有逻辑或清空）
-      metricResults.value = [] // 暂时清空，或保留原有 mock 逻辑
-      externalResults.value = []
+      // 处理外部数据结果（三方数据源）
+      externalResults.value = (data.external || []).map((e: any) => ({
+        id: e.interfaceId,
+        name: e.dataName,
+        description: `${e.supplier} · ${e.dataType}${e.subType ? ' · ' + e.subType : ''}`,
+        type: 'external',
+        owner: e.supplier,
+        updateTime: e.onlineTime,
+        domain: e.dataType,
+        isFavorite: e.isFavorite || false,
+        heat: 0
+      }))
 
       // 合并所有结果
-      allResults.value = [...tableResults.value, ...conceptResults.value]
+      allResults.value = [...tableResults.value, ...metricResults.value, ...conceptResults.value, ...externalResults.value]
+
+      // 根据实际结果自动切换到第一个有数据的TAB
+      autoSwitchToFirstAvailableTab()
     }
   } catch (error) {
 
@@ -489,6 +535,7 @@ const clearResults = () => {
   externalResults.value = []
   conceptResults.value = []
   currentPage.value = 1
+  activeResultType.value = 'all'
 }
 
 // 筛选方法
@@ -555,6 +602,32 @@ const clearHistory = () => {
   localStorage.removeItem('search-history')
 }
 
+// 动态TAB配置：基于实际搜索结果决定哪些TAB可见
+const tabConfigs = [
+  { key: 'all', label: '全部', results: () => allResults.value },
+  { key: 'table', label: '数据表', results: () => tableResults.value },
+  { key: 'metric', label: '指标', results: () => metricResults.value },
+  { key: 'external', label: '外部数据', results: () => externalResults.value },
+  { key: 'concept', label: '业务概念', results: () => conceptResults.value }
+]
+
+// 仅展示有结果的TAB（"全部"在有结果时始终展示）
+const visibleTabs = computed(() => {
+  return tabConfigs.filter(tab => {
+    if (tab.key === 'all') return allResults.value.length > 0
+    return tab.results().length > 0
+  })
+})
+
+// 自动切换到第一个有数据的TAB
+const autoSwitchToFirstAvailableTab = () => {
+  const visibleKeys = visibleTabs.value.map(t => t.key)
+  // 如果当前TAB不在可见列表中，切换到第一个可见TAB
+  if (!visibleKeys.includes(activeResultType.value) && visibleKeys.length > 0) {
+    activeResultType.value = visibleKeys[0]
+  }
+}
+
 // 结果处理方法
 const handleResultTypeChange = (key: string) => {
   activeResultType.value = key
@@ -568,10 +641,15 @@ const handleItemClick = (item: SearchResult) => {
       router.push(`/discovery/data-map/table/${encodeURIComponent(item.name)}`)
       break
     case 'metric':
-      router.push(`/discovery/metrics-map/${item.id}`)
+      router.push(`/discovery/metrics-map/detail/${item.id}`)
       break
     case 'external':
-      router.push(`/discovery/external/${item.id}`)
+      // external 列表页在 discovery/external,无独立详情路由,通过 query.focus 高亮定位
+      router.push({ name: 'external', query: { focus: String(item.id) } })
+      break
+    case 'concept':
+      // business-concept 详情页在 management 域(三栏:域/实体/要素),通过 query 定位
+      router.push({ name: 'business-concept', query: { focus: String(item.id), focusType: item.conceptType || '' } })
       break
   }
 }
@@ -590,17 +668,6 @@ const handlePageSizeChange = (size: number) => {
   currentPage.value = 1
 }
 
-// 缺失工单方法
-const showMissingTicket = () => {
-  showMissingTicketModal.value = true
-}
-
-const handleMissingTicketConfirm = (data: any) => {
-
-  // 这里可以调用API提交工单
-  Message.success('缺失工单已提交')
-}
-
 // 工具方法
 const getTypeColor = (type: string) => {
   switch (type) {
@@ -610,6 +677,8 @@ const getTypeColor = (type: string) => {
       return 'green'
     case 'external':
       return 'orange'
+    case 'concept':
+      return 'purple'
     default:
       return 'gray'
   }
@@ -623,6 +692,8 @@ const getTypeLabel = (type: string) => {
       return '指标'
     case 'external':
       return '外部数据'
+    case 'concept':
+      return '业务概念'
     default:
       return '未知'
   }
@@ -735,6 +806,12 @@ const getTypeLabel = (type: string) => {
   background: #f7f8fa;
   border-radius: 6px;
   border: 1px solid var(--subapp-border);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .history-header {

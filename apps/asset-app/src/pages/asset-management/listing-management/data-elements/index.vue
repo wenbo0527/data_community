@@ -18,7 +18,7 @@
         <a-tab-pane key="metric" title="指标注册">
           <MetricManagement />
         </a-tab-pane>
-        <a-tab-pane key="variable" title="变量注册">
+        <a-tab-pane key="variable" title="特征注册">
           <VariableManagement />
         </a-tab-pane>
       </a-tabs>

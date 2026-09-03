@@ -30,7 +30,7 @@ const tourSteps = [
   {
     element: '.data-assets',
     title: '数据资产',
-    description: '在这里你可以查找和管理数据资产，包括数据表、外部数据、CDP元素和风控变量等。',
+    description: '在这里你可以查找和管理数据资产，包括数据表、外部数据、CDP元素和风控特征等。',
     position: 'right'
   },
   {
@@ -42,7 +42,7 @@ const tourSteps = [
   {
     element: '.digital-credit',
     title: '数字授信',
-    description: '变量中心与模型服务，支持实时风控和反欺诈等功能。',
+    description: '特征中心与模型服务，支持实时风控和反欺诈等功能。',
     position: 'left'
   },
   {

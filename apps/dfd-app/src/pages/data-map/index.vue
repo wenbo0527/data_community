@@ -571,7 +571,7 @@ const handleElementClick = (item: any) => {
     router.push({ path: '/discovery/unified-metrics' })
   } else if (item.name === '业务标签') {
     router.push({ path: '/dex/customer360' })
-  } else if (item.name === '数据变量') {
+  } else if (item.name === '数据特征') {
     router.push({ path: '/variables/map' })
   } else if (item.name === '模型特征') {
     // 跳转到特征中心

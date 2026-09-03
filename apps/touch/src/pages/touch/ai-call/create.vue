@@ -83,7 +83,7 @@
               />
               <div class="script-hint">
                 <icon-info-circle />
-                <span>支持变量引用，格式：${变量名}</span>
+                <span>支持特征引用，格式：${特征名}</span>
               </div>
             </a-form-item>
           </a-col>

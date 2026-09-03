@@ -8,8 +8,8 @@
     <a-table :data="importRows" :columns="importColumns" row-key="__key" :pagination="false" size="small">
       <template #majorCategoryCell="{ record }">
         <a-select v-model="record.majorCategory" placeholder="特征大类">
-          <a-option value="credit">征信变量</a-option>
-          <a-option value="behavior">行为变量</a-option>
+          <a-option value="credit">征信特征</a-option>
+          <a-option value="behavior">行为特征</a-option>
           <a-option value="model_output">模型输出</a-option>
         </a-select>
       </template>

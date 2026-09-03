@@ -167,8 +167,8 @@
       <a-form :model="importConfig" layout="vertical">
         <a-form-item label="数据类型">
           <a-select v-model="importConfig.dataType" placeholder="选择数据类型" @change="handleDataTypeChange">
-            <a-option value="behavior">行为变量</a-option>
-            <a-option value="credit">征信变量</a-option>
+            <a-option value="behavior">行为特征</a-option>
+            <a-option value="credit">征信特征</a-option>
           </a-select>
         </a-form-item>
         
@@ -547,8 +547,8 @@ const handleDataTypeChange = () => {
 
 const getDataTypeText = (type: string) => {
   const textMap: Record<string, string> = {
-    behavior: '行为变量',
-    credit: '征信变量'
+    behavior: '行为特征',
+    credit: '征信特征'
   }
   return textMap[type] || ''
 }
@@ -609,8 +609,8 @@ const downloadTemplate = () => {
   }
   
   const templateMap: Record<string, string> = {
-    behavior: '行为变量导入模板.xlsx',
-    credit: '征信变量导入模板.xlsx'
+    behavior: '行为特征导入模板.xlsx',
+    credit: '征信特征导入模板.xlsx'
   }
 
   Message.success(`${getDataTypeText(importConfig.dataType)}模板下载成功`)

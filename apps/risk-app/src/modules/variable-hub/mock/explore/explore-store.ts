@@ -18,21 +18,21 @@ export type ExplorePriority = 'high' | 'medium' | 'low'
 export type ExploreDecisionResult = 'adopted' | 'rejected' | 'paused'
 
 /**
- * 探索中心台账展示用的"变量当前状态"枚举
+ * 探索中心台账展示用的"特征当前状态"枚举
  * 与 §6.5 探索中心台账展示与状态同步机制 对齐
  * 注意：探索中心不维护此状态机，仅只读展示
  */
 export type VariableSyncStatus =
-  | 'none'              // 无关联变量（如已否决/已暂缓/未采纳）
-  | 'pending_approval'  // 变量中心：待审批
-  | 'pending_deploy'    // 变量中心：待部署
-  | 'online'            // 变量中心：已上线
-  | 'rejected'          // 变量中心：审批驳回（探索中心自动回退到已暂缓）
+  | 'none'              // 无关联特征（如已否决/已暂缓/未采纳）
+  | 'pending_approval'  // 特征中心：待审批
+  | 'pending_deploy'    // 特征中心：待部署
+  | 'online'            // 特征中心：已上线
+  | 'rejected'          // 特征中心：审批驳回（探索中心自动回退到已暂缓）
 
 export interface VariableSyncInfo {
-  /** 关联变量ID（生成草稿后写入） */
+  /** 关联特征ID（生成草稿后写入） */
   variableId: string
-  /** 变量当前状态 */
+  /** 特征当前状态 */
   status: VariableSyncStatus
   /** 状态变更时间戳（演示同步延迟） */
   updatedAt: string
@@ -79,8 +79,8 @@ export interface ExploreTopic {
   >
   referencedTopicIds: string[]
   /**
-   * 关联变量同步信息（仅在状态为已采纳时有值）
-   * 探索中心只读展示，状态变更由变量中心事件驱动
+   * 关联特征同步信息（仅在状态为已采纳时有值）
+   * 探索中心只读展示，状态变更由特征中心事件驱动
    */
   variableSync?: VariableSyncInfo
   /** ============ 需求专属字段（demandType='derivation' 时使用） ============ */
@@ -185,7 +185,7 @@ const topicMocks: ExploreTopic[] = [
     id: 'EXP-2026-001',
     name: '风控_逾期前行为特征_202606',
     businessProblem: '逾期前30天，客户行为有哪些可量化的预警信号？',
-    hypothesis: '交易频次突降 + 还款金额递减 = 逾期预警变量',
+    hypothesis: '交易频次突降 + 还款金额递减 = 逾期预警特征',
     domainTags: ['风控'],
     variableTypeTags: ['行为类', '交易类'],
     exploreCategoryId: 'behavior-loan',
@@ -204,8 +204,8 @@ const topicMocks: ExploreTopic[] = [
   },
   {
     id: 'EXP-2026-002',
-    name: '风控_多头借贷变量优化_202606',
-    businessProblem: '在既有外数成本约束下，是否存在更高 ROI 的多头变量组合？',
+    name: '风控_多头借贷特征优化_202606',
+    businessProblem: '在既有外数成本约束下，是否存在更高 ROI 的多头特征组合？',
     hypothesis: '外部多头查询 + 近30天借款行为组合可提升区分度',
     domainTags: ['风控'],
     variableTypeTags: ['外部类'],
@@ -221,7 +221,7 @@ const topicMocks: ExploreTopic[] = [
       { type: 'external_service', name: 'ext_multi_loan_query', displayName: '外部多头查询服务' }
     ],
     referencedTopicIds: ['EXP-2026-001'],
-    // 演示数据：已采纳课题的关联变量已处于"已上线"状态
+    // 演示数据：已采纳课题的关联特征已处于"已上线"状态
     variableSync: {
       variableId: 'VAR-DRAFT-002',
       status: 'online',
@@ -236,8 +236,8 @@ const topicMocks: ExploreTopic[] = [
   },
   {
     id: 'EXP-2026-003',
-    name: '营销_响应率预测变量_202606',
-    businessProblem: '营销触达响应率的预测变量是否可提升活动投放效果？',
+    name: '营销_响应率预测特征_202606',
+    businessProblem: '营销触达响应率的预测特征是否可提升活动投放效果？',
     hypothesis: 'APP使用频次 + 近期消费偏好 = 响应率提升信号',
     domainTags: ['营销'],
     variableTypeTags: ['行为类', '画像类'],
@@ -419,12 +419,12 @@ const experimentMocks: ExploreExperiment[] = [
     transformLogic: 'ext_multi_loan_cnt_30d + loan_apply_cnt_30d',
     thresholdConfig: '5分箱',
     metrics: { iv: 0.45, ks: 0.38, psi: 0.05, coverage: 0.812 },
-    conclusion: '组合变量效果最优，建议进入采纳决策。',
+    conclusion: '组合特征效果最优，建议进入采纳决策。',
     recommendation: 'go',
     executor: '李四',
     startedAt: '2026-06-18 10:00:00',
     finishedAt: '2026-06-18 12:10:00',
-    tags: ['外数', '组合变量']
+    tags: ['外数', '组合特征']
   }
 ]
 
@@ -637,7 +637,7 @@ const derivationMocks: ExploreTopic[] = [
     batch: '2026Q3',
     acceptor: '小李',
     derivationStatus: 'requirement_accepted',
-    remark: '由原内数变量迁移为贷中行为品类',
+    remark: '由原内数特征迁移为贷中行为品类',
     businessProblem: '评估用户申请行为',
     hypothesis: '申请频次激增预示用户风险',
     domainTags: ['风控'],
@@ -681,7 +681,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '数据应用团队',
-    remark: '由原内数变量迁移为贷中行为品类',
+    remark: '由原内数特征迁移为贷中行为品类',
     derivationStatus: 'requirement_accepted',
     businessProblem: '评估用户活跃度',
     hypothesis: '交易频次反映用户活跃度',
@@ -798,7 +798,7 @@ const decisionMocks: ExploreDecision[] = [
     rationale: 'RUN-003 的 IV/KS 领先且 PSI 稳定，满足进入注册草稿条件。',
     extensionPlan: {
       recommendedVariables: [
-        { name: '多头借贷组合变量v1', bestExperimentId: 'RUN-003' }
+        { name: '多头借贷组合特征v1', bestExperimentId: 'RUN-003' }
       ],
       expectedLaunchDate: '2026-07-15',
       resourceEstimate: '数据工程师 3 天确认口径；前端 2 天补齐登记字段。',
@@ -1012,16 +1012,16 @@ export const ExploreStore = {
 
   /**
    * 探索中心台账展示相关方法（§6.5）
-   * 探索中心只读订阅变量中心的状态变更，不反向写入
+   * 探索中心只读订阅特征中心的状态变更，不反向写入
    */
 
-  /** 读取课题的关联变量同步信息（只读） */
+  /** 读取课题的关联特征同步信息（只读） */
   getVariableSyncStatus: (topicId: string): VariableSyncInfo | undefined => {
     const topic = ExploreStore.getTopicById(topicId)
     return topic?.variableSync
   },
 
-  /** 采纳决策生成草稿后，初始化变量同步信息为"待审批" */
+  /** 采纳决策生成草稿后，初始化特征同步信息为"待审批" */
   initVariableSync: (topicId: string, variableId: string): VariableSyncInfo | undefined => {
     const topic = ExploreStore.getTopicById(topicId)
     if (!topic) return undefined
@@ -1031,7 +1031,7 @@ export const ExploreStore = {
       status: 'pending_approval',
       updatedAt: now,
       events: [
-        { at: now, from: 'none', to: 'pending_approval', note: '采纳决策生成草稿，移交变量中心' }
+        { at: now, from: 'none', to: 'pending_approval', note: '采纳决策生成草稿，移交特征中心' }
       ]
     }
     const topics = readExtraTopics()
@@ -1047,24 +1047,24 @@ export const ExploreStore = {
       field: 'variableSync.status',
       beforeValue: 'none',
       afterValue: 'pending_approval',
-      reason: `采纳决策生成草稿 ${variableId}，移交变量中心`
+      reason: `采纳决策生成草稿 ${variableId}，移交特征中心`
     })
     return sync
   },
 
   /**
-   * 模拟变量中心"审批通过"事件
+   * 模拟特征中心"审批通过"事件
    * 状态变更：pending_approval → pending_deploy
    * 含演示同步延迟（默认 5 秒，模拟"1 分钟级"同步能力）
    */
   mockSyncApprove: (topicId: string): VariableSyncInfo | undefined => {
     const topic = ExploreStore.getTopicById(topicId)
     if (!topic?.variableSync || topic.variableSync.status !== 'pending_approval') return topic?.variableSync
-    return scheduleSyncTransition(topic, 'pending_deploy', '审批通过，变量中心接管')
+    return scheduleSyncTransition(topic, 'pending_deploy', '审批通过，特征中心接管')
   },
 
   /**
-   * 模拟变量中心"审批驳回"事件
+   * 模拟特征中心"审批驳回"事件
    * 状态变更：pending_approval → rejected
    * 探索中心自动把课题状态从"已采纳"回退到"已暂缓"
    */
@@ -1081,7 +1081,7 @@ export const ExploreStore = {
       writeExtraTopics(topics)
       ExploreStore.addAuditEvent({
         topicId,
-        operator: '变量中心（Demo）',
+        operator: '特征中心（Demo）',
         action: '回退',
         field: 'topic.status',
         beforeValue: 'adopted',
@@ -1093,7 +1093,7 @@ export const ExploreStore = {
   },
 
   /**
-   * 模拟变量中心"部署完成"事件
+   * 模拟特征中心"部署完成"事件
    * 状态变更：pending_deploy → online
    */
   mockSyncDeploy: (topicId: string): VariableSyncInfo | undefined => {
@@ -1158,7 +1158,7 @@ function scheduleSyncTransition(
     }
     ExploreStore.addAuditEvent({
       topicId: topic.id,
-      operator: '变量中心（Demo）',
+      operator: '特征中心（Demo）',
       action: '同步',
       field: 'variableSync.status',
       beforeValue: from,

@@ -257,7 +257,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 
-// 状态变量
+// 状态特征
 const selectedNodeType = ref('default')
 const selectedState = ref('default')
 const screenshotSize = ref('medium')

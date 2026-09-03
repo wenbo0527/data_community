@@ -74,12 +74,12 @@ const scenes = [
   },
   {
     id: 'variable-backtrack',
-    title: '全量变量回溯申请',
-    description: '适用于模型训练与验证，支持全量特征变量的历史数据回溯。',
+    title: '全量特征回溯申请',
+    description: '适用于模型训练与验证，支持全量特征特征的历史数据回溯。',
     icon: IconFindReplace,
     color: '#FF7D00',
-    tags: ['特征工程', '全量变量', '模型训练'],
-    serviceType: '全量变量回溯申请'
+    tags: ['特征工程', '全量特征', '模型训练'],
+    serviceType: '全量特征回溯申请'
   },
   {
     id: 'risk-compliance',

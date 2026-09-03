@@ -185,7 +185,7 @@ const allElements = computed<ShelfItem[]>(() => {
 // ── 分类定义 ──
 const categoryDefs = [
   { type: '指标', label: '指标', icon: IconStar, description: '业务核心/监管指标管理' },
-  { type: '变量', label: '变量', icon: IconBulb, description: '业务变量/风控变量' },
+  { type: '特征', label: '特征', icon: IconBulb, description: '业务特征/风控特征' },
   { type: 'API', label: 'API', icon: IconShareExternal, description: '数据服务 API 接口' },
   { type: '外数', label: '外数', icon: IconCloud, description: '外部数据源接入' },
   { type: '特征', label: '特征', icon: IconCommon, description: '模型特征/画像特征' },

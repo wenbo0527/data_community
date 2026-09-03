@@ -2,16 +2,16 @@
   <div class="variable-management-page">
     <div class="page-header">
       <a-breadcrumb>
-        <a-breadcrumb-item>变量管理</a-breadcrumb-item>
-        <a-breadcrumb-item>变量列表</a-breadcrumb-item>
+        <a-breadcrumb-item>特征管理</a-breadcrumb-item>
+        <a-breadcrumb-item>特征列表</a-breadcrumb-item>
       </a-breadcrumb>
       <div class="header-content">
-        <h1 class="page-title">变量上下架管理</h1>
+        <h1 class="page-title">特征上下架管理</h1>
         <div class="header-actions">
           <a-dropdown trigger="click" @select="handleCreateMenuSelect">
             <a-button type="primary">
               <template #icon><icon-plus /></template>
-              新建变量
+              新建特征
             </a-button>
             <template #content>
               <a-doption value="create">单独注册</a-doption>
@@ -20,7 +20,7 @@
           </a-dropdown>
           <a-button @click="handleExport">
             <template #icon><icon-download /></template>
-            导出变量清单
+            导出特征清单
           </a-button>
         </div>
       </div>
@@ -33,7 +33,7 @@
           <a-card class="stat-card">
             <div class="stat-content">
               <div class="stat-number">{{ stats.total }}</div>
-              <div class="stat-label">变量总数</div>
+              <div class="stat-label">特征总数</div>
             </div>
           </a-card>
         </a-col>
@@ -67,9 +67,9 @@
       <a-card class="filter-card">
         <a-form :model="filterForm" layout="inline">
           <a-form-item label="关键词">
-            <a-input v-model="filterForm.keyword" placeholder="搜索变量名称、编码或描述" allow-clear @change="handleSearch" />
+            <a-input v-model="filterForm.keyword" placeholder="搜索特征名称、编码或描述" allow-clear @change="handleSearch" />
           </a-form-item>
-          <a-form-item label="变量类型">
+          <a-form-item label="特征类型">
             <a-select v-model="filterForm.type" placeholder="全部类型" allow-clear @change="handleSearch">
               <a-option value="numerical">数值型</a-option>
               <a-option value="categorical">分类型</a-option>
@@ -93,7 +93,7 @@
         </a-form>
       </a-card>
 
-      <!-- 变量列表 -->
+      <!-- 特征列表 -->
       <a-card class="table-card">
         <a-table
           :data="displayList"
@@ -124,7 +124,7 @@
           <template #empty>
             <div class="table-empty">
               <icon-empty :size="40" class="empty-icon" />
-              <span>暂无变量数据</span>
+              <span>暂无特征数据</span>
             </div>
           </template>
         </a-table>
@@ -132,7 +132,7 @@
     </div>
 
     <!-- 导入更新弹窗 -->
-    <a-modal v-model:visible="importModalVisible" title="导入更新变量" width="600px" @ok="confirmImport" @cancel="importModalVisible = false">
+    <a-modal v-model:visible="importModalVisible" title="导入更新特征" width="600px" @ok="confirmImport" @cancel="importModalVisible = false">
       <a-upload :auto-upload="false" :limit="1" :accept="'.xlsx,.xls'" @change="handleFileChange">
         <a-button>选择Excel文件</a-button>
       </a-upload>
@@ -163,7 +163,7 @@ const filterForm = reactive({
   status: ''
 })
 
-// 变量列表（Mock）
+// 特征列表（Mock）
 const allVariables = ref([
   { id: 1, name: '客户年龄段', code: 'var_age_group', type: 'categorical', status: 'active', dataSourceName: 'CRM系统', creator: '张三', createdAt: '2024-03-15' },
   { id: 2, name: '近30天交易金额', code: 'var_trx_amt_30d', type: 'numerical', status: 'active', dataSourceName: '交易系统', creator: '李四', createdAt: '2024-03-18' },
@@ -192,8 +192,8 @@ const paginationConfig = reactive({
 
 // 表格列配置
 const columns = [
-  { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
-  { title: '变量编码', dataIndex: 'code', width: 180 },
+  { title: '特征名称', dataIndex: 'name', slotName: 'name', width: 200 },
+  { title: '特征编码', dataIndex: 'code', width: 180 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
   { title: '状态', dataIndex: 'status', slotName: 'status', width: 100 },
   { title: '数据源', dataIndex: 'dataSourceName', width: 150 },
@@ -252,19 +252,19 @@ const handlePageChange = (page: number) => {
 
 // 详情
 const handleViewDetail = (record: any) => {
-  Message.info(`查看变量详情：${record.name}（Demo模式）`)
+  Message.info(`查看特征详情：${record.name}（Demo模式）`)
 }
 
 // 编辑
 const handleEdit = (record: any) => {
-  Message.info(`编辑变量：${record.name}（Demo模式）`)
+  Message.info(`编辑特征：${record.name}（Demo模式）`)
 }
 
 // 上下架
 const handleToggleStatus = async (record: any) => {
   const newStatus = record.status === 'active' ? 'inactive' : 'active'
   record.status = newStatus
-  Message.success(`变量「${record.name}」已${newStatus === 'active' ? '上架' : '下架'}`)
+  Message.success(`特征「${record.name}」已${newStatus === 'active' ? '上架' : '下架'}`)
   handleSearch()
 }
 
@@ -278,7 +278,7 @@ const handleCreateMenuSelect = (val: string) => {
   if (val === 'incremental') {
     importModalVisible.value = true
   } else {
-    Message.info('新建变量（Demo模式）')
+    Message.info('新建特征（Demo模式）')
   }
 }
 

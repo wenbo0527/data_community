@@ -1056,6 +1056,114 @@ export const mockUsers: Record<string, any> = {
   }
 }
 
+/**
+ * 根据借据记录生成还款记录
+ * 每条借据按期次生成已还款/逾期/待还款记录
+ */
+function generateRepaymentRecords(loanRecords: any[]): any[] {
+  const records: any[] = []
+  let idCounter = 1
+
+  for (const loan of loanRecords) {
+    if (!loan.loanNo) continue
+
+    const installments = loan.installments || 1
+    const currentPeriod = loan.currentPeriod || 0
+    const perPrincipal = Math.round((loan.amount || 0) / installments)
+    const perInterest = Math.round((loan.amount || 0) * (loan.interestRate || 0) / 100 / 12)
+    const perTotal = perPrincipal + perInterest
+    const startDate = new Date(loan.loanDate || new Date())
+
+    // 决定已还期次数
+    let repaidPeriods = 0
+    if (loan.status === '结清' || loan.iouStatus === '已结清') {
+      repaidPeriods = installments
+    } else if (loan.status === '正常') {
+      repaidPeriods = currentPeriod
+    } else if (loan.status === '逾期') {
+      repaidPeriods = Math.max(currentPeriod - 1, 0)
+    }
+
+    // 生成已还款记录
+    for (let i = 1; i <= repaidPeriods; i++) {
+      const d = new Date(startDate)
+      d.setMonth(d.getMonth() + i)
+      records.push({
+        id: `RP${String(idCounter++).padStart(4, '0')}`,
+        loanNo: loan.loanNo,
+        productKey: loan.productKey || '',
+        productName: loan.productName || '',
+        creditProductId: loan.creditProductId || '',
+        creditApplicationId: loan.creditApplicationId || '',
+        loanProductId: loan.loanProductId || '',
+        loanProductName: loan.loanProductName || '',
+        period: i,
+        repayDate: d.toISOString().slice(0, 10),
+        amount: perTotal,
+        principal: perPrincipal,
+        interest: perInterest,
+        penalty: 0,
+        method: i % 2 === 0 ? '主动还款' : '自动扣款',
+        status: '已还款'
+      })
+    }
+
+    // 逾期期次
+    if (loan.status === '逾期' && loan.overdueDays > 0) {
+      const d = new Date(startDate)
+      d.setMonth(d.getMonth() + currentPeriod)
+      records.push({
+        id: `RP${String(idCounter++).padStart(4, '0')}`,
+        loanNo: loan.loanNo,
+        productKey: loan.productKey || '',
+        productName: loan.productName || '',
+        creditProductId: loan.creditProductId || '',
+        creditApplicationId: loan.creditApplicationId || '',
+        loanProductId: loan.loanProductId || '',
+        loanProductName: loan.loanProductName || '',
+        period: currentPeriod,
+        repayDate: d.toISOString().slice(0, 10),
+        amount: perTotal,
+        principal: perPrincipal,
+        interest: perInterest,
+        penalty: Math.round(loan.remainingPenalty || 0),
+        method: '自动扣款',
+        status: '逾期',
+        overdueDays: loan.overdueDays
+      })
+    }
+
+    // 待还款期次（在贷且有未还期次时，展示下一期待还）
+    if ((loan.status === '正常' || loan.status === '逾期') && currentPeriod < installments) {
+      const nextPeriod = loan.status === '逾期' ? currentPeriod + 1 : currentPeriod + 1
+      if (nextPeriod <= installments) {
+        const d = new Date(startDate)
+        d.setMonth(d.getMonth() + nextPeriod)
+        records.push({
+          id: `RP${String(idCounter++).padStart(4, '0')}`,
+          loanNo: loan.loanNo,
+          productKey: loan.productKey || '',
+          productName: loan.productName || '',
+          creditProductId: loan.creditProductId || '',
+          creditApplicationId: loan.creditApplicationId || '',
+          loanProductId: loan.loanProductId || '',
+          loanProductName: loan.loanProductName || '',
+          period: nextPeriod,
+          repayDate: d.toISOString().slice(0, 10),
+          amount: perTotal,
+          principal: perPrincipal,
+          interest: perInterest,
+          penalty: 0,
+          method: '自动扣款',
+          status: '待还款'
+        })
+      }
+    }
+  }
+
+  return records
+}
+
 // 模糊搜索 Mock 结果
 export const fuzzySearchResults: Record<string, any[]> = {
   '张伟': [
@@ -1094,7 +1202,12 @@ export async function fetchUserInfo(userId: string): Promise<any> {
 
   const user = mockUsers[userId]
   if (user) {
-    return { ...user }
+    const data = { ...user }
+    // 自动生成还款记录
+    if (!data.repaymentRecords && data.loanRecords) {
+      data.repaymentRecords = generateRepaymentRecords(data.loanRecords)
+    }
+    return data
   }
 
   return {

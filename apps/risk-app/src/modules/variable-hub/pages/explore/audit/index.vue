@@ -41,7 +41,7 @@
         </a-card>
 
         <!-- §6.5.5 审批驳回/部署失败/实际上线通知记录 -->
-        <a-card :bordered="false" class="panel-card" title="同步事件通知记录（变量中心 → 探索中心）" style="margin-top: 16px">
+        <a-card :bordered="false" class="panel-card" title="同步事件通知记录（特征中心 → 探索中心）" style="margin-top: 16px">
           <a-empty v-if="syncNotifications.length === 0" description="暂无同步通知记录" />
           <a-timeline v-else>
             <a-timeline-item v-for="(item, idx) in syncNotifications" :key="idx">
@@ -79,7 +79,7 @@
           <a-alert type="info" :show-icon="false">
             Demo 中的"审计导出"仅展示交互路径，不生成真实 PDF/Excel。
             <div style="margin-top: 8px; font-size: 12px">
-              §6.5 同步机制：变量中心状态变更通过事件订阅推送，探索中心只读展示，同步延迟容忍度 1 分钟级。
+              §6.5 同步机制：特征中心状态变更通过事件订阅推送，探索中心只读展示，同步延迟容忍度 1 分钟级。
             </div>
           </a-alert>
         </a-card>
@@ -110,7 +110,7 @@ const resultOptions = [
 const resultLabel = (value: ExploreDecisionResult) => ({ adopted: '采纳', rejected: '否决', paused: '暂缓' }[value])
 const resultColor = (value: ExploreDecisionResult) => ({ adopted: 'green', rejected: 'red', paused: 'orange' }[value])
 
-// §6.5.5 同步事件通知：展示变量中心状态变更事件
+// §6.5.5 同步事件通知：展示特征中心状态变更事件
 // 演示用：1 秒轮询触发响应式更新
 const tickRef = ref(0)
 let pollTimer: number | undefined
@@ -154,8 +154,8 @@ const filteredDecisions = computed(() => {
 })
 
 /**
- * §6.5.5 同步通知事件（变量中心 → 探索中心）
- * 仅展示 action ∈ {同步, 回退} 的审计事件，对应"变量状态变更"和"审批驳回回退"
+ * §6.5.5 同步通知事件（特征中心 → 探索中心）
+ * 仅展示 action ∈ {同步, 回退} 的审计事件，对应"特征状态变更"和"审批驳回回退"
  */
 const syncNotifications = computed(() => {
   void tickRef.value

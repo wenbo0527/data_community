@@ -40,7 +40,7 @@
           </div>
           <a-textarea
             v-model="localConfig.code"
-            placeholder="请输入Python代码...\n\n# 可用变量:\n# - input_data: 上游节点的输出数据\n# - params: 节点参数\n\n# 示例:\nimport pandas as pd\n\n# 处理数据\nresult = input_data.copy()\nresult['new_column'] = result['existing_column'] * 2\n\n# 返回结果\noutput_data = result"
+            placeholder="请输入Python代码...\n\n# 可用特征:\n# - input_data: 上游节点的输出数据\n# - params: 节点参数\n\n# 示例:\nimport pandas as pd\n\n# 处理数据\nresult = input_data.copy()\nresult['new_column'] = result['existing_column'] * 2\n\n# 返回结果\noutput_data = result"
             :rows="12"
             class="code-editor"
             @change="handleConfigChange"
@@ -506,7 +506,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 # 获取输入数据
 df = input_data
 
-# 假设最后一列是目标变量
+# 假设最后一列是目标特征
 X = df.iloc[:, :-1]
 y = df.iloc[:, -1]
 

@@ -567,9 +567,9 @@ function handleAlertRulesAPI(url, method, params, data) {
 }
 
 /**
- * 处理变量管理相关 API
+ * 处理特征管理相关 API
  */
-// 变量管理内存数据
+// 特征管理内存数据
 let __variablesMemory = null
 const __variableTypes = ['numerical', 'categorical', 'text', 'datetime', 'boolean']
 const __variableStatuses = ['draft', 'pending', 'active', 'inactive', 'expired']
@@ -589,7 +589,7 @@ function initVariablesMemory() {
     const ds = __dataSources[Math.floor(Math.random() * __dataSources.length)]
     list.push({
       id: `var_${String(i).padStart(3, '0')}`,
-      name: `变量${i}`,
+      name: `特征${i}`,
       code: `var_code_${i}`,
       type,
       status,
@@ -599,7 +599,7 @@ function initVariablesMemory() {
       missingRate: Math.floor(Math.random() * 5),
       creator: `用户${i}`,
       createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      description: `这是变量${i}的描述信息`
+      description: `这是特征${i}的描述信息`
     })
   }
   __variablesMemory = list
@@ -664,7 +664,7 @@ function handleVariablesAPI(url, method, params, data) {
       description: data.description || ''
     }
     __variablesMemory.unshift(newItem)
-    return { code: 200, message: '变量创建成功', data: newItem }
+    return { code: 200, message: '特征创建成功', data: newItem }
   }
 
   // 批量导入
@@ -746,7 +746,7 @@ function handleVariablesAPI(url, method, params, data) {
     const id = url.split('/').pop()
     const variable = __variablesMemory.find(v => v.id === id)
     if (!variable) {
-      return { code: 404, message: '未找到变量', data: null }
+      return { code: 404, message: '未找到特征', data: null }
     }
     return { code: 200, message: 'success', data: variable }
   }
@@ -756,7 +756,7 @@ function handleVariablesAPI(url, method, params, data) {
     const id = url.split('/').pop()
     const idx = __variablesMemory.findIndex(v => v.id === id)
     if (idx === -1) {
-      return { code: 404, message: '未找到变量', data: null }
+      return { code: 404, message: '未找到特征', data: null }
     }
     const ds = __dataSources.find(s => s.id === data.dataSource) || __dataSources[0]
     __variablesMemory[idx] = {
@@ -766,7 +766,7 @@ function handleVariablesAPI(url, method, params, data) {
       dataSourceName: ds.name,
       updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19)
     }
-    return { code: 200, message: '变量更新成功', data: __variablesMemory[idx] }
+    return { code: 200, message: '特征更新成功', data: __variablesMemory[idx] }
   }
 
   // 删除
@@ -775,7 +775,7 @@ function handleVariablesAPI(url, method, params, data) {
     const beforeLen = __variablesMemory.length
     __variablesMemory = __variablesMemory.filter(v => v.id !== id)
     const success = __variablesMemory.length < beforeLen
-    return { code: success ? 200 : 404, message: success ? '变量删除成功' : '未找到变量', data: null }
+    return { code: success ? 200 : 404, message: success ? '特征删除成功' : '未找到特征', data: null }
   }
 
   // 更新状态
@@ -784,7 +784,7 @@ function handleVariablesAPI(url, method, params, data) {
     const id = parts[3]
     const idx = __variablesMemory.findIndex(v => v.id === id)
     if (idx === -1) {
-      return { code: 404, message: '未找到变量', data: null }
+      return { code: 404, message: '未找到特征', data: null }
     }
     __variablesMemory[idx].status = data.status
     __variablesMemory[idx].updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 19)
@@ -800,7 +800,7 @@ function handleVariablesAPI(url, method, params, data) {
 }
 
 /**
- * 处理变量地图相关 API
+ * 处理特征地图相关 API
  */
 function handleVariableMapAPI(url, method, params, data) {
   const upperMethod = method.toUpperCase()
@@ -830,7 +830,7 @@ function handleVariableMapAPI(url, method, params, data) {
   // 血缘
   if (url.match(/\/api\/variable-map\/lineage\/[^/]+$/) && upperMethod === 'GET') {
     const id = url.split('/').pop()
-    const current = { id, name: `变量${id}`, type: 'numerical', status: 'active' }
+    const current = { id, name: `特征${id}`, type: 'numerical', status: 'active' }
     return { code: 200, message: 'success', data: { upstream: [], downstream: [], current } }
   }
 

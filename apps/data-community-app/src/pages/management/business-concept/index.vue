@@ -93,10 +93,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { BusinessConceptStore } from '@/mock-shared/business-concept-store'
 
 const router = useRouter()
+const route = useRoute()
 
 const domains = ref<any[]>([])
 const entities = ref<any[]>([])
@@ -111,6 +112,33 @@ onMounted(() => {
   entities.value = BusinessConceptStore.getEntities()
   relations.value = BusinessConceptStore.getRelations()
   elements.value = BusinessConceptStore.getElements()
+
+  // 搜索结果点击跳转进入时,根据 query.focus + focusType 自动定位到对应业务域/实体/要素
+  const { focus, focusType } = route.query
+  if (!focus) return
+  const code = String(focus)
+
+  if (focusType === '业务域') {
+    const d = domains.value.find(x => x.code === code)
+    if (d) selectDomain(d)
+  } else if (focusType === '业务实体') {
+    const e = entities.value.find(x => x.code === code)
+    if (e) {
+      const d = domains.value.find(x => x.code === e.domainCode)
+      if (d) selectDomain(d)
+      selectEntity(e)
+    }
+  } else if (focusType === '数据要素') {
+    const el = elements.value.find(x => x.code === code)
+    if (el?.relatedEntityCode) {
+      const e = entities.value.find(x => x.code === el.relatedEntityCode)
+      if (e) {
+        const d = domains.value.find(x => x.code === e.domainCode)
+        if (d) selectDomain(d)
+        selectEntity(e)
+      }
+    }
+  }
 })
 
 const filteredEntities = computed(() => {

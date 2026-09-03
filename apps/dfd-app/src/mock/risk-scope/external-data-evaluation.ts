@@ -687,7 +687,7 @@ const generateEvaluationReportDetail = (id: string) => {
           startTime: '2024-12-04 10:45:00',
           endTime: '2024-12-04 11:30:00',
           duration: '45分钟',
-          description: '构建分析所需的特征变量'
+          description: '构建分析所需的特征特征'
         },
         {
           step: 4,

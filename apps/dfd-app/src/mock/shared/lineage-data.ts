@@ -155,6 +155,10 @@ export interface LineageNodeData {
   sql: string
   upstreamExpanded: boolean
   downstreamExpanded: boolean
+  // 中文名称
+  chineseName?: string
+  // 资产描述
+  description?: string
   // 扩展字段（来自 DataLineage）
   transformationLogic?: string
   dependencies?: string[]
@@ -217,8 +221,52 @@ const ownerMap: Record<string, string> = {
   dwd_fraud_alert: '赵六'
 }
 
-// 创建节点数据的工厂函数
-function createNodeData(
+// 表名 → 中文名称映射
+const chineseNameMap: Record<string, string> = {
+  dim_user: '用户维度表',
+  ods_user_info: '用户信息表',
+  ods_customer_profile: '客户画像表',
+  log_user_behavior: '用户行为日志表',
+  fact_loan_apply: '贷款申请事实表',
+  dws_risk_score: '风险评分汇总表',
+  ads_user_portrait: '用户画像应用表',
+  dwd_fraud_alert: '欺诈告警明细表'
+}
+
+// 根据表名获取中文名称
+export function getChineseName(tableName: string): string {
+  return chineseNameMap[tableName] || tableName
+}
+
+// 表名 → 资产描述映射
+const descriptionMap: Record<string, string> = {
+  dim_user: '存储用户基础属性信息，包括用户ID、姓名、手机号、注册时间等字段，是用户画像和风控模型的核心维度表',
+  ods_user_info: '从业务系统同步的原始用户信息，未经加工处理，包含全量用户字段',
+  ods_customer_profile: '从外部系统接入的客户画像数据，包含客户标签和偏好信息',
+  log_user_behavior: '采集自APP和Web端的用户行为埋点日志，记录页面浏览、点击、停留等行为',
+  fact_loan_apply: '记录贷款申请的全流程数据，包括申请金额、期限、利率、审批结果等关键信息',
+  dws_risk_score: '基于用户多维数据计算的风险评分汇总表，用于风控规则引擎和审批决策',
+  ads_user_portrait: '面向应用层的用户画像宽表，整合标签、偏好、行为等多维特征供营销使用',
+  dwd_fraud_alert: '欺诈告警明细表，记录告警类型、触发规则、处置结果等信息'
+}
+
+// 根据表名获取资产描述
+export function getDescription(tableName: string): string {
+  return descriptionMap[tableName] || ''
+}
+
+// 基于字符串的确定性哈希,确保同一表名每次生成相同数据
+function hashStr(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash = hash & hash
+  }
+  return Math.abs(hash)
+}
+
+// 创建节点数据的工厂函数（确定性，不依赖 Math.random）
+export function createNodeData(
   id: string,
   label: string,
   type: GraphNodeType,
@@ -227,18 +275,21 @@ function createNodeData(
   dataType: GraphDataType = 'Table',
   extra?: Partial<LineageNodeData>
 ): LineageNodeData {
+  const h = hashStr(label)
   return {
     label,
     type,
     dataType,
     dbName,
     owner,
-    rowCount: Math.floor(Math.random() * 1000000),
-    dataSize: (Math.random() * 100).toFixed(2) + ' GB',
+    chineseName: getChineseName(label),
+    description: getDescription(label),
+    rowCount: h % 1000000,
+    dataSize: (h % 100).toFixed(2) + ' GB',
     taskName: `任务_${label}`,
-    taskId: `task-${type}-${Math.random().toString(36).substr(2, 5)}`,
-    taskStatus: Math.random() > 0.8 ? 'failed' : Math.random() > 0.5 ? 'running' : 'success',
-    lastRunTime: new Date(Date.now() - Math.random() * 86400000).toLocaleString(),
+    taskId: `task-${type}-${h.toString(36).slice(2, 7)}`,
+    taskStatus: h % 10 > 8 ? 'failed' : h % 10 > 5 ? 'running' : 'success',
+    lastRunTime: new Date(Date.now() - (h % 86400000)).toLocaleString(),
     sql: `SELECT * FROM ${label} \nWHERE dt = '${new Date().toISOString().slice(0, 10)}'`,
     upstreamExpanded: false,
     downstreamExpanded: false,
@@ -247,12 +298,12 @@ function createNodeData(
 }
 
 // 根据表名获取库名
-function getDbName(tableName: string): string {
+export function getDbName(tableName: string): string {
   return dbNameMap[tableName] || 'dw'
 }
 
 // 根据表名获取负责人
-function getOwner(tableName: string): string {
+export function getOwner(tableName: string): string {
   return ownerMap[tableName] || '未知'
 }
 

@@ -64,9 +64,9 @@ const STORAGE_KEY = 'evaluation.tasks.extra'
 const BINDING_KEY = 'evaluation.external.binding'
 
 /**
- * 评估执行后写回变量的"外数评估报告 ID"映射
+ * 评估执行后写回特征的"外数评估报告 ID"映射
  * 形如：{ VAR-0001: 11, VAR-0002: 12, ... }
- * 在 api/variable-management 中会与变量的 sourceRefs.externalEvaluationId 合并展示
+ * 在 api/variable-management 中会与特征的 sourceRefs.externalEvaluationId 合并展示
  */
 type ExternalBindingMap = Record<string, string | number>
 
@@ -123,7 +123,7 @@ function nextExternalReportId(): number {
 const defaultTasks: EvaluationTaskMock[] = [
   {
     id: 'EVAL-2026-001',
-    name: '外数准入变量复评',
+    name: '外数准入特征复评',
     taskType: 'recheck',
     status: 'completed',
     sourceType: 'variable_batch',
@@ -132,9 +132,9 @@ const defaultTasks: EvaluationTaskMock[] = [
     dataSourceId: 'external',
     dataSourceName: '外部数据服务',
     variableTypeId: 'external',
-    variableTypeName: '外数变量',
+    variableTypeName: '外数特征',
     owner: '李四',
-    description: '针对外数变量的命中率、成本收益和 SLA 稳定性进行复评。',
+    description: '针对外数特征的命中率、成本收益和 SLA 稳定性进行复评。',
     createdAt: '2026-06-22 10:00:00',
     updatedAt: '2026-06-24 18:20:00',
     startedAt: '2026-06-23 09:00:00',
@@ -185,7 +185,7 @@ const defaultTasks: EvaluationTaskMock[] = [
   },
   {
     id: 'EVAL-2026-002',
-    name: '行为变量候选准入评估',
+    name: '行为特征候选准入评估',
     taskType: 'access',
     status: 'running',
     sourceType: 'topic',
@@ -194,9 +194,9 @@ const defaultTasks: EvaluationTaskMock[] = [
     dataSourceId: 'internal',
     dataSourceName: '内数底表',
     variableTypeId: 'behavior',
-    variableTypeName: '行为变量',
+    variableTypeName: '行为特征',
     owner: '张三',
-    description: '对探索课题产出的候选变量做准入评估，验证覆盖率和稳定性。',
+    description: '对探索课题产出的候选特征做准入评估，验证覆盖率和稳定性。',
     createdAt: '2026-06-25 09:30:00',
     updatedAt: '2026-06-26 10:40:00',
     startedAt: '2026-06-26 10:00:00',
@@ -277,7 +277,7 @@ function generateReportsForTask(task: EvaluationTaskMock): EvaluationTaskReport[
       name: `DMT 评估总结 - ${task.name}`,
       generatedAt: now,
       url: `preview:internal-summary-${task.id}`,
-      summary: `DMT 评估总结：${task.targets.length} 个目标变量，详见逐项报告。`
+      summary: `DMT 评估总结：${task.targets.length} 个目标特征，详见逐项报告。`
     })
   }
 
@@ -340,7 +340,7 @@ export const EvaluationTaskStore = {
       ks: Number((0.12 + targetCount * 0.03).toFixed(2)),
       passRate: Number((0.82 + targetCount * 0.02).toFixed(2))
     }
-    // 回写评估指标到变量档案
+    // 回写评估指标到特征档案
     current.targets.forEach((target) => {
       if (!target.id) return
       const quality = Math.round((metrics.passRate ?? 0.9) * 100)
@@ -364,7 +364,7 @@ export const EvaluationTaskStore = {
       metrics,
       resultSummary:
         current.resultSummary ||
-        `已完成 ${targetCount} 个变量的 mock 评估（已生成 ${reports.length} 份评估报告），评估指标已回写到变量档案。`,
+        `已完成 ${targetCount} 个特征的 mock 评估（已生成 ${reports.length} 份评估报告），评估指标已回写到特征档案。`,
       reports
     }
     upsertExtraTask(finished)
@@ -387,7 +387,7 @@ export const EvaluationTaskStore = {
     return running
   },
   /**
-   * 读取"评估任务中心 → 外数评估"已生成的 ID 映射，供变量档案侧合并 sourceRefs
+   * 读取"评估任务中心 → 外数评估"已生成的 ID 映射，供特征档案侧合并 sourceRefs
    */
   getExternalBinding(): ExternalBindingMap {
     return readBinding()

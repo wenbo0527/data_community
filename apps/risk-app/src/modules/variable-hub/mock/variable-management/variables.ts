@@ -245,7 +245,7 @@ export const variableAssets: VariableAssetMock[] = [
     apiNo: 'MIDLOAN-API-0001',
     apiName: 'midloan_bigtxn_30d_query',
     onlineTime: fmt(new Date(now.getTime() - 3 * 86400000)),
-    /** 当前状态=已上线（H1 R05：变量中心确认后填入引用信息）*/
+    /** 当前状态=已上线（H1 R05：特征中心确认后填入引用信息）*/
     registeredAt: fmt(new Date(now.getTime() - 25 * 86400000)),
     developingOaAt: fmt(new Date(now.getTime() - 22 * 86400000)),
     pendingVerifyAt: fmt(new Date(now.getTime() - 11 * 86400000)),
@@ -257,7 +257,7 @@ export const variableAssets: VariableAssetMock[] = [
     syncingInternalAt: fmt(new Date(now.getTime() - 5 * 86400000)),
     syncingVariableAt: fmt(new Date(now.getTime() - 4 * 86400000)),
     referenceStatus: '已引用',
-    referenceDetail: '已正式投产到变量中心，关联决策引擎：风控V3、风控V4',
+    referenceDetail: '已正式投产到特征中心，关联决策引擎：风控V3、风控V4',
     upstreamTable: 'dwd_trade_detail',
     requirementProposalAt: fmt(new Date(now.getTime() - 27 * 86400000)),
     businessAcceptanceAt: fmt(new Date(now.getTime() - 12 * 86400000)),
@@ -661,7 +661,7 @@ export const variableAssets: VariableAssetMock[] = [
     adminConfirmedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     /** OA 审批中时间戳（F0.1 触发时间）*/
     oaProductionReviewingAt: fmt(new Date(now.getTime() - 0.5 * 86400000)),
-    /** OA 审批中还没有内数同步/变量中心同步时间戳 */
+    /** OA 审批中还没有内数同步/特征中心同步时间戳 */
     syncingInternalAt: '',
     syncingVariableAt: '',
     apiNo: '',
@@ -674,7 +674,7 @@ export const variableAssets: VariableAssetMock[] = [
     effectMetrics: { iv: 0.21, ks: 0.16, auc: 0.64, coverage: 0.89, lift: 6 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 42000, monthlyCost: 0, costTrend: 'stable' }
   },
-  // ============ 补齐：syncing_variable（同步中 变量中心）============
+  // ============ 补齐：syncing_variable（同步中 特征中心）============
   {
     id: 'MIDLOAN-FEAT-0012',
     name: '近30日 GPS 定位异常次数',
@@ -714,7 +714,7 @@ export const variableAssets: VariableAssetMock[] = [
     adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 8 * 86400000)),
-    /** 当前状态=变量中心同步中（D.3 时间戳）*/
+    /** 当前状态=特征中心同步中（D.3 时间戳）*/
     developingOaAt: fmt(new Date(now.getTime() - 7 * 86400000)),
     pendingVerifyAt: fmt(new Date(now.getTime() - 5 * 86400000)),
     businessAcceptanceAt: fmt(new Date(now.getTime() - 4 * 86400000)),
@@ -777,7 +777,7 @@ export const variableAssets: VariableAssetMock[] = [
     offlineTime: '2026-07-30 02:00:00',
     offlineReason: '模型 V3 升级，汰换 V2 衍生特征',
     referenceStatus: '已断开',
-    referenceDetail: '变量中心已断开引用，数字社区团队已断开 hbase/hive',
+    referenceDetail: '特征中心已断开引用，数字社区团队已断开 hbase/hive',
     upstreamTable: 'dwd_trade_detail',
     effectMetrics: { iv: 0.18, ks: 0.13, auc: 0.62, coverage: 0.95, lift: 4 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 0, monthlyCost: 0, costTrend: 'stable' }
@@ -830,7 +830,7 @@ export const variableAssets: VariableAssetMock[] = [
     offlineTime: '2026-08-02 02:00:00',
     offlineReason: '数据源服务下线',
     referenceStatus: '已断开',
-    referenceDetail: '变量中心已断开引用，数字社区团队已断开 hbase/hive',
+    referenceDetail: '特征中心已断开引用，数字社区团队已断开 hbase/hive',
     upstreamTable: 'dwd_thirdparty_query_log',
     effectMetrics: { iv: 0.22, ks: 0.17, auc: 0.66, coverage: 0.88, lift: 7 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 0, monthlyCost: 0, costTrend: 'stable' }
@@ -884,7 +884,7 @@ export const variableAssets: VariableAssetMock[] = [
     offlineTime: fmt(new Date(now.getTime() - 7 * 86400000)),
     offlineReason: '模型 V3 升级，汰换 V2 衍生特征',
     referenceStatus: '已断开',
-    referenceDetail: '变量中心已断开引用，等待数字社区团队断开 hbase/hive',
+    referenceDetail: '特征中心已断开引用，等待数字社区团队断开 hbase/hive',
     /** 当前状态=已下线（D.3 时间戳：已下线时间在 offlineTime）*/
     developingOaAt: fmt(new Date(now.getTime() - 68 * 86400000)),
     pendingVerifyAt: fmt(new Date(now.getTime() - 60 * 86400000)),
@@ -894,7 +894,7 @@ export const variableAssets: VariableAssetMock[] = [
     effectMetrics: { iv: 0.26, ks: 0.21, auc: 0.68, coverage: 0.94, lift: 9 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 0, monthlyCost: 0, costTrend: 'stable' }
   },
-  // ============ 补齐：variable_sync_failed（变量中心同步失败）============
+  // ============ 补齐：variable_sync_failed（特征中心同步失败）============
   {
     id: 'MIDLOAN-FEAT-0014',
     name: '近60日通讯录负面词出现次数',
@@ -934,7 +934,7 @@ export const variableAssets: VariableAssetMock[] = [
     adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 4 * 86400000)),
-    /** 当前状态=变量中心同步失败：尚未成功上线，apiNo/apiName/onlineTime 为空 */
+    /** 当前状态=特征中心同步失败：尚未成功上线，apiNo/apiName/onlineTime 为空 */
     developingOaAt: fmt(new Date(now.getTime() - 7 * 86400000)),
     pendingVerifyAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     adminConfirmedAt: fmt(new Date(now.getTime() - 2.5 * 86400000)),
@@ -946,7 +946,7 @@ export const variableAssets: VariableAssetMock[] = [
     apiName: '',
     onlineTime: '',
     upstreamTable: 'dwd_contact_log',
-    syncFailedReason: '变量中心返回失败：特征字段名与变量中心已存在特征冲突（neg_word_cnt_60d）',
+    syncFailedReason: '特征中心返回失败：特征字段名与特征中心已存在特征冲突（neg_word_cnt_60d）',
     syncFailedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     syncRetryCount: 1,
     effectMetrics: { iv: 0.18, ks: 0.14, auc: 0.62, coverage: 0.85, lift: 5 },
@@ -1048,7 +1048,7 @@ export const variableAssets: VariableAssetMock[] = [
     syncingInternalAt: fmt(new Date(now.getTime() - 30 * 86400000)),
     syncingVariableAt: fmt(new Date(now.getTime() - 29 * 86400000)),
     upstreamTable: 'dwd_card_binding_log',
-    syncFailedReason: '变量中心批次同步失败：批量接口返回 503，3 条特征中 1 条未确认',
+    syncFailedReason: '特征中心批次同步失败：批量接口返回 503，3 条特征中 1 条未确认',
     syncFailedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     syncRetryCount: 2,
     effectMetrics: { iv: 0.39, ks: 0.31, auc: 0.77, coverage: 0.91, lift: 15 },
@@ -1106,7 +1106,7 @@ export const variableAssets: VariableAssetMock[] = [
     oaProductionReviewingAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     /** 当前=参数准备：进入系统自动参数映射+有效性验证 */
     paramPreparingAt: fmt(new Date(now.getTime() - 0.5 * 86400000)),
-    /** param_preparing 还没有内数同步/变量中心同步时间戳 */
+    /** param_preparing 还没有内数同步/特征中心同步时间戳 */
     syncingInternalAt: '',
     syncingVariableAt: '',
     apiNo: '',
@@ -1170,7 +1170,7 @@ export const variableAssets: VariableAssetMock[] = [
     apiName: 'midloan_top_login_city_30d_query',
     onlineTime: fmt(new Date(now.getTime() - 20 * 86400000)),
     referenceStatus: '已引用',
-    referenceDetail: '已上线到变量中心，关联决策引擎：风控V4',
+    referenceDetail: '已上线到特征中心，关联决策引擎：风控V4',
     upstreamTable: 'dwd_login_log',
     effectMetrics: { iv: 0.15, ks: 0.11, auc: 0.6, coverage: 0.98, lift: 4 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 95000, monthlyCost: 0, costTrend: 'stable' }
@@ -1228,7 +1228,7 @@ export const variableAssets: VariableAssetMock[] = [
     apiName: 'midloan_whitelist_hit_30d_query',
     onlineTime: fmt(new Date(now.getTime() - 28 * 86400000)),
     referenceStatus: '已引用',
-    referenceDetail: '已上线到变量中心，关联决策引擎：白名单通道、风控V4',
+    referenceDetail: '已上线到特征中心，关联决策引擎：白名单通道、风控V4',
     upstreamTable: 'dwd_rule_engine_log',
     effectMetrics: { iv: 0.48, ks: 0.38, auc: 0.81, coverage: 0.99, lift: 19 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 72000, monthlyCost: 0, costTrend: 'stable' }
@@ -1283,7 +1283,7 @@ export const variableAssets: VariableAssetMock[] = [
     adminConfirmedAt: fmt(new Date(now.getTime() - 6 * 86400000)),
     /** OA 审批闸门进入时间 */
     oaProductionReviewingAt: fmt(new Date(now.getTime() - 0.2 * 86400000)),
-    /** OA 审批中：尚未进入内数同步/变量中心同步 */
+    /** OA 审批中：尚未进入内数同步/特征中心同步 */
     syncingInternalAt: '',
     syncingVariableAt: '',
     apiNo: '',

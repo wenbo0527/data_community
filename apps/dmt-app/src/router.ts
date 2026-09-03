@@ -191,7 +191,7 @@ const childRoutes: RouteRecordRaw[] = [
     path: 'service/backtrack',
     name: 'Backtrack',
     component: () => import('./pages/service/backtrack.vue'),
-    meta: { title: '全量变量回溯申请' }
+    meta: { title: '全量特征回溯申请' }
   },
   {
     path: 'service/fund-usage-query',

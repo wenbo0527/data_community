@@ -19,6 +19,8 @@ dist-ssr/
 build/
 out/
 *.local
+*.bundled_*.mjs
+*.bundled_*.cjs
 
 # Vue / Vite
 .vite/

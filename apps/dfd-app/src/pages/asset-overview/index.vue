@@ -61,7 +61,7 @@
                 </div>
                 <div class="stat-info">
                   <div class="stat-number">45<span class="stat-unit">个</span></div>
-                  <div class="stat-label">变量管理</div>
+                  <div class="stat-label">特征管理</div>
                 </div>
               </div>
             </a-card>

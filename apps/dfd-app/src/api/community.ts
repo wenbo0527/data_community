@@ -502,27 +502,95 @@ export const logApi = {
 
 // 搜索 API
 export const searchApi = {
-  // 全文搜索
+  // 全文搜索 —— 覆盖数据资源（表）、数据资产（指标）、业务要素（域/实体/要素）
   search: (keyword: string, _params?: Partial<QueryParams>): Promise<ApiResponse<{
-    documents: Document[]
-    notifications: Notification[]
+    tables: any[]
+    concepts: { domains: any[]; entities: any[]; elements: any[] }
+    metrics: any[]
+    external: any[]
     total: number
   }>> => {
     if (USE_MOCK) {
-      // mock 模式：从 mockDocuments / mockNotifications 模糊匹配
-      const lowerKeyword = keyword.toLowerCase()
-      const matchedDocs = mockDocuments.filter(d =>
-        d.title.toLowerCase().includes(lowerKeyword) ||
-        d.description.toLowerCase().includes(lowerKeyword)
-      )
-      const matchedNotifs = mockNotifications.filter(n =>
-        n.title.toLowerCase().includes(lowerKeyword)
-      )
-      return mockDelay(mockOk({
-        documents: matchedDocs,
-        notifications: matchedNotifs,
-        total: matchedDocs.length + matchedNotifs.length
-      }))
+      // 延迟导入避免循环依赖
+      return Promise.all([
+        import('@/mock/shared/metadata-store'),
+        import('@/mock/shared/business-concept-store'),
+        import('@/mock/metrics'),
+        import('@/mock/external-resources')
+      ]).then(([{ MetadataStore }, { BusinessConceptStore }, { metrics }, { externalResources }]) => {
+        const lowerKeyword = keyword.toLowerCase()
+
+        // 1. 搜索物理表（数据资源）
+        const allTables = MetadataStore.getTables()
+        let matchedTables = allTables.filter(t =>
+          t.name.toLowerCase().includes(lowerKeyword) ||
+          (t.description && t.description.toLowerCase().includes(lowerKeyword)) ||
+          (t.domain && t.domain.toLowerCase().includes(lowerKeyword)) ||
+          (t.tags && t.tags.some((tag: string) => tag.toLowerCase().includes(lowerKeyword)))
+        )
+
+        // sourceType 筛选：区分 HIVE 数据仓库表 vs 业务系统源表
+        const sourceType = (_params as any)?.sourceType
+        if (sourceType) {
+          matchedTables = matchedTables.filter(t => t.sourceType === sourceType)
+        }
+
+        // 2. 搜索业务概念（业务要素：域/实体/要素）
+        const matchedDomains = BusinessConceptStore.getDomains().filter(d =>
+          d.name.includes(keyword) || d.description.includes(keyword)
+        )
+        const matchedEntities = BusinessConceptStore.getEntities().filter(e =>
+          e.name.includes(keyword) || e.description.includes(keyword)
+        )
+        const matchedElements = BusinessConceptStore.getElements().filter(e =>
+          e.name.includes(keyword)
+        )
+
+        // 3. 搜索指标（数据资产）
+        const matchedMetrics = metrics.filter(m =>
+          m.name.toLowerCase().includes(lowerKeyword) ||
+          (m.businessDefinition && m.businessDefinition.toLowerCase().includes(lowerKeyword)) ||
+          (m.category && m.category.toLowerCase().includes(lowerKeyword)) ||
+          (m.businessDomain && m.businessDomain.toLowerCase().includes(lowerKeyword))
+        )
+
+        // 4. 关联查询：通过命中的概念反查物理表
+        let relatedTableNames = new Set<string>()
+        matchedEntities.forEach(e => {
+          BusinessConceptStore.getEntityRelatedTables(e.code).forEach(t => relatedTableNames.add(t.name))
+        })
+        matchedElements.forEach(e => {
+          if (e.relatedResource?.table) relatedTableNames.add(e.relatedResource.table)
+        })
+        const allTablesMap = new Map(allTables.map(t => [t.name, t]))
+        const finalTables = [...matchedTables]
+        relatedTableNames.forEach(tableName => {
+          if (!finalTables.find(ft => ft.name === tableName)) {
+            const table = allTablesMap.get(tableName)
+            if (table) finalTables.push(table)
+          }
+        })
+
+        // 5. 搜索外部数据(三方数据源)
+        const matchedExternal = externalResources.filter(e =>
+          e.dataName.toLowerCase().includes(lowerKeyword) ||
+          e.supplier.toLowerCase().includes(lowerKeyword) ||
+          e.interfaceId.toLowerCase().includes(lowerKeyword) ||
+          e.dataType.toLowerCase().includes(lowerKeyword)
+        )
+
+        return mockDelay(mockOk({
+          tables: finalTables,
+          concepts: {
+            domains: matchedDomains,
+            entities: matchedEntities,
+            elements: matchedElements
+          },
+          metrics: matchedMetrics,
+          external: matchedExternal,
+          total: finalTables.length + matchedDomains.length + matchedEntities.length + matchedElements.length + matchedMetrics.length + matchedExternal.length
+        }))
+      })
     }
     const queryParams = { keyword, ..._params }
     const queryString = `?${new URLSearchParams(queryParams as any).toString()}`

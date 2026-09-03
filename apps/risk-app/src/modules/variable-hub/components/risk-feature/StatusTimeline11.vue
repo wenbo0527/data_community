@@ -81,7 +81,7 @@ const currentStepIndex = computed(() => {
     // 找到异常对应的前一个正常状态
     const failedMap = {
       internal_sync_failed: 5,    // 9 状态机：内数同步中 = index 5
-      variable_sync_failed: 6,    // 9 状态机：变量中心同步中 = index 6
+      variable_sync_failed: 6,    // 9 状态机：特征中心同步中 = index 6
       dw_online_failed: 2,        // 9 状态机：数仓开发完成 = index 2
       offline_failed: 8           // 9 状态机：已下线 = index 8
     }
@@ -112,7 +112,7 @@ const failedTitle = computed(() => {
 
 const nextNormalLabel = computed(() => {
   // 异常修复后回到的下一个正常状态
-  if (props.status === 'internal_sync_failed') return '同步中（变量中心）'
+  if (props.status === 'internal_sync_failed') return '同步中（特征中心）'
   if (props.status === 'variable_sync_failed') return '已上线'
   if (props.status === 'dw_online_failed') return '数仓已上线'
   if (props.status === 'offline_failed') return '已下线'

@@ -2,7 +2,7 @@
  * favorite-store —— DCA 关注(收藏) store
  *
  * 2026-08-06 新建:统一"我的关注"入口,数据源桥接 dfd-app 的 favorite-directory。
- * 收藏对象 = 资产 / 指标 / 变量 / 特征 / API / 集合,与原版"资产门户"定位一致。
+ * 收藏对象 = 资产 / 指标 / 特征 / 特征 / API / 集合,与原版"资产门户"定位一致。
  *
  * 2026-08-12 候选 #172 v3.0 C 级:TASK-20260811-CFC1B6FD
  *   - 跨包 import 修复:从 `'../../../../dfd-app/src/mock/shared/favorite-directory'`
@@ -82,7 +82,7 @@ export const FavoriteStore = {
 // ───────────────────────────── 派生常量 ─────────────────────────────
 export const FAVORITE_TYPES: { value: FavoriteResourceType; label: string; color: string }[] = [
   { value: 'metric', label: '指标', color: 'arcoblue' },
-  { value: 'variable', label: '变量', color: 'green' },
+  { value: 'variable', label: '特征', color: 'green' },
   { value: 'feature', label: '特征', color: 'purple' },
   { value: 'api', label: 'API', color: 'orange' },
   { value: 'table', label: '表', color: 'arcoblue' },

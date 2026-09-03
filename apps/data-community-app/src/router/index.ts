@@ -61,6 +61,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '资产目录' }
       },
       {
+        path: 'discovery/asset-catalog/table/:tableName',
+        name: 'AssetCatalogTable',
+        component: () => import('../../../dfd-app/src/pages/data-map/TableDetailPage.vue'),
+        meta: { title: '表详情' }
+      },
+      {
+        path: 'discovery/data-map/table/:tableName',
+        name: 'data-map-table',
+        component: () => import('../../../dfd-app/src/pages/data-map/TableDetailPage.vue'),
+        meta: { title: '表详情' }
+      },
+      {
         path: 'discovery/credit',
         name: 'credit',
         component: () => import('../../../dfd-app/src/pages/credit/index.vue'),
@@ -77,6 +89,12 @@ const routes: RouteRecordRaw[] = [
         name: 'metrics-map',
         component: () => import('../../../dfd-app/src/pages/metrics-map/index.vue'),
         meta: { title: '指标地图' }
+      },
+      {
+        path: 'discovery/metrics-map/detail/:id',
+        name: 'MetricsMapDetail',
+        component: () => import('../../../dfd-app/src/pages/metrics-map/detail.vue'),
+        meta: { title: '指标详情' }
       },
       {
         path: 'discovery/indicator-dict',
@@ -106,13 +124,13 @@ const routes: RouteRecordRaw[] = [
         path: 'discovery/variable-map',
         name: 'variable-map',
         component: () => import('../../../dfd-app/src/pages/variable-map/index.vue'),
-        meta: { title: '变量地图' }
+        meta: { title: '特征地图' }
       },
       {
         path: 'discovery/variable-dict',
         name: 'variable-dict',
         component: () => import('../pages/discovery/variable-dict.vue'),
-        meta: { title: '变量字典' }
+        meta: { title: '特征字典' }
       },
       {
         path: 'discovery/feature-map',
@@ -177,7 +195,7 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '数据管理' }
       },
       // 2026-08-06 清理:management/favorites 已统一到 discovery/favorites(我的关注)
-      //   原版定位"收藏的是资产/指标/变量/特征/外数",属于数据发现域
+      //   原版定位"收藏的是资产/指标/特征/特征/外数",属于数据发现域
       {
         path: 'management/notifications',
         name: 'notifications',
@@ -440,7 +458,7 @@ const routes: RouteRecordRaw[] = [
         path: 'management/service/backtrack',
         name: 'service-backtrack',
         component: () => import('../pages/management/service/backtrack.vue'),
-        meta: { title: '全量变量回溯申请' }
+        meta: { title: '全量特征回溯申请' }
       },
       {
         path: 'management/service/detail-data-query',

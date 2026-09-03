@@ -741,8 +741,8 @@ const viewDocument = (document) => {
   console.log('document.notificationData 存在性:', !!document.notificationData)
   console.log('document.notificationData 内容:', document.notificationData)
   
-  // 检查响应式变量状态
-  console.log('当前响应式变量状态:')
+  // 检查响应式特征状态
+  console.log('当前响应式特征状态:')
   console.log('  notificationModalVisible.value:', notificationModalVisible.value)
   console.log('  selectedNotification.value:', selectedNotification.value)
   console.log('  notificationModalVisible 是否为 ref:', notificationModalVisible.__v_isRef)
@@ -764,7 +764,7 @@ const viewDocument = (document) => {
     
     console.log('✓ notificationData 存在，内容:', JSON.stringify(document.notificationData, null, 2))
     
-    // 设置响应式变量
+    // 设置响应式特征
     try {
       selectedNotification.value = document.notificationData
       console.log('✓ selectedNotification 设置成功')

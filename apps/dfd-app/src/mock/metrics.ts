@@ -2,7 +2,7 @@ import type { MockMethod } from 'vite-plugin-mock'
 import type { MetricItem } from '../types/metrics'
 import { MetricType, RegulatoryCategory, REGULATORY_CATEGORY_LABELS } from '../types/metrics'
 
-const metrics: MetricItem[] = [
+export const metrics: MetricItem[] = [
   {
     id: '1',
     type: MetricType.BUSINESS_CORE,

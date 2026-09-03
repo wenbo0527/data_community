@@ -1,12 +1,12 @@
 /**
- * 变量状态变更（Demo）
+ * 特征状态变更（Demo）
  *
  * 系统可承接的演示闭环：
  * 1. 启用/停用：用户在台账表格直接切换状态
  * 2. 提交上线申请：草稿 → 启用审批 → 上线（active）
  * 3. 评估写回：评估任务完成后回写 quality / missingRate / lastEvaluatedAt
  *
- * 所有覆盖都通过 localStorage 持久化，由 api/variable-management 合并到变量数据。
+ * 所有覆盖都通过 localStorage 持久化，由 api/variable-management 合并到特征数据。
  */
 
 const STATUS_KEY = 'variable.status.override'

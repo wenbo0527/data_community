@@ -16,6 +16,8 @@ export interface ContractItem {
   writtenOffAmount?: number
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
+  signReportNo?: string
+  initialOccupiedAmount?: number
 }
 
 export interface ContractListParams {
@@ -75,11 +77,7 @@ export const useContractStore = defineStore('contract', {
           const defaultProductCount = i.productCount ?? (numId % 5) + 1
           const ratios = [0.3, 0.5, 0.7]
           const defaultWrittenOff = i.writtenOffAmount ?? Math.round((i.amount || 0) * ratios[numId % ratios.length])
-          const defaultType: 'framework' | 'supplement' = numId % 2 === 0 ? 'framework' : 'supplement'
-          // 关联到最近的一个框架协议
-          const frameworks = (this.list || []).filter(x => x.contractType === 'framework')
-          const linkId = defaultType === 'supplement' && frameworks.length ? frameworks[frameworks.length - 1].id : null
-          return { ...i, dataCount: defaultDataCount, productCount: defaultProductCount, writtenOffAmount: defaultWrittenOff, contractType: i.contractType ?? defaultType, frameworkId: i.frameworkId ?? linkId }
+          return { ...i, dataCount: defaultDataCount, productCount: defaultProductCount, writtenOffAmount: defaultWrittenOff, contractType: i.contractType ?? 'framework', frameworkId: i.frameworkId ?? null, signReportNo: i.signReportNo, initialOccupiedAmount: i.initialOccupiedAmount ?? 0 }
         })
 
         this.list = list
@@ -97,8 +95,8 @@ export const useContractStore = defineStore('contract', {
     async uploadMock() {
       try {
         const append: ContractItem[] = [
-          { id: 'C-20240104', contractNo: 'HT-004', contractName: '外数采购-美团2024Q4', supplier: '美团', amount: 650000, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 1000*60*60*24*15).toISOString(), status: 'active', contractType: 'framework', frameworkId: null },
-          { id: 'C-20240105', contractNo: 'HT-005', contractName: '外数采购-美团补充协议-接口扩展', supplier: '美团', amount: 150000, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 1000*60*60*24*60).toISOString(), status: 'active', contractType: 'supplement', frameworkId: 'C-20240104' }
+          { id: 'C-XX-FW-02', contractNo: 'XX-2026-FW-002', contractName: '学信网-2026年度框架协议补充', supplier: '学信网', amount: 650000, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 1000*60*60*24*15).toISOString(), status: 'active', contractType: 'framework', frameworkId: null, initialOccupiedAmount: 0 },
+          { id: 'C-XX-SUP-02', contractNo: 'XX-2026-SUP-002', contractName: '学信网-2026补充采购单02', supplier: '学信网', amount: 150000, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 1000*60*60*24*60).toISOString(), status: 'active', contractType: 'supplement', frameworkId: 'C-XX-FW-02', initialOccupiedAmount: 0 }
         ]
         this.list = [...this.list, ...append]
         this.total = this.list.length

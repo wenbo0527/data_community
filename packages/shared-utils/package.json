@@ -7,6 +7,11 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
+    "./arco": "./dist/arco.js",
+    "./message": "./dist/message.js",
+    "./copy": "./dist/copy.js",
+    "./coords": "./dist/coords.js",
+    "./export": "./dist/export.js",
     "./dateUtils": "./dist/dateUtils.js",
     "./formatUtils": "./dist/formatUtils.js",
     "./validationUtils": "./dist/validationUtils.js"
@@ -22,6 +27,14 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "dayjs": ">=1.11.0"
+    "dayjs": ">=1.11.0",
+    "@arco-design/web-vue": ">=2.55.0",
+    "file-saver": ">=2.0.5",
+    "xlsx": ">=0.18.0"
+  },
+  "peerDependenciesMeta": {
+    "@arco-design/web-vue": { "optional": true },
+    "file-saver": { "optional": true },
+    "xlsx": { "optional": true }
   }
 }

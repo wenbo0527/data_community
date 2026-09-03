@@ -303,8 +303,7 @@ import {
   Space as ASpace,
   Divider as ADivider
 } from '@arco-design/web-vue'
-import { arcoConfig } from '@/utils/arco'
-import { businessMessage } from '@/utils/message'
+import { arcoConfig, businessMessage } from '@app/shared-utils'
 
 export default {
   name: 'BaseForm',

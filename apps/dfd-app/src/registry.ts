@@ -61,7 +61,7 @@ const registry: MicroAppRegistry = {
       icon: 'icon-list',
       order: 11,
       children: [
-        { key: 'dfd-variable-dict', label: '变量字典', path: '/dfd/variable-dict' },
+        { key: 'dfd-variable-dict', label: '特征字典', path: '/dfd/variable-dict' },
         { key: 'dfd-indicator-dict', label: '指标字典', path: '/dfd/indicator-dict' },
         { key: 'dfd-feature-dict', label: '特征字典', path: '/dfd/feature-dict' }
       ]
