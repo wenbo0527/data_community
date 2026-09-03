@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { viteMockServe } from 'vite-plugin-mock'
 import path from 'path'
 
 export default defineConfig(async () => {
@@ -28,12 +27,8 @@ export default defineConfig(async () => {
   }
 
   const plugins = [
-    vue(), 
+    vue(),
     indexRedirect,
-    viteMockServe({
-      mockPath: path.resolve(__dirname, '../../src/mock/risk-scope'),
-      enable: true,
-    })
   ]
   if (logPlugin) plugins.unshift(logPlugin)
 
