@@ -291,11 +291,6 @@ import { useMissingTicket } from '@/composables/useMissingTicket'
 
 const { showMissingTicketModal, ticketContext, showMissingTicket, handleMissingTicketConfirm } = useMissingTicket()
 
-// 导入模拟数据
-import { tableMockData } from '@/mock/tableData.ts'
-import mockDataMap from '@/mock/data-map'
-import mockMetrics from '@/mock/metrics'
-import { generateBurndownData, generateWarningData } from '@/mock/external-data'
 
 interface SearchFilters {
   type?: string
@@ -435,7 +430,7 @@ const handleSearch = async (query?: string) => {
   }
 }
 
-import { searchApi } from '@/api/community'
+import { searchApi } from '@/api/search-shim'
 
 // ... existing code ...
 
@@ -445,8 +440,8 @@ const performSearch = async (query?: string) => {
   // 使用新的 searchApi 进行搜索
   try {
     const res = await searchApi.search(searchTerm, filters.value)
-    if (res.code === 200 && res.data) {
-      const data = res.data
+    const data = res.data
+    if (data) {
       
       // 处理数据表结果（数据资源）
       tableResults.value = (data.tables || []).map((t: any) => ({

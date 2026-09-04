@@ -476,7 +476,8 @@ export const MENU_CONFIG = {
         } 
       }, 
 
-    } 
+      }
+    }
   },
 
   // 数字营销

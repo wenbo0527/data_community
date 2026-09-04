@@ -147,7 +147,7 @@ const router = useRouter()
 const safePush = (path: string) => {
   if (!path) return
   const p = path.replace(/^\/dca\/?/, '').replace(/^\//, '')
-  router.push(p)
+  router.push('/' + p)
 }
 
 // 集合元数据从公共 mock 派生,丰富字段(tags/tables/accessLevel)由派生补全
@@ -318,7 +318,7 @@ const goBack = () => {
 const showTableDetail = (table: any) => {
   // 跳到数据地图,带表名筛选
   router.push({
-    path: 'discovery/asset-catalog',
+    name: 'asset-catalog',
     query: { table: table.name }
   })
 }

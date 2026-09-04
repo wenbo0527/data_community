@@ -68,7 +68,10 @@ export const ROUTE_TABLE: Record<string, string> = {
   'exploration:customer360': '/exploration/customer360',
   'exploration:customer360-detail': '/exploration/customer360/detail/:userId',
   'exploration:workflows': '/exploration/workflows',
-  'exploration:indicator-dashboard': '/exploration/indicator-dashboard'
+  'exploration:indicator-dashboard': '/exploration/indicator-dashboard',
+  // 统一查询平台(数据探索下,与客户 360 并列)
+  'exploration:unified-query-sql': '/exploration/unified-query/sql',
+  'exploration:unified-query-tasks': '/exploration/unified-query/tasks'
 }
 
 export function useCrossNav() {

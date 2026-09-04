@@ -19,6 +19,10 @@
             <template #icon><IconFolderAdd /></template>
             添加到集合
           </a-button>
+          <a-button type="outline" size="mini" @click="openMissingTicket">
+            <template #icon><IconExclamationCircle /></template>
+            缺失工单
+          </a-button>
           <a-button type="primary" size="mini" @click="applyPermission">
             <template #icon><IconSafe /></template>
             申请权限
@@ -293,7 +297,12 @@
     <div v-else class="empty-state">
       <a-empty description="请选择一个数据表查看详情" />
     </div>
-    
+
+    <!-- 缺失工单弹窗 -->
+    <MissingTicketModal
+      v-model:visible="showMissingTicketModal"
+      :context="missingTicketContext"
+    />
   </div>
 </template>
 
@@ -326,6 +335,7 @@ import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import dataMapMock from '@/mock/data-map.ts'
 import { SENSITIVITY_NAMES } from '@/mock/shared/classify-constants'
 import LineageGraph from '@/pages/lineage/components/LineageGraph.vue'
+import MissingTicketModal from '../search/MissingTicketModal.vue'
 
 // 注册必须的组件
 echarts.use([TreeChart, CanvasRenderer, TitleComponent, TooltipComponent])
@@ -1400,6 +1410,17 @@ const showAddToCollection = () => {
 
 const applyPermission = () => {
   logger.info('申请权限', tableData.value?.name)
+}
+
+// 缺失工单
+const showMissingTicketModal = ref(false)
+const missingTicketContext = computed(() => ({
+  assetType: 'table',
+  assetName: tableData.value?.name || '',
+  pageSource: '数据表详情'
+}))
+const openMissingTicket = () => {
+  showMissingTicketModal.value = true
 }
 
 // 组件挂载时检查是否需要渲染关系图

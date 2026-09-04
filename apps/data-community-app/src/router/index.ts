@@ -676,6 +676,26 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../pages/exploration/indicator-dashboard.vue'),
         meta: { title: '业务指标看板' }
       },
+      // ===== 统一查询平台(数据探索 / 与客户 360 并列的模块)=====
+      // 合并页面:左侧脚本树 + 右侧 SQL 编辑器(原 scripts 路由已并入 sql)
+      {
+        path: 'exploration/unified-query/sql',
+        name: 'unified-query-sql',
+        component: () => import('../pages/unified-query/sql-editor.vue'),
+        meta: { title: '统一查询' }
+      },
+      {
+        path: 'exploration/unified-query/tasks',
+        name: 'unified-query-tasks',
+        component: () => import('../pages/unified-query/task-scheduler.vue'),
+        meta: { title: '任务调度' }
+      },
+      {
+        path: 'exploration/unified-query/task/create',
+        name: 'unified-query-task-create',
+        component: () => import('../pages/unified-query/task-create.vue'),
+        meta: { title: '创建定时任务' }
+      },
       // ===== 无访问权限 =====
       {
         path: 'unauthorized',

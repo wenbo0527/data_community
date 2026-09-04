@@ -51,11 +51,25 @@ export default defineConfig({
 
       // dfd 子目录(中等长度)
       { find: '@/components', replacement: path.resolve(DFD, 'components') },
-      // 注: 原 alias 把 '@/mock' 指向 DFD mock,但 src/api/search-shim.ts 与
-      // src/mock/metadata-bus.ts 都引用 data-community-app 自己的 mock。
-      // 改为指向自己,与 @ 优先级匹配。
+      // dfd-app mock 模块(data-community-app 中不存在,指向 dfd-app)
+      // 注: Vite 字符串别名匹配规则为 精确匹配 或 find+'/' 前缀。
+      // '@/mock/metrics' 不匹配 '@/mock/metrics.ts'(下一个字符是'.'不是'/')，
+      // 故对 .ts 后缀导入需单独添加精确匹配别名。
+      { find: '@/mock/metrics.ts', replacement: path.resolve(DFD, 'mock/metrics.ts') },
+      { find: '@/mock/metrics', replacement: path.resolve(DFD, 'mock/metrics') },
+      { find: '@/mock/community', replacement: path.resolve(DFD, 'mock/community') },
+      { find: '@/mock/notification', replacement: path.resolve(DFD, 'mock/notification') },
+      { find: '@/mock/offlineModel', replacement: path.resolve(DFD, 'mock/offlineModel') },
+      { find: '@/mock/alertMetrics', replacement: path.resolve(DFD, 'mock/alertMetrics') },
+      { find: '@/mock/external-data', replacement: path.resolve(DFD, 'mock/external-data') },
+      { find: '@/mock/businessProcessData', replacement: path.resolve(DFD, 'mock/businessProcessData') },
+      { find: '@/mock/businessModuleData', replacement: path.resolve(DFD, 'mock/businessModuleData') },
+      { find: '@/mock/tableData.ts', replacement: path.resolve(DFD, 'mock/tableData.ts') },
+      { find: '@/mock/tableData', replacement: path.resolve(DFD, 'mock/tableData') },
+      { find: '@/mock/data-models', replacement: path.resolve(DFD, 'mock/data-models') },
+      { find: '@/mock/alert-rules', replacement: path.resolve(DFD, 'mock/alert-rules') },
+      // data-community-app 自有 mock(search-shim.ts 等引用)
       { find: '@/mock', replacement: path.resolve(__dirname, 'src/mock') },
-      { find: '@/mock-dca', replacement: path.resolve(__dirname, 'src/mock') },
       { find: '@/api', replacement: path.resolve(__dirname, 'src/api') },
       { find: '@/types', replacement: path.resolve(DFD, 'types') },
       { find: '@/utils', replacement: path.resolve(DFD, 'utils') },
@@ -82,7 +96,6 @@ export default defineConfig({
       'echarts',
       'dayjs',
       'axios',
-      'xlsx',
       '@vueuse/core',
       'marked',
       '@antv/x6',
@@ -105,7 +118,7 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarning: 1500
+    chunkSizeWarningLimit: 1500
   },
   base: '/data-community/'
 })

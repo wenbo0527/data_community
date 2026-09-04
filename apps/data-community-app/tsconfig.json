@@ -15,7 +15,7 @@
     "esModuleInterop": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@/mock/*": ["../../dfd-app/src/mock/*"],
+      "@/mock/*": ["./src/mock/*"],
       "@/mock-shared/*": ["./src/mock/shared/*"],
       "@/components-dca/*": ["./src/components-dca/*"],
       "@/utils-dca/*": ["./src/utils-dca/*"]

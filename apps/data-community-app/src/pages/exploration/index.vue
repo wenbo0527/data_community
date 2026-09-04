@@ -1,14 +1,14 @@
 <template>
   <div class="exploration-page">
-    <a-page-header title="数据探索" sub-title="单客户画像查询、可视化分析工作流、跨域指标看板">
+    <a-page-header title="数据探索" sub-title="单客户画像查询、统一 SQL 查询、可视化分析工作流、跨域指标看板">
       <template #extra>
         <a-button @click="goWorkbench">返回工作台</a-button>
       </template>
     </a-page-header>
 
-    <!-- 模块入口:3 个核心入口,与侧栏菜单完全对齐 -->
+    <!-- 模块入口:4 个核心入口,与侧栏菜单完全对齐 -->
     <a-row :gutter="16">
-      <a-col :span="8">
+      <a-col :span="6">
         <a-card class="module-card" @click="go('exploration/customer360')">
           <template #title><span><icon-user-circle /> 客户 360</span></template>
           <p>单客户全维度画像:基本信息、信贷、还款、行为、触达记录</p>
@@ -17,7 +17,16 @@
           </div>
         </a-card>
       </a-col>
-      <a-col :span="8">
+      <a-col :span="6">
+        <a-card class="module-card" @click="go('exploration/unified-query/sql')">
+          <template #title><span><icon-code /> 统一查询</span></template>
+          <p>SQL 编辑执行、脚本管理、任务调度,统一入口查 Doris / Hive</p>
+          <div class="stats">
+            <a-statistic title="我的脚本" :value="4" />
+          </div>
+        </a-card>
+      </a-col>
+      <a-col :span="6">
         <a-card class="module-card" @click="go('exploration/workflows')">
           <template #title><span><icon-flow /> 分析工作流</span></template>
           <p>可视化编排数据采集、清洗、计算、推送全流程</p>
@@ -26,7 +35,7 @@
           </div>
         </a-card>
       </a-col>
-      <a-col :span="8">
+      <a-col :span="6">
         <a-card class="module-card" @click="go('exploration/indicator-dashboard')">
           <template #title><span><icon-dashboard /> 业务指标看板</span></template>
           <p>DAU/GMV/授信通过率 等业务指标可视化</p>

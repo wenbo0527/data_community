@@ -327,9 +327,16 @@ const managementMenus = [
 // 数据探索 = 面向业务的「分析视图」:客户 360 / 工作流 / 指标看板
 //   2026-08-06 清理:已移除越界路由(客群/标签/事件→ MKT)
 // 数据发现 = 平台级「资产管理」:总览 / 资源 / 资产 / 要素 / 治理
+//   2026-09-03 新增「统一查询」子菜单分组(SQL编辑执行 / 脚本管理 / 任务调度)
+//     见 .trae/documents/产品设计/设计文档:统一查询平台Demo(前端交互版).md
+//   2026-09-03 r2 合并:脚本管理+SQL编辑执行合为一个左右布局页面,菜单从 3 项变 2 项
 const explorationMenus = [
   { key: 'exploration', title: '数据探索' },
   { key: 'exploration/customer360', title: '客户 360' },
+  { key: 'exploration-group-unified-query', title: '统一查询', children: [
+    { key: 'exploration/unified-query/sql', title: '统一查询' },
+    { key: 'exploration/unified-query/tasks', title: '任务调度' },
+  ]},
   { key: 'exploration/workflows', title: '分析工作流' },
   { key: 'exploration/indicator-dashboard', title: '业务指标看板' },
 ]
@@ -385,6 +392,9 @@ const EXPLORATION_ALWAYS_ON = new Set([
   'exploration',
   'exploration/customer360',
   'exploration/workflows',
+  // 统一查询;父组 key 含 -group- 由 isAllowed 自动放行
+  'exploration/unified-query/sql',
+  'exploration/unified-query/tasks',
 ])
 
 // 用 ref + 手动 update 替代 computed,避免每次 render 返回新 array
@@ -605,6 +615,8 @@ const NAME_BY_PATH: Record<string, string> = {
   'exploration/workflows': 'workflows',
   'exploration/workflows/editor': 'workflow-editor',
   'exploration/indicator-dashboard': 'exploration-indicator-dashboard',
+  'exploration/unified-query/sql': 'unified-query-sql',
+  'exploration/unified-query/tasks': 'unified-query-tasks',
 
   // —— 工作台 ——
   'workbench': 'workbench'
