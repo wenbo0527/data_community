@@ -15,7 +15,7 @@
 <template>
   <a-drawer
     :visible="visible"
-    :width="540"
+    :width="drawerWidth"
     :title="config.title"
     :ok-loading="submitting"
     @cancel="handleCancel"
@@ -185,13 +185,130 @@
         </a-card>
       </template>
 
-      <!-- 提开发 OA 单（C1 R02：接收方=数仓团队，展示但不可改）-->
+      <!-- 提开发 OA 单（C1：批量/单个共用同一表单）-->
       <template v-if="actionKey === 'submit_dev_oa'">
-        <a-form-item label="接收方">
-          <a-input :model-value="'数仓团队（dw_team）'" disabled />
+        <!-- 批量模式：选中特征摘要 -->
+        <a-card
+          v-if="isBatchMode"
+          title="批量提单特征"
+          size="small"
+          style="margin-bottom: 12px"
+        >
+          <a-descriptions :column="1" bordered :data="[
+            { label: '选中数量', value: `${batchSummary?.count ?? 0} 条` },
+            { label: '特征列表', value: batchSummary?.names ?? '' }
+          ]" :label-style="{ width: '100px' }" />
+        </a-card>
+
+        <a-form-item label="需求处理人" required>
+          <a-select
+            v-model="form.requirementHandler"
+            :options="HANDLER_OPTIONS"
+            placeholder="请选择需求处理人"
+            allow-clear
+          />
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">
+              选择负责处理本开发需求的数仓人员
+            </span>
+          </template>
         </a-form-item>
-        <a-form-item label="业务背景">
-          <a-input :model-value="'贷中行为特征上线'" disabled />
+        <a-form-item label="验收人">
+          <a-select
+            v-model="form.acceptor"
+            :options="ACCEPTOR_OPTIONS"
+            placeholder="默认带入需求提出人，可修改"
+            allow-clear
+          />
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">
+              <icon-info-circle /> 默认需求提出人：{{ form.requirementProposer || '—' }}
+            </span>
+          </template>
+        </a-form-item>
+        <a-form-item label="需求名称" required>
+          <a-input
+            v-model="form.requirementName"
+            placeholder="请填写需求名称，如：近30日大额交易次数特征开发"
+            :max-length="100"
+            show-word-limit
+          />
+        </a-form-item>
+        <a-form-item label="需求说明" required>
+          <a-textarea
+            v-model="form.requirementDescription"
+            :rows="4"
+            :max-length="500"
+            show-word-limit
+            placeholder="请详细描述需求内容，包括加工逻辑、字段说明、数据来源等"
+          />
+        </a-form-item>
+
+        <!-- 批量模式：字段选择 + 预览表格 -->
+        <template v-if="isBatchMode">
+          <a-form-item label="需求清单字段">
+            <a-checkbox-group
+              :model-value="selectedFieldKeys"
+              @change="(vals: string[]) => {
+                selectedFieldKeys = vals
+                if (attachmentList.length > 0) regenerateBatchRequirementFile()
+              }"
+            >
+              <a-checkbox v-for="f in REQUIREMENT_FIELDS" :key="f.key" :value="f.key">
+                {{ f.label }}
+              </a-checkbox>
+            </a-checkbox-group>
+            <template #extra>
+              <span style="color: var(--color-text-3); font-size: 12px;">
+                勾选需要的字段，下方表格预览实时更新
+              </span>
+            </template>
+          </a-form-item>
+
+          <a-form-item label="需求清单预览">
+            <a-table
+              :columns="previewColumns"
+              :data="previewRowData"
+              :pagination="false"
+              :bordered="{ cell: true, wrapper: true }"
+              :max-height="260"
+              size="small"
+              stripe
+            >
+              <template #empty>
+                <a-empty description="暂无选中特征" />
+              </template>
+            </a-table>
+            <template #extra>
+              <a-button type="outline" size="small" @click="regenerateBatchRequirementFile">
+                <icon-refresh /> 重新生成 Excel
+              </a-button>
+            </template>
+          </a-form-item>
+        </template>
+
+        <a-form-item label="附件上传">
+          <a-upload
+            :file-list="attachmentList"
+            :auto-upload="true"
+            :custom-request="customAttachmentUpload"
+            :before-upload="beforeAttachmentUpload"
+            :show-file-list="true"
+            :limit="5"
+            multiple
+            @change="(fileList: any[]) => attachmentList = fileList"
+          >
+            <template #upload-button>
+              <a-button type="outline">
+                <icon-upload /> 上传附件
+              </a-button>
+            </template>
+          </a-upload>
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">
+              支持上传需求文档、数据说明等附件，单个文件不超过 10MB，最多 5 个
+            </span>
+          </template>
         </a-form-item>
         <a-form-item label="OA 开发单号">
           <a-input :model-value="form.generatedOaOrderId || '提交后由 OA 系统自动生成'" disabled />
@@ -200,9 +317,6 @@
               <icon-info-circle /> OA 单号由 OA 系统提交后返回，无需人工填写
             </span>
           </template>
-        </a-form-item>
-        <a-form-item label="说明（可选）">
-          <a-textarea v-model="form.remark" :rows="3" placeholder="补充说明本次提单的需求点" />
         </a-form-item>
       </template>
 
@@ -360,6 +474,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import * as XLSX from 'xlsx'
 import {
   FIELD_TYPE_OPTIONS,
   DATA_FRESHNESS_OPTIONS,
@@ -367,12 +482,15 @@ import {
   L1_L2_CATEGORY_MAP,
   SOURCE_TYPE_OPTIONS
 } from '@/modules/variable-hub/mock/variable-management/variable-draft-store'
+import { UserContext } from '@/modules/variable-hub/mock/risk-feature/permissions'
 
 interface Props {
   visible: boolean
   actionKey: 'submit_requirement' | 'submit_dev_oa' | 'business_verify_pass' | 'admin_confirm_pass' | 'submit_production_order' | 'oa_production_approve' | 'oa_production_reject' | 'retry_sync_supplement_table' | 'archive_variable' | 'correct_status'
   /** 当前特征数据（用于预览）*/
   variableData?: any
+  /** 批量操作时的选中记录列表（非空时为批量模式）*/
+  batchRecords?: any[]
 }
 
 interface Emits {
@@ -403,7 +521,6 @@ const form = reactive<any>({
   productScope: '',
   listType: undefined,
   batch: '',
-  acceptor: '',
   creator: '小李',
   developer: '',
   remark: '',
@@ -416,7 +533,14 @@ const form = reactive<any>({
   generatedOaOrderId: '',
   standardizedAttachment: true,
   targetStatus: '',
-  tableName: ''
+  tableName: '',
+  // 提开发OA单字段
+  requirementHandler: '',
+  requirementName: '',
+  requirementDescription: '',
+  requirementProposer: '',
+  acceptor: '',
+  attachments: [] as any[]
 })
 
 /** 二级分类联动选项（与 VariableRegisterDrawer 保持一致）*/
@@ -457,8 +581,179 @@ const correctableOptions = [
   { value: 'offline_failed', label: '下线接收失败' }
 ]
 
+/** 是否为批量模式 */
+const isBatchMode = computed(() => props.actionKey === 'submit_dev_oa' && (props.batchRecords?.length ?? 0) > 0)
+
+/** 抽屉宽度（提开发OA单表单更宽）*/
+const drawerWidth = computed(() => {
+  if (props.actionKey === 'submit_dev_oa') {
+    return isBatchMode.value ? 920 : 720
+  }
+  return 540
+})
+
+/** 批量模式下的选中记录摘要 */
+const batchSummary = computed(() => {
+  if (!isBatchMode.value) return null
+  const records = props.batchRecords || []
+  return {
+    count: records.length,
+    names: records.map(r => r.featureCnName || r.name || r.id).join('、'),
+    ids: records.map(r => r.id)
+  }
+})
+
+/** 需求处理人候选列表 */
+const HANDLER_OPTIONS = [
+  { value: '王数仓', label: '王数仓（数仓团队）' },
+  { value: '数仓_A', label: '数仓_A（数仓团队）' },
+  { value: '数仓_B', label: '数仓_B（数仓团队）' },
+  { value: '数仓_C', label: '数仓_C（数仓团队）' },
+  { value: '小李', label: '小李（风险数据成员）' },
+  { value: '小张', label: '小张（风险数据管理员）' }
+]
+
+/** 验收人候选列表 */
+const ACCEPTOR_OPTIONS = [
+  { value: '小李', label: '小李（风险数据成员）' },
+  { value: '小张', label: '小张（风险数据管理员）' },
+  { value: '小王', label: '小王（数字社区管理员）' },
+  { value: '数据应用团队', label: '数据应用团队' }
+]
+
+/** 数据时效映射 */
+const DATA_FRESHNESS_LABELS: Record<string, string> = {
+  realtime: '实时',
+  offline_t1: '离线 T-1（次日）',
+  offline_t2: '离线 T-2（隔日）'
+}
+
+/** 需求清单字段定义（key 映射到特征数据字段）*/
+const REQUIREMENT_FIELDS = [
+  { key: 'l1Category', label: '一级分类', defaultChecked: true },
+  { key: 'l2Category', label: '二级分类', defaultChecked: true },
+  { key: 'code', label: '特征名称', defaultChecked: true },
+  { key: 'featureCnName', label: '中文名', defaultChecked: true },
+  { key: 'processingLogic', label: '加工逻辑', defaultChecked: true },
+  { key: 'fieldType', label: '字段类型', defaultChecked: true },
+  { key: 'defaultValue', label: '默认值', defaultChecked: true },
+  { key: 'productScope', label: '产品范围', defaultChecked: false },
+  { key: 'dataFreshness', label: '数据时效', defaultChecked: true },
+  { key: 'description', label: '备注信息', defaultChecked: true }
+]
+
+/** 用户当前选中的字段 key 列表 */
+const selectedFieldKeys = ref<string[]>(REQUIREMENT_FIELDS.filter(f => f.defaultChecked).map(f => f.key))
+
+/** 字段值映射：根据 key 从特征记录中取值 */
+function getFieldValue(r: any, key: string): string {
+  if (key === 'featureCnName') return r.featureCnName || r.name || '-'
+  if (key === 'code') return r.code || r.featureEnName || '-'
+  if (key === 'productScope') return r.productScope || r.profile?.productScope || '-'
+  if (key === 'dataFreshness') return DATA_FRESHNESS_LABELS[r.dataFreshness] || r.dataFreshness || '-'
+  return r[key] || '-'
+}
+
+/** 表格预览用的列配置（基于 selectedFieldKeys）*/
+const previewColumns = computed(() => {
+  return [
+    ...selectedFieldKeys.value.map(key => {
+      const def = REQUIREMENT_FIELDS.find(f => f.key === key)
+      return {
+        title: def?.label || key,
+        dataIndex: key,
+        width: key === 'processingLogic' ? 220 : key === 'description' ? 180 : 120
+      }
+    })
+  ]
+})
+
+/** 表格预览用的数据 */
+const previewRowData = computed(() => {
+  return (props.batchRecords || []).map((r, idx) => {
+    const row: any = { __idx: idx + 1 }
+    selectedFieldKeys.value.forEach(key => {
+      row[key] = getFieldValue(r, key)
+    })
+    return row
+  })
+})
+
+/** 根据用户选中的字段重新生成 Excel 附件 */
+function regenerateBatchRequirementFile() {
+  if (!isBatchMode.value) return
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  const header = selectedFieldKeys.value.map(key => REQUIREMENT_FIELDS.find(f => f.key === key)?.label || key)
+  const rows = (props.batchRecords || []).map(r => selectedFieldKeys.value.map(key => getFieldValue(r, key)))
+
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows])
+  ws['!cols'] = selectedFieldKeys.value.map(key => {
+    if (key === 'processingLogic') return { wch: 50 }
+    if (key === 'description') return { wch: 30 }
+    return { wch: 18 }
+  })
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '特征开发需求清单')
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const file = new File([blob], `特征开发需求清单_${dateStr}.xlsx`, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  })
+  attachmentList.value = [{
+    uid: `batch-req-${Date.now()}`,
+    name: file.name,
+    url: '',
+    file,
+    status: 'done'
+  }]
+}
+
+/** 移除生成的默认附件 */
+function removeGeneratedAttachment(file: any) {
+  attachmentList.value = attachmentList.value.filter(f => f.uid !== file.uid)
+}
+
+/** 切换字段选中状态时重新生成 Excel */
+function toggleField(key: string, checked: boolean) {
+  if (checked) {
+    if (!selectedFieldKeys.value.includes(key)) selectedFieldKeys.value.push(key)
+  } else {
+    selectedFieldKeys.value = selectedFieldKeys.value.filter(k => k !== key)
+  }
+  if (isBatchMode.value && attachmentList.value.length > 0) {
+    regenerateBatchRequirementFile()
+  }
+}
+
+/** 附件列表 */
+const attachmentList = ref<any[]>([])
+
+/** 附件上传前校验 */
+const beforeAttachmentUpload = (file: File) => {
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    Message.warning('附件大小不能超过 10MB')
+    return false
+  }
+  return true
+}
+
+/** 附件自定义上传（mock） */
+const customAttachmentUpload = (option: any) => {
+  const { fileItem, onSuccess } = option
+  // mock 上传：模拟延迟后返回文件信息
+  setTimeout(() => {
+    onSuccess?.({
+      ...fileItem,
+      url: `https://mock.example.com/files/${fileItem.uid}`,
+      name: fileItem.name
+    })
+  }, 300)
+}
+
 /** 哪些 action 需要预览特征信息 */
 const showPreview = computed(() => {
+  if (isBatchMode.value) return false // 批量模式不显示单条预览
   return ['submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order'].includes(props.actionKey)
 })
 
@@ -523,7 +818,7 @@ const config = computed(() => {
       alertType: 'info'
     },
     submit_dev_oa: {
-      title: '提开发 OA 单',
+      title: isBatchMode.value ? `提开发 OA 单（批量 · ${batchSummary.value?.count ?? 0} 条）` : '提开发 OA 单',
       alert: '本操作会向 OA 系统提交开发单（接收方=数仓团队）。提交后系统自动等待「数仓回调」。',
       alertType: 'info'
     },
@@ -582,6 +877,29 @@ watch(() => props.visible, (v) => {
     form.remark = ''
     form.targetStatus = ''
     form.tableName = props.variableData?.dataTableName || ''
+    // 提开发OA单：重置新字段
+    if (props.actionKey === 'submit_dev_oa') {
+      // 需求提出人：从 UserContext 中获取当前用户名
+      const proposer = UserContext.get().name || '小李'
+      form.requirementHandler = ''
+      form.requirementName = ''
+      form.requirementDescription = ''
+      form.requirementProposer = proposer
+      form.acceptor = proposer // 默认验收人 = 需求提出人
+      form.attachments = []
+      // 批量模式：自动生成需求清单附件；单个模式：清空附件
+      if (isBatchMode.value) {
+        // 重置字段选择为默认
+        selectedFieldKeys.value = REQUIREMENT_FIELDS.filter(f => f.defaultChecked).map(f => f.key)
+        regenerateBatchRequirementFile()
+      } else {
+        attachmentList.value = []
+        // 单个模式：从特征数据预填需求名称
+        if (props.variableData) {
+          form.requirementName = `${props.variableData.featureCnName || props.variableData.name || ''}开发需求`
+        }
+      }
+    }
     // submit_requirement：进入审核注册模式，重置注册表单字段，并预填默认值
     if (props.actionKey === 'submit_requirement') {
       form.name = props.variableData?.code || props.variableData?.featureEnName || props.variableData?.name || ''
@@ -638,9 +956,34 @@ async function handleSubmit() {
     Message.warning('请选择目标状态并填写修正原因')
     return
   }
+  // 提开发OA单：校验必填字段
+  if (props.actionKey === 'submit_dev_oa') {
+    if (!form.requirementHandler) {
+      Message.warning('请选择需求处理人')
+      return
+    }
+    if (!form.requirementName?.trim()) {
+      Message.warning('请填写需求名称')
+      return
+    }
+    if (!form.requirementDescription?.trim()) {
+      Message.warning('请填写需求说明')
+      return
+    }
+  }
   submitting.value = true
   try {
-    emit('submit', { ...form })
+    const payload = { ...form }
+    // 提开发OA单：附加附件信息到 payload
+    if (props.actionKey === 'submit_dev_oa') {
+      payload.attachments = attachmentList.value.map(f => ({
+        name: f.name,
+        uid: f.uid,
+        url: f.url,
+        size: f.file?.size
+      }))
+    }
+    emit('submit', payload)
   } finally {
     submitting.value = false
   }

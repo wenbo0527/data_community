@@ -228,6 +228,7 @@
       :visible="actionDrawerVisible"
       :action-key="actionDrawerKey"
       :variable-data="actionDrawerRecord"
+      :batch-records="actionDrawerBatchRecords"
       @update:visible="actionDrawerVisible = $event"
       @submit="handleActionDrawerSubmit"
     />
@@ -1279,6 +1280,7 @@ const handleQuickAction = (record, actionKey) => {
   if (drawerActions.includes(key)) {
     actionDrawerRecord.value = record
     actionDrawerKey.value = key
+    actionDrawerBatchRecords.value = []
     actionDrawerVisible.value = true
     return
   }
@@ -1296,6 +1298,7 @@ const handleQuickAction = (record, actionKey) => {
     if (key === 'retry_sync' && record?.midloanStatus === 'internal_sync_failed' && !record?.dataTableName) {
       actionDrawerRecord.value = record
       actionDrawerKey.value = 'retry_sync_supplement_table'
+      actionDrawerBatchRecords.value = []
       actionDrawerVisible.value = true
       return
     }
@@ -1382,6 +1385,7 @@ const triggerTableAction = (record, action) => {
   if (action.key === 'correct_status') {
     actionDrawerRecord.value = record
     actionDrawerKey.value = 'correct_status'
+    actionDrawerBatchRecords.value = []
     actionDrawerVisible.value = true
     return
   }
@@ -1390,6 +1394,7 @@ const triggerTableAction = (record, action) => {
     // 在列表页直接弹抽屉
     actionDrawerRecord.value = record
     actionDrawerKey.value = action.key
+    actionDrawerBatchRecords.value = []
     actionDrawerVisible.value = true
     return
   }
@@ -1471,11 +1476,28 @@ const actionDrawerVisible = ref(false)
 const actionDrawerRecord = ref(null)
 const actionDrawerKey = ref('')
 const actionDrawerSubmitting = ref(false)
+const actionDrawerBatchRecords = ref([])
 
 const handleActionDrawerSubmit = (payload) => {
-  if (!actionDrawerRecord.value) return
   actionDrawerSubmitting.value = true
   try {
+    // 批量模式：submit_dev_oa 批量提交
+    if (actionDrawerKey.value === 'submit_dev_oa' && actionDrawerBatchRecords.value.length > 0) {
+      const ids = actionDrawerBatchRecords.value.map(r => r.id)
+      const result = MidloanStateEngine.batchExecute(ids, 'submit_dev_oa', payload)
+      if (result.failed === 0) {
+        Message.success(`批量提开发OA单完成：成功 ${result.succeeded} 条`)
+      } else {
+        Message.warning(`批量提开发OA单完成：成功 ${result.succeeded} 条，失败 ${result.failed} 条`)
+      }
+      actionDrawerVisible.value = false
+      actionDrawerBatchRecords.value = []
+      fetchVariableList()
+      clearSelection()
+      return
+    }
+    // 单条模式
+    if (!actionDrawerRecord.value) return
     // correct_status：payload 含 targetStatus / reason / remark
     // 其他主流程：payload 透传到 stateEngine
     const result = MidloanStateEngine.handleAction(
@@ -1486,6 +1508,7 @@ const handleActionDrawerSubmit = (payload) => {
     if (result?.ok) {
       Message.success(actionDrawerKey.value === 'correct_status' ? '状态已修正' : '操作成功，状态已更新')
       actionDrawerVisible.value = false
+      actionDrawerBatchRecords.value = []
       fetchVariableList()
     } else {
       Message.error(result?.reason || '操作失败')
@@ -1811,6 +1834,17 @@ const handleBatchAction = (batchAction) => {
   const ids = batchAction.records
   if (!ids || ids.length === 0) {
     Message.warning('无可执行记录')
+    return
+  }
+
+  // submit_dev_oa 批量操作：打开 MidloanActionDrawer（与单个共用同一表单）
+  if (batchAction.key === 'submit_dev_oa') {
+    actionDrawerRecord.value = null
+    actionDrawerKey.value = 'submit_dev_oa'
+    actionDrawerBatchRecords.value = batchAction.records.map(id =>
+      selectedRows.value.find(r => r.id === id)
+    ).filter(Boolean)
+    actionDrawerVisible.value = true
     return
   }
 

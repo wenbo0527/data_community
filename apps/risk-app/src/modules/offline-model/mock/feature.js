@@ -687,6 +687,8 @@ const mockTables = [
         onlineTime: '2024-01-15',
         dataType: 'int',
         defaultValue: '0',
+        businessLogic: '取用户基础信息年龄',
+        sqlLogic: "SELECT age FROM user_profile WHERE user_id = '${user_id}' AND dt = '${dt}';",
         processingLogic: '取用户基础信息年龄',
         batch: '20240115',
         remark: '基础属性'
@@ -700,6 +702,8 @@ const mockTables = [
         onlineTime: '2024-01-15',
         dataType: 'string',
         defaultValue: '',
+        businessLogic: '取用户基础信息性别',
+        sqlLogic: "SELECT gender FROM user_profile WHERE user_id = '${user_id}' AND dt = '${dt}';",
         processingLogic: '取用户基础信息性别',
         batch: '20240115',
         remark: ''
@@ -714,6 +718,8 @@ const mockTables = [
         onlineTime: '2024-02-01',
         dataType: 'double',
         defaultValue: '0.0',
+        businessLogic: '来自信用评分模型服务的风险评分输出沉淀',
+        sqlLogic: "INSERT OVERWRITE TABLE dwd_credit_score\nSELECT user_id, score, NOW() AS etl_time\nFROM   credit_score_service_output\nWHERE  dt = '${dt}';",
         processingLogic: '来自信用评分模型服务的风险评分输出沉淀',
         batch: '20240201',
         remark: '模型输出沉淀'
@@ -727,6 +733,8 @@ const mockTables = [
         onlineTime: '2024-02-01',
         dataType: 'double',
         defaultValue: '0.0',
+        businessLogic: '来自风险回归模型服务的连续风险值输出沉淀',
+        sqlLogic: "INSERT OVERWRITE TABLE dwd_risk_value\nSELECT user_id, risk_value, NOW() AS etl_time\nFROM   risk_regression_service_output\nWHERE  dt = '${dt}';",
         processingLogic: '来自风险回归模型服务的连续风险值输出沉淀',
         batch: '20240201',
         remark: '模型输出沉淀'
@@ -820,7 +828,7 @@ export function batchRegisterFields(tableName, fields) {
   const details = fields.map(f => {
     if (typeof f === 'string') {
       const c = t.columns.find(col => col.name === f) || { name: f, type: '' }
-      return { ...c, code: c.name, level1: '', level2: '', cnName: f, onlineTime: '', dataType: c.type || '', defaultValue: '', processingLogic: '', batch: '', remark: '', sourceType: '', sourceRefId: '', lineage: null }
+      return { ...c, code: c.name, level1: '', level2: '', cnName: f, onlineTime: '', dataType: c.type || '', defaultValue: '', businessLogic: '', sqlLogic: '', processingLogic: '', batch: '', remark: '', sourceType: '', sourceRefId: '', lineage: null }
     }
     const c = t.columns.find(col => col.name === f.name) || { name: f.name, type: f.type || '' }
     return {
@@ -833,7 +841,9 @@ export function batchRegisterFields(tableName, fields) {
       onlineTime: f.onlineTime || '',
       dataType: f.dataType || c.type || '',
       defaultValue: transformDefaultValue(f.defaultValue || ''),
-      processingLogic: f.processingLogic || '',
+      businessLogic: f.businessLogic || '',
+      sqlLogic: f.sqlLogic || '',
+      processingLogic: f.processingLogic || f.businessLogic || f.sqlLogic || '',
       batch: f.batch || '',
       remark: f.remark || '',
       sourceType: f.sourceType || '',

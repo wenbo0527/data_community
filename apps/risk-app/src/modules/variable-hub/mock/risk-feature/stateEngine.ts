@@ -310,11 +310,21 @@ export function validateParams(featureId: string): { ok: boolean; passed: boolea
 }
 
 /** C1：提 OA 开发单 */
-export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; remark?: string }): { success: boolean; oaId?: string; reason?: string } {
+export function submitDevOA(
+  featureId: string,
+  payload?: {
+    oaOrderId?: string
+    remark?: string
+    requirementHandler?: string
+    requirementName?: string
+    requirementDescription?: string
+    attachments?: Array<{ name?: string; uid?: string; url?: string; size?: number }>
+  }
+): { ok: boolean; oaId?: string; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
-  if (!v) return { success: false, reason: '特征不存在' }
+  if (!v) return { ok: false, reason: '特征不存在' }
   if (v.midloanStatus !== 'registered') {
-    return { success: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许提开发单` }
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许提开发单` }
   }
   if (DemoFlags.isOADown()) {
     SyncLogStore.push({
@@ -329,7 +339,7 @@ export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; r
       finishedAt: nowStr(),
       retryCount: 0
     })
-    return { success: false, reason: 'OA系统响应超时（演示开关触发）' }
+    return { ok: false, reason: 'OA系统响应超时（演示开关触发）' }
   }
   // 优先使用用户填写的 OA 单号，否则自动生成
   const oaId = payload?.oaOrderId || `OA-DEV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`
@@ -339,8 +349,17 @@ export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; r
   v.devOaOrderId = oaId
   // 需求6：OA回调同步OA单链接
   v.oaDocLink = `https://oa.example.com/doc/${oaId}`
+  // 记录需求处理人（写入 developer 字段）
+  if (payload?.requirementHandler) {
+    v.developer = payload.requirementHandler
+  }
+  // 构建变更说明
+  const reqName = payload?.requirementName ? `需求名称：${payload.requirementName}；` : ''
+  const reqHandler = payload?.requirementHandler ? `处理人：${payload.requirementHandler}；` : ''
+  const attachmentCount = payload?.attachments?.length ? `附件${payload.attachments.length}个；` : ''
   const devRemark = payload?.remark ? `（备注：${payload.remark}）` : ''
-  recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'C1 提开发OA单', '小李', 'risk_data_member', `OA单号：${oaId}${devRemark}`)
+  const detail = `${reqName}${reqHandler}${attachmentCount}OA单号：${oaId}${devRemark}`
+  recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'C1 提开发OA单', '小李', 'risk_data_member', detail)
   SyncLogStore.push({
     id: logId(),
     featureId,
@@ -348,14 +367,21 @@ export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; r
     type: 'oa_dev',
     direction: 'call',
     status: 'success',
-    request: { featureId, receiver: '数仓团队' },
+    request: {
+      featureId,
+      receiver: '数仓团队',
+      requirementHandler: payload?.requirementHandler,
+      requirementName: payload?.requirementName,
+      requirementDescription: payload?.requirementDescription,
+      attachments: payload?.attachments
+    },
     response: { oaId, receiver: 'dw_team' },
     startedAt: nowStr(),
     finishedAt: nowStr(),
     retryCount: 0,
     operator: '小李'
   })
-  return { success: true, oaId }
+  return { ok: true, oaId }
 }
 
 /** D1：模拟数仓回调（成功/失败） */

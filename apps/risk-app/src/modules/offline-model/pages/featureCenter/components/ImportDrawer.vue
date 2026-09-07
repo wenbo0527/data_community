@@ -33,7 +33,13 @@
         <a-input v-model="record.sourceTable" placeholder="日模型来源表" />
       </template>
       <template #processingLogicCell="{ record }">
-        <a-input v-model="record.processingLogic" placeholder="加工逻辑" />
+        <a-input v-model="record.processingLogic" placeholder="加工逻辑(兼容旧字段)" />
+      </template>
+      <template #businessLogicCell="{ record }">
+        <a-input v-model="record.businessLogic" placeholder="业务口径逻辑" />
+      </template>
+      <template #sqlLogicCell="{ record }">
+        <a-input v-model="record.sqlLogic" placeholder="SQL 加工逻辑" />
       </template>
       <template #dataTypeCell="{ record }">
         <a-select v-model="record.dataType" placeholder="数据类型">
@@ -93,7 +99,9 @@ const importColumns = [
   { title: '特征编码', dataIndex: 'code', slotName: 'codeCell', width: 160 },
   { title: '特征名称', dataIndex: 'name', slotName: 'nameCell', width: 160 },
   { title: '日模型来源表', dataIndex: 'sourceTable', slotName: 'sourceTableCell', width: 160 },
-  { title: '加工逻辑', dataIndex: 'processingLogic', slotName: 'processingLogicCell', width: 200 },
+  { title: '加工逻辑', dataIndex: 'processingLogic', slotName: 'processingLogicCell', width: 180 },
+  { title: '业务口径', dataIndex: 'businessLogic', slotName: 'businessLogicCell', width: 180 },
+  { title: 'SQL 逻辑', dataIndex: 'sqlLogic', slotName: 'sqlLogicCell', width: 180 },
   { title: '数据类型', dataIndex: 'dataType', slotName: 'dataTypeCell', width: 140 },
   { title: '批次', dataIndex: 'batch', slotName: 'batchCell', width: 120 },
   { title: '需求提出人', dataIndex: 'proposer', slotName: 'proposerCell', width: 140 },
@@ -118,7 +126,7 @@ const handleClose = () => {
 const addImportRow = () => {
   importRows.value.push({
     __key: Date.now() + Math.random(),
-    majorCategory: '', level1: '', level2: '', code: '', name: '', sourceTable: '', processingLogic: '', dataType: '', batch: '', proposer: '', developer: '', onlineTime: '', accepter: '', remark: ''
+    majorCategory: '', level1: '', level2: '', code: '', name: '', sourceTable: '', processingLogic: '', businessLogic: '', sqlLogic: '', dataType: '', batch: '', proposer: '', developer: '', onlineTime: '', accepter: '', remark: ''
   })
 }
 
@@ -139,7 +147,7 @@ const submitImport = async () => {
     name: r.name,
     code: r.code,
     type: typeMap(r.dataType),
-    description: r.processingLogic || '',
+    description: r.processingLogic || [r.businessLogic, r.sqlLogic].filter(Boolean).join('\n\n---\n\n') || '',
     dataSource: r.sourceTable || '',
     updateFrequency: '按需',
     majorCategory: r.majorCategory,
@@ -150,7 +158,9 @@ const submitImport = async () => {
     developer: r.developer,
     onlineTime: r.onlineTime,
     accepter: r.accepter,
-    remark: r.remark
+    remark: r.remark,
+    businessLogic: r.businessLogic || '',
+    sqlLogic: r.sqlLogic || ''
   }))
   try {
     const res = await featureAPI.importFeatures(payload)
@@ -168,7 +178,7 @@ const submitImport = async () => {
 }
 
 const downloadTemplate = () => {
-  const headers = ['majorCategory','level1','level2','code','name','sourceTable','processingLogic','dataType','batch','proposer','developer','onlineTime','accepter','remark']
+  const headers = ['majorCategory','level1','level2','code','name','sourceTable','processingLogic','businessLogic','sqlLogic','dataType','batch','proposer','developer','onlineTime','accepter','remark']
   const csv = headers.join(',') + '\n'
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)

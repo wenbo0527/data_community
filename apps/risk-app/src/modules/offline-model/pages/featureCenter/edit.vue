@@ -113,8 +113,12 @@
                 </a-col>
               </a-row>
 
-              <a-form-item label="加工逻辑">
-                <a-textarea v-model="form.processingLogic" placeholder="请输入加工逻辑" :auto-size="{ minRows: 4, maxRows: 6 }" />
+              <a-form-item label="业务口径逻辑">
+                <a-textarea v-model="form.businessLogic" placeholder="请用业务语言描述口径" :auto-size="{ minRows: 3, maxRows: 5 }" />
+              </a-form-item>
+
+              <a-form-item label="SQL 加工逻辑">
+                <a-textarea v-model="form.sqlLogic" placeholder="请填写加工 SQL(INSERT/CREATE TABLE 语句)" :auto-size="{ minRows: 4, maxRows: 8 }" />
               </a-form-item>
 
               <a-form-item label="备注">
@@ -241,6 +245,8 @@ const form = ref({
   name: '',
   sourceTable: '',
   monthlySourceTable: '',
+  businessLogic: '',
+  sqlLogic: '',
   processingLogic: '',
   dataType: '',
   batch: '',
@@ -304,6 +310,8 @@ onMounted(async () => {
       code: detail.value?.code || '',
       name: detail.value?.name || '',
       sourceTable: detail.value?.dataSource || '',
+      businessLogic: detail.value?.businessLogic || '',
+      sqlLogic: detail.value?.sqlLogic || '',
       processingLogic: detail.value?.description || '',
       dataType: detail.value?.type === 'time' ? 'timestamp' : (detail.value?.type === 'categorical' ? 'string' : (detail.value?.type === 'numerical' ? 'double' : 'string')),
       batch: detail.value?.batch || '',
@@ -354,7 +362,7 @@ const handleSubmit = async () => {
     name: form.value.name,
     code: form.value.code,
     type: typeMap(form.value.dataType),
-    description: form.value.processingLogic || '',
+    description: [form.value.businessLogic, form.value.sqlLogic].filter(Boolean).join('\n\n---\n\n') || form.value.processingLogic || '',
     dataSource: form.value.sourceTable || '',
     monthlyDataSource: form.value.monthlySourceTable || '',
     updateFrequency: form.value.modelType.includes('monthly') ? '月度' : (form.value.updateFrequency || '按需'),
@@ -369,7 +377,9 @@ const handleSubmit = async () => {
     remark: form.value.remark,
     modelType: form.value.modelType,
     defaultValue: form.value.defaultValue || '',
-    defaultValueMappings: form.value.defaultValueMappings
+    defaultValueMappings: form.value.defaultValueMappings,
+    businessLogic: form.value.businessLogic || '',
+    sqlLogic: form.value.sqlLogic || ''
   }
 
   try {

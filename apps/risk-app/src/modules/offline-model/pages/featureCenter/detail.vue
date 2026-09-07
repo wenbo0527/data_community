@@ -41,9 +41,17 @@
                 </a-tag>
               </a-descriptions-item>
             </a-descriptions>
-            <div class="logic-section" v-if="detail?.processingLogic">
-              <div class="section-label">处理逻辑</div>
-              <div class="logic-content">{{ detail.processingLogic }}</div>
+            <div class="logic-section" v-if="detail?.businessLogic || detail?.processingLogic">
+              <div class="section-label">业务口径逻辑</div>
+              <div class="logic-content">{{ detail.businessLogic || detail.processingLogic }}</div>
+            </div>
+            <div class="logic-section" v-if="detail?.sqlLogic">
+              <div class="section-label">SQL 加工逻辑</div>
+              <div class="logic-content logic-content--sql">{{ detail.sqlLogic }}</div>
+            </div>
+            <div class="logic-section" v-else-if="detail?.processingLogic && !detail?.businessLogic">
+              <div class="section-label">SQL 加工逻辑</div>
+              <div class="logic-content logic-content--sql">{{ detail.processingLogic }}</div>
             </div>
           </a-card>
 
@@ -230,6 +238,13 @@ const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.logic-content--sql {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  background: #1e1e1e;
+  color: #d4d4d4;
 }
 
 .mapping-group {

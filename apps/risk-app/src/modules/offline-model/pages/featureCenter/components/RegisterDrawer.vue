@@ -111,6 +111,27 @@
           <a-alert v-if="registerForm.majorCategory==='model_output'" type="info">
             来源自动填充为平台模型输出
           </a-alert>
+
+          <a-row :gutter="24" style="margin-top: 16px">
+            <a-col :span="12">
+              <a-form-item label="业务口径逻辑" field="businessLogic">
+                <a-textarea
+                  v-model="registerForm.businessLogic"
+                  placeholder="请用业务语言描述口径(统计区间、过滤条件、归一化规则等)"
+                  :auto-size="{ minRows: 3, maxRows: 5 }"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="SQL 加工逻辑" field="sqlLogic">
+                <a-textarea
+                  v-model="registerForm.sqlLogic"
+                  placeholder="请填写加工 SQL(INSERT/CREATE TABLE 语句)"
+                  :auto-size="{ minRows: 4, maxRows: 8 }"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
         </a-collapse-item>
 
         <!-- 第三部分：管理信息与映射规则 -->
@@ -206,6 +227,8 @@ const registerForm = reactive({
   level2: '',
   code: '',
   name: '',
+  businessLogic: '',
+  sqlLogic: '',
   processingLogic: '',
   dataType: 'double',
   defaultValue: '',
@@ -306,7 +329,7 @@ const submitRegister = async () => {
     name: registerForm.name,
     code: registerForm.code,
     type: typeMap(registerForm.dataType),
-    description: registerForm.processingLogic || '',
+    description: [registerForm.businessLogic, registerForm.sqlLogic].filter(Boolean).join('\n\n---\n\n') || registerForm.processingLogic || '',
     dataSource: (isModelOutput && !registerForm.modelType.includes('daily')) ? '平台模型输出' : (dailyMapping?.sourceTable || ''),
     monthlyDataSource: monthlyMapping?.sourceTable || '',
     updateFrequency: registerForm.modelType.includes('monthly') ? '月度' : (registerForm.updateFrequency || '按需'),
@@ -324,7 +347,9 @@ const submitRegister = async () => {
     creator: isModelOutput ? (selectedModel?.creator || '平台模型') : undefined,
     modelType: registerForm.modelType,
     defaultValueMappings: registerForm.defaultValueMappings,
-    dataSourceMappings: registerForm.dataSourceMappings
+    dataSourceMappings: registerForm.dataSourceMappings,
+    businessLogic: registerForm.businessLogic || '',
+    sqlLogic: registerForm.sqlLogic || ''
   }
 
   try {
