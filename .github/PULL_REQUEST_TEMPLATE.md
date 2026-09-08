@@ -122,11 +122,15 @@
 
 ### 代码质量
 
-- [ ] 代码风格符合项目 ESLint 规则（`pnpm lint:check`）
-- [ ] TypeScript 类型检查通过（`pnpm typecheck`）
-- [ ] 无新增 ESLint 警告（`--max-warnings 0`）
+- [ ] 代码风格符合项目 ESLint 规则（`pnpm lint:check --max-warnings 0`）
+- [ ] TypeScript 类型检查通过（`vue-tsc -p tsconfig.typecheck.json`）
+- [ ] 无新增 ESLint 警告
 - [ ] 无 `console.log` / `debugger` 残留
-- [ ] 无 `any` 类型滥用（`pnpm lint:any` 适用时）
+- [ ] 无 `any` 类型滥用
+- [ ] 组件不超过 300 行（超长需拆分到 components/）
+- [ ] 操作列统一为「详情」+「更多∨」
+- [ ] 高风险操作有二次确认弹窗
+- [ ] 空状态、加载态、错误态已处理
 
 ### 测试覆盖
 
@@ -174,9 +178,11 @@
 
 ## 📚 关联文档
 
-- [BRANCH_NAMING.md](docs/BRANCH_NAMING.md) — 分支命名规约
-- [BRANCH_CLEANUP.md](docs/BRANCH_CLEANUP.md) — 分支清理 SOP
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — 架构总览
+- [BRANCH_NAMING.md](docs/governance/BRANCH_NAMING.md) — 分支命名规约
+- [BRANCH_CLEANUP.md](docs/governance/BRANCH_CLEANUP.md) — 分支清理 SOP
+- [BRANCH_RETIREMENT_PLAN.md](docs/governance/BRANCH_RETIREMENT_PLAN.md) — 已归档分支记录
+- [architecture/overview.md](docs/architecture/overview.md) — 架构总览（原 ARCHITECTURE.md）
+- [docs/README.md](docs/README.md) — 文档索引
 - [CODEOWNERS](CODEOWNERS) — 仓库 owner 配置
 
 ---
