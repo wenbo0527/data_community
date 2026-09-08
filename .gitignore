@@ -68,16 +68,23 @@ jscpd-risk/
 browser-test-*.html
 debug-*.json
 debug_*.js
+debug-log.json
 test_*.js
 test_*.cjs
 test-*.js
 test-*.cjs
 test-*.md
+test-*.log
+test-output*.log
+test-final-*.log
+test-success-*.log
 verify-*.js
 comprehensive-*.js
 update-imports.js
 if patch fails*
 log-server.js
+migration-report.json
+test-results.json
 
 # Reports / Plans (中文报告散落)
 *报告*.md
