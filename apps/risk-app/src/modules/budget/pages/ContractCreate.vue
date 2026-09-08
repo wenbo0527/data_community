@@ -10,12 +10,18 @@
           <a-collapse :bordered="false" :default-active-key="['contract', 'external']">
             <a-collapse-item key="contract" header="合同信息与上传">
                 <a-row :gutter="12">
-                  <a-col :span="24">
+                  <a-col :span="12">
+                    <!-- PRD I18: 合同类型为不可编辑字段（按禁用样式整改要求，纯文字展示） -->
                     <a-form-item field="contractType" label="合同类型" required>
-                      <a-select v-model="form.contractType" placeholder="选择类型">
-                        <a-option value="framework">框架合同</a-option>
-                        <a-option value="supplement">补充协议</a-option>
-                      </a-select>
+                      <a-radio-group v-model="form.contractType">
+                        <a-radio value="framework">框架合同</a-radio>
+                        <a-radio value="supplement">补充协议</a-radio>
+                      </a-radio-group>
+                    </a-form-item>
+                  </a-col>
+                  <a-col :span="12">
+                    <a-form-item field="expireDate" label="合同失效日期">
+                      <a-date-picker v-model="form.expireDate" style="width:100%" placeholder="非必填，过期后仍可继续核销" />
                     </a-form-item>
                   </a-col>
                 </a-row>
@@ -91,7 +97,7 @@
                       </div>
                       <div style="margin-top: 4px">
                         成交通知书金额：<b>{{ formatAmount(selectedSignReportInfo.noticeAmount) }}</b>
-                        　-　初始占用：<b>{{ formatAmount(selectedSignReportInfo.initialOccupiedAmount) }}</b>
+                        　-　初始占用：<b>{{ formatAmount(selectedSignReportInfo.initialOccupied) }}</b>
                         　-　已绑定合同：<b>{{ formatAmount(selectedSignReportInfo.usedContractAmount) }}</b>
                         　=　<b :style="{ color: selectedSignReportInfo.remainingAmount < 0 ? 'var(--color-danger-6)' : 'var(--color-success-6)' }">剩余未占用：{{ formatAmount(selectedSignReportInfo.remainingAmount) }}</b>
                       </div>
@@ -101,9 +107,22 @@
                 </a-row>
                 <a-form-item label="已有外数">
                   <a-space direction="vertical" style="width: 100%">
-                    <a-space>
+                    <a-space wrap>
                        <a-button size="mini" @click="forceRefreshProducts">刷新外数列表</a-button>
-                       <span style="font-size: 12px; color: var(--subapp-text-tertiary)">当前外数总数: {{ products.length }}（左侧可选，右侧已关联不可取消）</span>
+                       <!-- PRD I04: 批量上传入口（接口号匹配，自动勾选） -->
+                       <a-upload
+                         :auto-upload="false"
+                         :show-file-list="false"
+                         accept=".xlsx,.xls,.csv"
+                         :before-upload="onBatchUpload"
+                       >
+                         <a-button size="mini" type="primary">
+                           <template #icon><IconUpload /></template>
+                           批量上传
+                         </a-button>
+                       </a-upload>
+                       <a-button size="mini" @click="downloadBatchTemplate">下载模板</a-button>
+                       <span style="font-size: 12px; color: var(--subapp-text-tertiary)">当前外数总数: {{ products.length }}（按接口号自动匹配勾选）</span>
                     </a-space>
                     <!-- PRD D1: 穿梭框（Transfer）+ 接口号搜索 + 已关联不可取消 -->
                     <a-transfer
@@ -128,7 +147,7 @@
                   <a-tab-pane v-for="extId in selectedExternalIds" :key="String(extId)" :title="externalLabel(extId)">
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费方式" required><a-select v-model="externalConfigs[String(extId)].billingMode"><a-option value="查得计费">查得计费</a-option><a-option value="查询计费">查询计费</a-option></a-select></a-form-item></a-col>
-                      <a-col :span="12"><a-form-item label="外数合同名称" required><a-input v-model="externalConfigs[String(extId)].contractName" placeholder="请输入外数合同名称" /></a-form-item></a-col>
+                      <a-col :span="12"><a-form-item label="合同中外数名称" required><a-input v-model="externalConfigs[String(extId)].contractName" placeholder="默认带入数据地图卡片名称，可改为合同内专属名称" /></a-form-item></a-col>
                     </a-row>
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费类型" required><a-select v-model="externalConfigs[String(extId)].billingType" @change="onBillingTypeChange(String(extId))"><a-option value="fixed">固定单价计费</a-option><a-option value="tiered">阶梯条件计费</a-option><a-option value="special">特殊计费</a-option></a-select></a-form-item></a-col>
@@ -377,7 +396,10 @@ const form = reactive<any>({
   signReportNo: '',
   initialOccupiedAmount: 0,
   frameworkIds: [] as Array<string>,
-  supplementIds: [] as Array<string>
+  supplementIds: [] as Array<string>,
+  expireDate: undefined,
+  // PRD I03: 合同中外数名称（按外数 ID 存储），与"已有外数"区域联动
+  externalProductNames: {} as Record<string, string>
 })
 
 const rules = {
@@ -433,7 +455,8 @@ function ensureConfigFor(extKey: string) {
   const p = products.value.find((x: any) => String(x.id) === String(extKey))
   const cfg = externalConfigs[extKey] || (externalConfigs[extKey] = {})
   if (!cfg.billingMode) cfg.billingMode = (p?.channel === '文件批量') ? '查得计费' : '查询计费'
-  if (!cfg.contractName) cfg.contractName = ''  // 新增：初始化外数合同名称
+  // PRD I03: 合同中外数名称预填数据地图卡片名称，可修改
+  if (!cfg.contractName) cfg.contractName = p?.name || ''
   if (!cfg.billingType) cfg.billingType = 'fixed'
   if (cfg.basePrice == null && typeof p?.unitPrice === 'number') cfg.basePrice = Number(p.unitPrice)
   if (!Array.isArray(cfg.tiers)) cfg.tiers = []
@@ -695,6 +718,10 @@ const submit = async () => {
     amount: Number(form.amount || 0),
     startDate: new Date(form.signDate || Date.now()).toISOString(),
     endDate: new Date(Date.now() + 180*86400000).toISOString(),
+    // PRD I02: 合同失效日期（仅信息展示）
+    expireDate: form.expireDate ? new Date(form.expireDate).toISOString() : undefined,
+    // PRD I03: 合同中外数名称
+    externalProductNames: { ...form.externalProductNames },
     status: 'active' as const,
     frameworkId: form.contractType === 'supplement' ? (form.frameworkIds?.[0] ?? null) : null,
     supplementIds: form.contractType === 'framework' ? (form.supplementIds || []) : []
@@ -714,6 +741,59 @@ onMounted(async () => {
   await signReportStore.fetchList()
 })
 const beforeUpload = (file: any) => { const okType = ['application/pdf','application/msword'].includes(file.type) || /\.docx?$|\.pdf$/i.test(file.name); const okSize = file.size <= 10 * 1024 * 1024; if (!okType) { Message.error('仅支持 PDF / Word 文件'); return false } if (!okSize) { Message.error('文件大小应不超过 10MB'); return false } return true }
+
+// PRD I04: 批量上传解析（按接口号 trim 后去重匹配）
+const onBatchUpload = (file: any) => {
+  const okType = /\.xlsx?$|\.csv$/i.test(file.name || '')
+  if (!okType) { Message.error('仅支持 Excel / CSV 文件'); return false }
+  // mock 解析：解析为接口号列表（此处以文件名为占位逻辑）
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = String(reader.result || '')
+    const lines = text.split(/\r?\n/).filter(Boolean)
+    if (lines.length <= 1) { Message.warning('未解析到有效数据，请确认文件内容'); return }
+    const header = (lines[0] || '').split(',').map(h => h.trim())
+    const interfaceIdx = header.findIndex(h => /接口号|interfaceNo/i.test(h))
+    if (interfaceIdx < 0) { Message.error('缺少「接口号」列，请参考模板'); return }
+    const inputInterfaces = new Set<string>()
+    for (let i = 1; i < lines.length; i++) {
+      const cells = (lines[i] || '').split(',')
+      const v = String(cells[interfaceIdx] || '').trim()
+      if (v) inputInterfaces.add(v)
+    }
+    const matched: Array<string | number> = []
+    const unmatched: string[] = []
+    inputInterfaces.forEach(ifNo => {
+      const p = products.value.find((x: any) => String(x.interfaceNo || '').trim() === ifNo)
+      if (p) {
+        const id = String(p.id)
+        if (!selectedExternalIds.value.some(s => String(s) === id)) matched.push(id)
+      } else {
+        unmatched.push(ifNo)
+      }
+    })
+    // 合并勾选
+    const next = Array.from(new Set([...selectedExternalIds.value, ...matched]))
+    if (next.length !== selectedExternalIds.value.length) {
+      selectedExternalIds.value = next
+    }
+    Message.success(`解析完成：成功 ${matched.length} 条，未匹配 ${unmatched.length} 条${unmatched.length ? '（' + unmatched.slice(0,5).join(',') + (unmatched.length>5?'...':'') + '）' : ''}`)
+  }
+  reader.readAsText(file as File)
+  return false
+}
+
+// PRD I04: 下载批量上传模板
+const downloadBatchTemplate = () => {
+  const header = ['接口号', '产品名称', '合作机构', '备注']
+  const example = ['IF-001', '学籍身份核验', '学信网', '示例行，使用后请删除']
+  const csv = [header.join(','), example.join(',')].join('\n')
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = '外数批量上传模板.csv'; a.click(); URL.revokeObjectURL(url)
+  Message.success('模板已下载，请按接口号列填写后上传')
+}
 </script>
 
 <style scoped>

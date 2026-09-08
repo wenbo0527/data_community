@@ -10,6 +10,8 @@ export interface ContractItem {
   amount: number
   startDate: string
   endDate: string
+  // PRD I02: 合同失效日期（非必填）
+  expireDate?: string
   status: 'active' | 'completed' | 'terminated' | 'pending' | 'expired'
   dataCount?: number
   productCount?: number
@@ -23,6 +25,8 @@ export interface ContractItem {
   signReportNo?: string
   // PRD R11: 合同初始占用金额（非必填，默认0）
   initialOccupiedAmount?: number
+  // PRD I03: 合同中外数名称（按外数 ID 存储）
+  externalProductNames?: Record<string, string>
 }
 
 export interface ContractListParams {

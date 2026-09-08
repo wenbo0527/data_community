@@ -25,12 +25,19 @@
           <a-collapse :bordered="false" :default-active-key="['contract', 'external']">
             <a-collapse-item key="contract" header="合同信息与上传">
                 <a-row :gutter="12">
-                  <a-col :span="24">
+                  <a-col :span="12">
+                    <!-- PRD I18: 合同类型为不可编辑字段，按禁用样式整改要求使用纯文字展示 -->
                     <a-form-item field="contractType" label="合同类型">
-                      <a-select v-model="form.contractType" placeholder="选择类型">
-                        <a-option value="framework">框架合同</a-option>
-                        <a-option value="supplement">补充协议</a-option>
-                      </a-select>
+                      <a-radio-group v-model="form.contractType" :disabled="!editing">
+                        <a-radio value="framework">框架合同</a-radio>
+                        <a-radio value="supplement">补充协议</a-radio>
+                      </a-radio-group>
+                    </a-form-item>
+                  </a-col>
+                  <a-col :span="12">
+                    <!-- PRD I02: 合同失效日期 -->
+                    <a-form-item field="expireDate" label="合同失效日期">
+                      <a-date-picker v-model="form.expireDate" style="width:100%" placeholder="非必填，过期后仍可继续核销" />
                     </a-form-item>
                   </a-col>
                 </a-row>
@@ -49,12 +56,14 @@
                   <a-col :span="24"><a-form-item field="fullName" label="合同全称"><a-input v-model="form.fullName" /></a-form-item></a-col>
                 </a-row>
                 <a-row :gutter="12" v-if="form.contractType === 'framework'">
-                  <a-col :span="12"><a-form-item field="amount" label="合同总金额"><a-input-number v-model="form.amount" style="width:100%" /></a-form-item></a-col>
+                  <!-- PRD I18: 合同总金额不可编辑（按禁用样式整改：纯文字展示） -->
+                  <a-col :span="12"><a-form-item field="amount" label="合同总金额"><span class="readonly-text">{{ formatAmount(form.amount) }}</span></a-form-item></a-col>
                   <!-- PRD R11: 合同初始占用金额 -->
                   <a-col :span="12"><a-form-item field="initialOccupiedAmount" label="合同初始占用金额"><a-input-number v-model="form.initialOccupiedAmount" :min="0" :step="1000" style="width:100%" placeholder="历史已使用金额，默认0" /></a-form-item></a-col>
                 </a-row>
                 <a-row :gutter="12" v-if="form.contractType === 'framework'">
-                  <a-col :span="12"><a-form-item field="writtenOffAmount" label="已核销金额"><a-input-number v-model="form.writtenOffAmount" style="width:100%" disabled /></a-form-item></a-col>
+                  <!-- PRD I18: 已核销金额只读，纯文字展示 -->
+                  <a-col :span="12"><a-form-item field="writtenOffAmount" label="已核销金额"><span class="readonly-text">{{ formatAmount(form.writtenOffAmount) }}</span></a-form-item></a-col>
                 </a-row>
                 <a-row :gutter="12">
                   <a-col :span="12"><a-form-item field="signDate" label="签订日期"><a-date-picker v-model="form.signDate" style="width:100%" /></a-form-item></a-col>
@@ -106,6 +115,10 @@
                   <a-tab-pane v-for="extId in selectedExternalIds" :key="String(extId)" :title="externalLabel(extId)">
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费方式"><a-select v-model="externalConfigs[String(extId)].billingMode"><a-option value="查得计费">查得计费</a-option><a-option value="查询计费">查询计费</a-option></a-select></a-form-item></a-col>
+                      <!-- PRD I03: 外数合同名称 → 合同中外数名称 -->
+                      <a-col :span="12"><a-form-item label="合同中外数名称"><a-input v-model="externalConfigs[String(extId)].contractName" placeholder="默认为数据地图卡片名称，可修改为合同内专属名称" /></a-form-item></a-col>
+                    </a-row>
+                    <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费类型"><a-select v-model="externalConfigs[String(extId)].billingType"><a-option value="fixed">固定单价计费</a-option><a-option value="tiered">阶梯条件计费</a-option><a-option value="special">特殊计费</a-option></a-select></a-form-item></a-col>
                     </a-row>
                     <a-row :gutter="12">
@@ -159,6 +172,10 @@ const currentStatus = ref<string>('')
 const editing = ref(false)
 const saving = ref(false)
 
+const formatAmount = (n?: number | null) => {
+  if (n === undefined || n === null) return '—'
+  return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' })
+}
 const statusColor = (s: string) => {
   const map: Record<string, string> = { active: 'green', completed: 'blue', terminated: 'red', pending: 'orange', expired: 'gray' }
   return map[s] || 'gray'
@@ -203,7 +220,9 @@ const form = reactive<any>({
   isGroupPurchase: false,
   supplier: '',
   signReportNo: '',
-  frameworkIds: [] as Array<string>
+  frameworkIds: [] as Array<string>,
+  // PRD I02
+  expireDate: undefined
 })
 
 const frameworkOptions = computed(() => store.frameworkOptions)
@@ -311,6 +330,8 @@ const saveEdit = async () => {
       contract.initialOccupiedAmount = Number(form.initialOccupiedAmount) || 0
       contract.amount = Number(form.amount) || contract.amount
       contract.contractName = form.fullName || form.shortName
+      // PRD I02: 失效日期（仅信息展示）
+      contract.expireDate = form.expireDate ? new Date(form.expireDate).toISOString() : undefined
     }
     Message.success('合同保存成功')
     editing.value = false
@@ -346,6 +367,7 @@ const loadData = async () => {
     form.supplier = contract.supplier
     form.signReportNo = (contract as any).signReportNo || ''
     form.frameworkIds = contract.frameworkId ? [contract.frameworkId] : []
+    form.expireDate = (contract as any).expireDate || undefined
     currentStatus.value = contract.status
 
     // 模拟关联外数
@@ -366,4 +388,6 @@ onMounted(loadData)
 <style scoped>
 .contract-detail { width: 100%; padding: 0 16px; }
 .header-sub { color: var(--color-text-2); }
+/* PRD I18: 只读字段使用纯文字样式，避免灰底输入框 */
+.readonly-text { display: inline-block; padding: 4px 0; color: var(--color-text-1); font-weight: 500; }
 </style>

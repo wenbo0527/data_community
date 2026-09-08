@@ -2,7 +2,18 @@
   <div class="settlement-management">
     <div class="page-header">
       <h3>结算管理</h3>
+      <!-- PRD I10: 流程顺序说明 -->
+      <p class="desc">流程：上传外部账单 → 费用核算（系统自动匹配产品） → 确认核销 → 待报销</p>
     </div>
+
+    <a-card class="flow-overview" :bordered="true" style="margin-bottom: 12px">
+      <a-steps :current="flowStageIndex" size="small">
+        <a-step title="上传外部账单" description="先上传对账单" />
+        <a-step title="费用核算" description="系统解析匹配" />
+        <a-step title="确认核销" description="按合同扣减" />
+        <a-step title="待报销" description="提交报销" />
+      </a-steps>
+    </a-card>
 
     <a-card class="toolbar" :bordered="true">
       <a-form :model="filters" layout="inline">
@@ -99,8 +110,10 @@
       </a-table>
     </a-card>
 
-    <a-modal v-model:visible="showCreate" title="发起结算" :width="800" ok-text="创建" cancel-text="取消" @ok="submitCreate">
+    <a-modal v-model:visible="showCreate" title="发起结算（先上传外部账单）" :width="800" ok-text="创建并进入对账" cancel-text="取消" @ok="submitCreate">
+      <a-alert type="info" style="margin-bottom: 12px" message="流程调整：先上传外部账单，系统自动基于码表匹配产品，未匹配项可在下一步手动选择。" show-icon />
       <a-form ref="createFormRef" :model="createForm" :rules="createRules" layout="vertical">
+        <!-- PRD I10: 流程顺序调换：第1步上传外部账单 -->
         <a-row :gutter="12">
           <a-col :span="12">
             <a-form-item field="taskName" label="任务名称" required>
@@ -128,32 +141,89 @@
             <a-alert v-if="settlementCount > 0" type="warning" style="margin-top: 30px" :message="`${createForm.supplierId}+${settlementPeriodStr}已经结算${settlementCount}次，本次为第${settlementCount + 1}次结算`" />
           </a-col>
         </a-row>
-        <!-- PRD R30: 对账单模板下载 + R31: 映射记录下载 -->
+        <!-- PRD I10: 第1步——上传外部账单（暂存） + I14 前端暂存 -->
         <a-row :gutter="12">
           <a-col :span="24">
-            <a-form-item label="模板与映射记录">
+            <a-form-item label="上传外部账单（暂存，不立即提交后端）" required>
+              <a-upload
+                :auto-upload="false"
+                :show-file-list="true"
+                :file-list="createForm.billFileList"
+                @change="onBillFileChange"
+                accept=".csv,.xlsx,.xls"
+                @before-upload="(file: any) => { billFileSizeCheck(file); return true }"
+              >
+                <a-button type="primary">
+                  <template #icon><icon-upload /></template>
+                  选择外部账单文件
+                </a-button>
+              </a-upload>
+              <div style="margin-top: 8px; color: var(--color-text-3); font-size: 12px">
+                支持 CSV / Excel；上传后仅在前端暂存，所有信息填完后一次性提交后端。
+              </div>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <!-- PRD I13: 映射记录展示位置调整到此处 -->
+        <a-row :gutter="12">
+          <a-col :span="24">
+            <a-form-item label="映射记录（暂存）">
               <a-space>
                 <a-button @click="downloadReconciliationTemplate">下载对账单模板</a-button>
                 <a-button @click="downloadMappingRecord">下载历史映射记录</a-button>
                 <a-upload :auto-upload="false" accept=".xlsx,.xls" :before-upload="onMappingUpload" :show-file-list="false">
                   <a-button>上传映射记录</a-button>
                 </a-upload>
+                <a-button type="outline" :disabled="!createForm.mappingList.length" @click="downloadStagedMapping">下载已暂存映射</a-button>
               </a-space>
+              <div v-if="createForm.mappingList.length" style="margin-top: 8px">
+                <a-tag v-for="m in createForm.mappingList" :key="m.__id" closable @close="removeStagedMapping(m)">{{ m.interfaceNo || '—' }} → {{ m.externalProductCode || m.externalProductName || '未匹配' }}</a-tag>
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
-        <!-- PRD R32: 付款账目类型字段（从对账单自动读取） -->
+        <!-- PRD I12: 匹配页面6字段预览（从账单暂存数据解析展示） -->
+        <a-row :gutter="12">
+          <a-col :span="24">
+            <a-form-item label="匹配预览（暂存解析结果，未点击保存前不持久化）">
+              <a-table :data="previewRows" :pagination="false" size="small" :bordered="{ wrapper: true, cell: false }">
+                <template #columns>
+                  <a-table-column title="产品名称" data-index="productName" :width="160" />
+                  <a-table-column title="内部账单金额" :width="140">
+                    <template #cell="{ record }">{{ formatAmount(record.systemAmount) }}</template>
+                  </a-table-column>
+                  <a-table-column title="外部账单金额" :width="140">
+                    <template #cell="{ record }">{{ formatAmount(record.externalAmount) }}</template>
+                  </a-table-column>
+                  <a-table-column title="内部单价" :width="120">
+                    <template #cell="{ record }">{{ formatPrice(record.systemUnitPrice) }}</template>
+                  </a-table-column>
+                  <a-table-column title="外部单价" :width="120">
+                    <template #cell="{ record }">{{ formatPrice(record.externalUnitPrice) }}</template>
+                  </a-table-column>
+                  <a-table-column title="内部免费量" :width="110">
+                    <template #cell="{ record }">{{ record.systemDiscount || 0 }}</template>
+                  </a-table-column>
+                  <a-table-column title="外部免费量" :width="110">
+                    <template #cell="{ record }">{{ record.externalDiscount || 0 }}</template>
+                  </a-table-column>
+                </template>
+                <template #empty>
+                  <a-empty description="上传账单后将自动解析展示，未匹配条目可在下一步手动选择" />
+                </template>
+              </a-table>
+            </a-form-item>
+          </a-col>
+        </a-row>
         <a-row :gutter="12">
           <a-col :span="12">
             <a-form-item field="callMethod" label="付款账目类型">
-              <a-select v-model="createForm.callMethod" allow-clear placeholder="上传对账单后自动读取" disabled>
+              <a-select v-model="createForm.callMethod" allow-clear placeholder="上传账单后自动读取" disabled>
                 <a-option value="线上">线上</a-option>
                 <a-option value="线下">线下</a-option>
               </a-select>
             </a-form-item>
           </a-col>
-        </a-row>
-        <a-row :gutter="12">
           <a-col :span="12">
             <a-form-item field="createdBy" label="创建人">
               <a-input v-model="createForm.createdBy" placeholder="输入创建人" />
@@ -166,42 +236,75 @@
       </a-form>
     </a-modal>
 
-    <a-drawer v-model:visible="detailVisible" :width="720" title="任务详情">
-      <a-steps :current="currentStep" style="margin-bottom: 12px">
-        <a-step title="数据锁定" />
-        <a-step title="差异计算" />
-        <a-step title="规则校验" />
-        <a-step title="报告生成" />
-        <a-step title="数据更新" />
+    <a-drawer v-model:visible="detailVisible" :width="900" title="任务详情">
+      <a-steps :current="detailStep" style="margin-bottom: 12px">
+        <a-step title="上传账单" description="已完成" />
+        <a-step title="费用核算" description="系统聚合" />
+        <a-step title="确认核销" description="按合同扣减" />
+        <a-step title="待报销" description="提交报销" />
       </a-steps>
-      <a-card title="子任务进度" :bordered="true" style="margin-bottom: 12px">
-        <a-table :data="subtasks" :pagination="false">
+      <a-alert v-if="writeoffLockHint" type="warning" :message="writeoffLockHint" show-icon style="margin-bottom: 12px" />
+
+      <a-card title="费用核算（按内部产品聚合）" :bordered="true" style="margin-bottom: 12px">
+        <a-table :data="costingAggregatedRows" :pagination="false" size="small" :bordered="{ wrapper: true, cell: true }">
           <template #columns>
-            <a-table-column title="对接渠道" data-index="supplierId" />
-            <a-table-column title="合同数" :width="100">
-              <template #cell="{ record }">{{ record.contracts.length }}</template>
+            <a-table-column title="内部产品" data-index="productName" :width="180" />
+            <a-table-column title="计费量（求和）" :width="120">
+              <template #cell="{ record }">{{ record.callCount || 0 }}</template>
             </a-table-column>
-            <a-table-column title="状态" :width="120">
-              <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
+            <a-table-column title="减免量（求和）" :width="120">
+              <template #cell="{ record }">{{ record.discount || 0 }}</template>
             </a-table-column>
-            <a-table-column title="进度" :width="160">
-                  <template #cell="{ record }"><a-progress :percent="record.progress" /></template>
-                </a-table-column>
-                <a-table-column title="操作" :width="240">
-                  <template #cell="{ record }">
-                    <a-space>
-                      <a-button size="small" type="text" :disabled="record.status !== 'succeeded'" @click="enterFlow(record)">进入结算流程</a-button>
-                      <a-button size="small" type="text" @click="retrySubtask(record)">重试</a-button>
-                      <a-button size="small" type="text" @click="skipSubtask(record)">跳过</a-button>
-                    </a-space>
-                  </template>
-                </a-table-column>
-              </template>
+            <a-table-column title="内部账单金额" :width="150">
+              <template #cell="{ record }">{{ formatAmount(record.systemAmount) }}</template>
+            </a-table-column>
+            <a-table-column title="外部账单金额" :width="150">
+              <template #cell="{ record }">{{ formatAmount(record.externalAmount) }}</template>
+            </a-table-column>
+            <a-table-column title="内部单价" :width="120">
+              <template #cell="{ record }">{{ formatPrice(record.systemUnitPrice) }}</template>
+            </a-table-column>
+            <a-table-column title="外部单价（AVG）" :width="130">
+              <template #cell="{ record }">{{ formatPrice(record.externalUnitPrice) }}</template>
+            </a-table-column>
+            <a-table-column title="费用（求和）" :width="120">
+              <template #cell="{ record }">{{ formatAmount(record.fee) }}</template>
+            </a-table-column>
+            <a-table-column title="类型" :width="100">
+              <template #cell="{ record }"><a-tag :status="record.type === '线上' ? 'arcoblue' : 'orange'">{{ record.type }}</a-tag></template>
+            </a-table-column>
+          </template>
+          <template #empty><a-empty description="暂无核算数据" /></template>
         </a-table>
       </a-card>
+
+      <a-card title="确认核销（按外部账单原始条目，不聚合）" :bordered="true" style="margin-bottom: 12px">
+        <a-table :data="writeoffRawRows" :pagination="false" size="small" :bordered="{ wrapper: true, cell: true }">
+          <template #columns>
+            <a-table-column title="接口号" data-index="interfaceNo" :width="160" />
+            <a-table-column title="产品名称" data-index="productName" :width="160" />
+            <a-table-column title="计费量" :width="100">
+              <template #cell="{ record }">{{ record.callCount || 0 }}</template>
+            </a-table-column>
+            <a-table-column title="外部账单金额" :width="150">
+              <template #cell="{ record }">{{ formatAmount(record.externalAmount) }}</template>
+            </a-table-column>
+            <a-table-column title="扣减合同" data-index="contractName" :width="200" />
+            <a-table-column title="操作" :width="180">
+              <template #cell="{ record }">
+                <a-space>
+                  <a-button size="small" type="text" :disabled="!!writeoffLocks[`${currentTask?.supplierIds?.[0]}-${currentTask?.timeLabel}`]" @click="confirmWriteoffRow(record)">确认核销</a-button>
+                </a-space>
+              </template>
+            </a-table-column>
+          </template>
+          <template #empty><a-empty description="暂无核销条目" /></template>
+        </a-table>
+      </a-card>
+
       <div style="text-align: right">
         <a-space>
-          <a-button type="primary" @click="generateReport(currentTask!)">生成报告</a-button>
+          <a-button type="primary" :disabled="!currentTask || !!writeoffLocks[`${currentTask?.supplierIds?.[0]}-${currentTask?.timeLabel}`]" @click="confirmAllWriteoff">确认全部核销</a-button>
           <a-button type="outline" @click="detailVisible = false">关闭</a-button>
         </a-space>
       </div>
@@ -255,9 +358,196 @@ const displayedTasks = computed(() => tasks.value.filter(t => {
   return true
 }))
 
+// PRD I10: 当前结算任务处于流程的哪一步（用于头部 Steps 高亮）
+const flowStageIndex = computed(() => {
+  // 1=上传账单，2=核算，3=核销，4=报销
+  if (displayedTasks.value.length === 0) return 0
+  const counts = displayedTasks.value.reduce(
+    (acc, t) => {
+      if (t.stage === 'reconcile') acc[0] += 1
+      else if (t.stage === 'costing') acc[1] += 1
+      else if (t.stage === 'writeoff') acc[2] += 1
+      else if (t.stage === 'pending_reimbursement' || t.stage === 'done') acc[3] += 1
+      return acc
+    },
+    [0, 0, 0, 0]
+  )
+  const maxIdx = counts.indexOf(Math.max(...counts))
+  return Math.min(3, Math.max(0, maxIdx))
+})
+
+// PRD I15: 合作机构维度并发锁集合（同一合作机构同一账期只允许一个核销进行中）
+const writeoffLocks = ref<Record<string, number>>({}) // key: supplierId-month
+const tryAcquireWriteoffLock = (supplierId: string, month: string): boolean => {
+  const key = `${supplierId}-${month}`
+  if (writeoffLocks.value[key]) { Message.warning('该机构结算任务正在处理中，请稍后重试'); return false }
+  writeoffLocks.value[key] = Date.now()
+  return true
+}
+const releaseWriteoffLock = (supplierId: string, month: string) => { delete writeoffLocks.value[`${supplierId}-${month}`] }
+
+const writeoffLockHint = computed(() => {
+  if (!currentTask.value) return ''
+  const k = `${currentTask.value.supplierIds?.[0]}-${currentTask.value.timeLabel}`
+  return writeoffLocks.value[k] ? '该机构结算任务正在处理中，请稍后重试' : ''
+})
+
+// PRD I10: 任务详情步骤面板索引
+const detailStep = computed(() => {
+  const stage = currentTask.value?.stage
+  if (stage === 'reconcile') return 0
+  if (stage === 'costing') return 1
+  if (stage === 'writeoff') return 2
+  if (stage === 'pending_reimbursement' || stage === 'done') return 3
+  return 0
+})
+
+// PRD I11: 费用核算按内部产品聚合（计费量/减免量/费用求和，外部单价 AVG）
+const costingAggregatedRows = computed(() => {
+  const lines = (flowStore as any).costingSnapshots?.[`${currentTask.value?.supplierIds?.[0]}-${currentTask.value?.timeLabel}`] || []
+  const map = new Map<string, any>()
+  for (const l of lines) {
+    const key = `${l.productName || l.externalProductCode || '—'}-${l.callMethod || l.type || '线上'}`
+    if (!map.has(key)) {
+      map.set(key, {
+        productName: l.productName || l.externalProductCode || '—',
+        type: l.callMethod || l.type || '线上',
+        callCount: 0, discount: 0,
+        systemAmount: 0, externalAmount: 0,
+        systemUnitPrice: l.systemUnitPrice || 0,
+        externalPriceSum: 0, externalPriceCount: 0,
+        fee: 0
+      })
+    }
+    const it = map.get(key)
+    it.callCount += Number(l.callCount || 0)
+    it.discount += Number(l.discount || l.discountCount || 0)
+    it.systemAmount += Number(l.systemAmount || 0)
+    it.externalAmount += Number(l.externalAmount || 0)
+    it.fee += Number(l.fee || 0)
+    if (Number(l.externalUnitPrice) > 0) {
+      it.externalPriceSum += Number(l.externalUnitPrice)
+      it.externalPriceCount += 1
+    }
+  }
+  return Array.from(map.values()).map(it => ({
+    ...it,
+    externalUnitPrice: it.externalPriceCount ? it.externalPriceSum / it.externalPriceCount : 0
+  }))
+})
+
+// PRD I16: 核销不聚合，按外部账单原始条目
+const writeoffRawRows = computed(() => {
+  const lines = (flowStore as any).costingSnapshots?.[`${currentTask.value?.supplierIds?.[0]}-${currentTask.value?.timeLabel}`] || []
+  return lines.map((l: any) => ({
+    interfaceNo: l.interfaceNo || l.externalProductCode || '—',
+    productName: l.productName || l.externalProductCode || '—',
+    callCount: l.callCount || 0,
+    externalAmount: l.externalAmount || 0,
+    contractName: currentTask.value?.contractIds?.[0] || '—'
+  }))
+})
+
+const confirmWriteoffRow = (record: any) => {
+  if (!currentTask.value) return
+  const sid = currentTask.value.supplierIds?.[0]
+  const month = currentTask.value.timeLabel
+  if (!sid || !tryAcquireWriteoffLock(sid, month)) return
+  Message.success(`已扣减：${record.productName} - ${formatAmount(record.externalAmount)}`)
+  setTimeout(() => releaseWriteoffLock(sid, month), 800)
+}
+const confirmAllWriteoff = () => {
+  if (!currentTask.value) return
+  const sid = currentTask.value.supplierIds?.[0]
+  const month = currentTask.value.timeLabel
+  if (!sid || !tryAcquireWriteoffLock(sid, month)) return
+  Message.success(`已全部核销 ${writeoffRawRows.value.length} 条`)
+  setTimeout(() => releaseWriteoffLock(sid, month), 800)
+}
+
 const showCreate = ref(false)
 const createFormRef = ref()
-const createForm = reactive<{ taskName: string; supplierId: string; granularity: Granularity; timeLabel: string; createdBy: string; remark?: string; callMethod?: string }>({ taskName: '', supplierId: '', granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, createdBy: '管理员', callMethod: '' })
+// PRD I14: 前端暂存所有字段 + 账单文件
+const createForm = reactive<{
+  taskName: string; supplierId: string; granularity: Granularity; timeLabel: string; createdBy: string; remark?: string; callMethod?: string
+  billFileList: any[]; mappingList: any[]
+}>({
+  taskName: '', supplierId: '', granularity: 'month',
+  timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,
+  createdBy: '管理员', callMethod: '',
+  billFileList: [], mappingList: []
+})
+
+// PRD I14/I12: 暂存账单解析结果用于 6 字段预览
+const previewRows = ref<any[]>([])
+
+const billFileSizeCheck = (file: any) => {
+  if (file.size > 20 * 1024 * 1024) { Message.error('账单文件应不超过 20MB'); return false }
+  return true
+}
+const onBillFileChange = (files: any) => {
+  // Arco v2.50+ Upload 的 change 事件：fileList
+  createForm.billFileList = Array.isArray(files) ? files : (files?.fileList || [])
+  const first = createForm.billFileList[0]
+  if (!first || !first.file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = String(reader.result || '')
+    const lines = text.split(/\r?\n/).filter(Boolean)
+    if (lines.length <= 1) { previewRows.value = []; return }
+    const header = lines[0].split(',').map(h => h.trim())
+    const idx = (k: string) => header.findIndex(h => new RegExp(k, 'i').test(h))
+    const getIdx = (k: string, fallback: number) => {
+      const i = idx(k)
+      return i >= 0 ? i : fallback
+    }
+    const codeIdx = getIdx('productCode|产品编码', 0)
+    const nameIdx = getIdx('productName|产品名称', 1)
+    const sysAmtIdx = getIdx('systemAmount|系统金额', 4)
+    const billAmtIdx = getIdx('amount|账单金额|externalAmount', 5)
+    const sysPriceIdx = getIdx('unitPrice|系统单价', -1)
+    const extPriceIdx = getIdx('externalUnitPrice|外部单价', 6)
+    const sysFreeIdx = getIdx('systemDiscount|内部免费量', -1)
+    const extFreeIdx = getIdx('externalDiscount|外部免费量|discountCount|减免次数', 7)
+    previewRows.value = lines.slice(1).map((line, i) => {
+      const cells = line.split(',')
+      return {
+        __key: `${i}-${cells[codeIdx]}`,
+        productName: cells[nameIdx] || cells[codeIdx] || `条目${i + 1}`,
+        systemAmount: Number(cells[sysAmtIdx]) || 0,
+        externalAmount: Number(cells[billAmtIdx]) || 0,
+        systemUnitPrice: sysPriceIdx >= 0 ? Number(cells[sysPriceIdx]) || 0 : 0,
+        externalUnitPrice: extPriceIdx >= 0 ? Number(cells[extPriceIdx]) || 0 : 0,
+        systemDiscount: sysFreeIdx >= 0 ? Number(cells[sysFreeIdx]) || 0 : 0,
+        externalDiscount: extFreeIdx >= 0 ? Number(cells[extFreeIdx]) || 0 : 0
+      }
+    })
+    // 解析付款账目类型
+    const callIdx = header.findIndex(h => /callMethod|付款账目类型|调用方式/i.test(h))
+    if (callIdx >= 0) {
+      const methods = new Set<string>()
+      lines.slice(1).forEach(line => { const v = line.split(',')[callIdx]?.trim(); if (v === '线上' || v === '线下') methods.add(v) })
+      if (methods.size === 2) createForm.callMethod = '线上 + 线下'
+      else if (methods.size === 1) createForm.callMethod = Array.from(methods)[0]
+    }
+    Message.success(`已解析 ${previewRows.value.length} 条对账记录（暂存，未持久化）`)
+  }
+  reader.readAsText(first.file as File)
+}
+
+const formatPrice = (n?: number) => { if (n === undefined || n === null) return '—'; return `¥${Number(n).toFixed(4)}` }
+
+const downloadStagedMapping = () => {
+  const header = ['接口号', '产品编码', '产品名称', '合作机构']
+  const rows = createForm.mappingList.map((m: any) => [m.interfaceNo || '', m.externalProductCode || '', m.externalProductName || '', createForm.supplierId || ''])
+  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a'); a.href = url; a.download = '已暂存映射.csv'; a.click(); URL.revokeObjectURL(url)
+}
+const removeStagedMapping = (m: any) => {
+  createForm.mappingList = createForm.mappingList.filter((x: any) => x.__id !== m.__id)
+}
 const createRules = {
   taskName: [{ required: true, message: '请输入任务名称' }],
   supplierId: [{ required: true, message: '请选择合作机构' }],
@@ -341,16 +631,49 @@ const downloadMappingRecord = () => {
   Message.success('历史映射记录已下载（含接口号字段）')
 }
 // PRD R31: 映射记录上传
-const onMappingUpload = (file: any) => {
-  const okType = /\.xlsx?$|\.csv$/i.test(file.name)
+const onMappingUpload = (option: any) => {
+  const okType = /\.xlsx?$|\.csv$/i.test(option?.file?.name || option?.name || '')
   if (!okType) { Message.error('请上传 Excel 或 CSV 文件'); return false }
-  Message.success('映射记录已上传并保存')
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = String(reader.result || '')
+    const lines = text.split(/\r?\n/).filter(Boolean)
+    if (lines.length <= 1) { Message.success('映射记录为空'); return }
+    const header = lines[0].split(',').map(h => h.trim())
+    const idx = (k: string) => header.findIndex(h => new RegExp(k, 'i').test(h))
+    const iNo = idx('interface|接口号')
+    const iCode = idx('productCode|产品编码')
+    const iName = idx('productName|产品名称')
+    let added = 0
+    lines.slice(1).forEach((line, idxRow) => {
+      const cells = line.split(',')
+      if (iNo < 0 || !cells[iNo]) return
+      const interfaceNo = String(cells[iNo] || '').trim()
+      if (!interfaceNo) return
+      if (createForm.mappingList.some((m: any) => m.interfaceNo === interfaceNo)) return
+      createForm.mappingList.push({
+        __id: `${Date.now()}-${idxRow}`,
+        interfaceNo,
+        externalProductCode: iCode >= 0 ? cells[iCode] : '',
+        externalProductName: iName >= 0 ? cells[iName] : ''
+      })
+      added++
+    })
+    Message.success(`已加载 ${added} 条映射记录到暂存区`)
+  }
+  const file = option?.file || option
+  reader.readAsText(file as File)
   return false
 }
 
 const submitCreate = async () => {
   try { await (createFormRef.value as any)?.validate() } catch { Message.error('请完整填写必填项'); return }
   if (!createForm.supplierId || !createForm.timeLabel) { Message.error('请选择合作机构与结算周期'); return }
+  // PRD I14: 账单文件必填，未上传直接禁止提交
+  if (!createForm.billFileList.length) { Message.error('请先上传外部账单文件'); return }
+  // PRD I15: 合作机构 + 账期并发锁
+  if (!tryAcquireWriteoffLock(createForm.supplierId, createForm.timeLabel)) return
+  releaseWriteoffLock(createForm.supplierId, createForm.timeLabel)
   // PRD R28: 结算周期格式 YYYYMM-n
   const period = createForm.timeLabel.replace('-', '')
   const seq = settlementCount.value + 1
@@ -362,6 +685,10 @@ const submitCreate = async () => {
   tasks.value.unshift(task)
   pagination.total = tasks.value.length
   showCreate.value = false
+  // PRD I14: 提交后清理暂存
+  createForm.billFileList = []
+  createForm.mappingList = []
+  previewRows.value = []
   await fillMockSnapshots(task)
   // PRD R34: 4步流程 - 默认从外部对账(step 0)开始
   router.push(`/budget/settlement/task/${id}?supplierId=${encodeURIComponent(task.supplierIds[0]||'')}&month=${encodeURIComponent(task.timeLabel)}&taskName=${encodeURIComponent(task.taskName||'')}&step=0`)

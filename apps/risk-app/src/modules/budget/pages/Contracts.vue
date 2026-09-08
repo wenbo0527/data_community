@@ -25,9 +25,9 @@
         <a-form-item>
           <a-button type="primary" @click="goCreatePage">
             <template #icon>
-              <IconUpload />
+              <IconPlus />
             </template>
-            合同上传
+            新建合同
           </a-button>
         </a-form-item>
         <a-form-item>
@@ -35,7 +35,7 @@
         </a-form-item>
         <a-form-item>
           <a-dropdown @select="handleSettlementSelect">
-            <a-button type="primary">
+            <a-button>
               结算 <IconDown />
             </a-button>
             <template #content>
@@ -117,8 +117,15 @@
               <a-table-column title="已核销金额" :width="160">
                 <template #cell="{ record }">{{ formatAmount(record.writtenOffAmount) }}</template>
               </a-table-column>
-              <a-table-column title="签订日期" :width="160">
+              <a-table-column title="签订日期" :width="140">
                 <template #cell="{ record }">{{ record.startDate?.split('T')[0] || '—' }}</template>
+              </a-table-column>
+              <a-table-column title="合同失效日期" :width="160">
+                <template #cell="{ record }">
+                  <span :class="{ 'expired-tag': isExpired(record.expireDate) }">
+                    {{ record.expireDate?.split('T')[0] || '—' }}
+                  </span>
+                </template>
               </a-table-column>
             </template>
           </a-table>
@@ -146,8 +153,15 @@
               <a-table-column title="关联产品数" :width="140">
                 <template #cell="{ record }">{{ record.productCount ?? '—' }}</template>
               </a-table-column>
-              <a-table-column title="签订日期" :width="160">
+              <a-table-column title="签订日期" :width="140">
                 <template #cell="{ record }">{{ record.startDate?.split('T')[0] || '—' }}</template>
+              </a-table-column>
+              <a-table-column title="合同失效日期" :width="160">
+                <template #cell="{ record }">
+                  <span :class="{ 'expired-tag': isExpired(record.expireDate) }">
+                    {{ record.expireDate?.split('T')[0] || '—' }}
+                  </span>
+                </template>
               </a-table-column>
             </template>
           </a-table>
@@ -172,7 +186,7 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUpload, IconDown } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDown, IconPlus } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '../stores/contract'
 import type { ContractItem } from '../stores/contract'
 import { useSettlementSupplier } from '../composables/useSettlementSupplier'
@@ -223,6 +237,7 @@ const submitSupplier = async () => { const valid = await supplierFormRef.value?.
 const resetSupplierForm = () => { supplierForm.name = ''; supplierForm.description = ''; supplierFormRef.value?.clearValidate() }
 
 const formatAmount = (n?: number) => { if (!n && n !== 0) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) }
+const isExpired = (d?: string | null) => { if (!d) return false; const t = new Date(d).getTime(); return Number.isFinite(t) && t < Date.now() }
 const frameworkLabel = (id?: string | null) => { if (!id) return '—'; const m = store.list.find(i => i.id === id); return m ? `${m.contractName}（${m.contractNo}）` : id }
 
 const statusColor = (s: string) => {
@@ -284,5 +299,8 @@ onMounted(async () => {
 }
 .stats {
   margin-bottom: 12px;
+}
+.expired-tag {
+  color: var(--color-text-3);
 }
 </style>

@@ -12,6 +12,8 @@ export interface ContractItem {
   amount: number
   startDate: string
   endDate: string
+  /** PRD I02: 合同失效日期（非必填，仅信息展示，不关联拦截） */
+  expireDate?: string
   status: 'active' | 'completed' | 'terminated' | 'pending' | 'expired'
   dataCount?: number
   productCount?: number
@@ -23,6 +25,8 @@ export interface ContractItem {
   supplementIds?: string[]
   signReportNo?: string
   initialOccupiedAmount?: number
+  /** PRD I03: 合同中外数名称（外数→合同专属名称映射，按外数 ID 存储） */
+  externalProductNames?: Record<string, string>
 }
 
 export interface ContractListParams {
@@ -43,6 +47,7 @@ const MOCK_CONTRACTS: ContractItem[] = [
     amount: 120,
     startDate: '2024-01-15',
     endDate: '2026-01-14',
+    expireDate: '2026-12-31',
     status: 'active',
     dataCount: 8,
     productCount: 5,
@@ -63,6 +68,7 @@ const MOCK_CONTRACTS: ContractItem[] = [
     amount: 30,
     startDate: '2024-03-01',
     endDate: '2025-12-31',
+    expireDate: '2025-12-31',
     status: 'active',
     dataCount: 3,
     productCount: 2,
@@ -83,6 +89,7 @@ const MOCK_CONTRACTS: ContractItem[] = [
     amount: 25,
     startDate: '2024-04-10',
     endDate: '2025-12-31',
+    expireDate: '2025-12-31',
     status: 'active',
     dataCount: 2,
     productCount: 1,
@@ -103,6 +110,7 @@ const MOCK_CONTRACTS: ContractItem[] = [
     amount: 80,
     startDate: '2024-06-01',
     endDate: '2026-05-31',
+    expireDate: '2026-06-30',
     status: 'active',
     dataCount: 5,
     productCount: 3,
@@ -228,6 +236,8 @@ export async function createContract(data: Partial<ContractItem>): Promise<Contr
       supplementIds: data.supplementIds || [],
       signReportNo: data.signReportNo,
       initialOccupiedAmount: data.initialOccupiedAmount,
+      expireDate: data.expireDate,
+      externalProductNames: data.externalProductNames,
     }
     MOCK_CONTRACTS.unshift(newItem)
     return newItem
