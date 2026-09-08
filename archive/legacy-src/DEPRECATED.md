@@ -1,9 +1,10 @@
 # DEPRECATED.md - src/ 主应用冻结声明（草稿）
 
-> **状态**: 📋 PM 草稿（待 doc 接手落地到项目仓库）
+> **状态**: ✅ 已执行归档（2026-09-08）→ `archive/legacy-src/`
 > **决策时间**: 2026-08-10 09:24 GMT+8
 > **决策方**: 文博拍板（PM 推荐方案 A，用户确认"按推荐走"）
 > **派单**: TASK-PENDING（PM 派单 doc 接手）
+> **执行 commit**: `chore(repo): P0-3 主应用冻结 - src/ → archive/legacy-src/`
 
 ---
 

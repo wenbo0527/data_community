@@ -80,7 +80,7 @@ export default defineConfig(({ command }) => ({
       ]
     },
     proxy: {
-      // 移除 /api/alert 的 bypass 代理，由 src/mock/alert.js 接管
+      // 移除 /api/alert 的 bypass 代理，由 archive/legacy-src/mock/alert.js 接管
     }
   },
   plugins: [
@@ -88,12 +88,12 @@ export default defineConfig(({ command }) => ({
     legacy({
       targets: ['chrome >= 49']
     }),
-    // viteMockServe 已禁用 - 用 src/mock/bootstrap.js 自己加载
+    // viteMockServe 已禁用 - 用 archive/legacy-src/mock/bootstrap.js 自己加载
     logServerPlugin()
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'archive/legacy-src')
     }
   }
 }));

@@ -5,16 +5,16 @@
     "checkJs": false
   },
   "include": [
-    "src/pages/risk/**/*",
-    "src/router/**/*",
-    "src/store/modules/model-offline.js",
-    "src/api/offlineModel/**/*"
+    "archive/legacy-src/pages/risk/**/*",
+    "archive/legacy-src/router/**/*",
+    "archive/legacy-src/store/modules/model-offline.js",
+    "archive/legacy-src/api/offlineModel/**/*"
   ],
   "exclude": [
     "tests/**/*",
-    "src/**/__tests__/**/*",
-    "src/**/*.spec.*",
-    "src/views/**/*",
+    "archive/legacy-src/**/__tests__/**/*",
+    "archive/legacy-src/**/*.spec.*",
+    "archive/legacy-src/views/**/*",
     "node_modules",
     "dist"
   ]

@@ -89,12 +89,12 @@
   
   // 包含的文件
   "include": [
-    "src/**/*",
-    "src/**/*.vue",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
+    "archive/legacy-src/**/*",
+    "archive/legacy-src/**/*.vue",
+    "archive/legacy-src/**/*.ts",
+    "archive/legacy-src/**/*.tsx",
+    "archive/legacy-src/**/*.js",
+    "archive/legacy-src/**/*.jsx",
     "tests/**/*",
     "vitest.config.*",
     "vite.config.*",
