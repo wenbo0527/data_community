@@ -1,4 +1,5 @@
 {
+  "root": true,
   "env": {
     "browser": true,
     "es2021": true,
@@ -18,8 +19,19 @@
     "extraFileExtensions": [".vue"]
   },
   "plugins": ["vue", "@typescript-eslint"],
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "build/",
+    "coverage/",
+    ".vite/",
+    ".cache/",
+    "archive/",
+    "scripts/_debug-archive/",
+    "scripts/_test-archive-legacy/"
+  ],
   "rules": {
-    // ========== Vue 相关规则 ==========
+    // ========== Vue 相关规则（宽松：优先类型检查） ==========
     "vue/multi-word-component-names": "off",
     "vue/no-unused-vars": "off",
     "vue/no-unused-components": "off",
@@ -30,7 +42,7 @@
     "vue/no-side-effects-in-computed-properties": "off",
     "vue/no-mutating-props": "off",
 
-    // 禁用格式类规则
+    // 禁用格式类规则（统一交给 Prettier / 编辑器）
     "vue/max-attributes-per-line": "off",
     "vue/singleline-html-element-content-newline": "off",
     "vue/html-indent": "off",
@@ -41,7 +53,7 @@
     "vue/html-self-closing": "off",
     "vue/block-order": "off",
 
-    // ========== TypeScript 相关规则 ==========
+    // ========== TypeScript 相关规则（宽松：渐进严格） ==========
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
@@ -50,7 +62,7 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-inferrable-types": "off",
 
-    // ========== 字节代码规范核心规则 ==========
+    // ========== 字节 + 阿里云代码规范核心规则 ==========
     "no-console": "warn",
     "no-debugger": "error",
     "no-alert": "error",
@@ -64,32 +76,36 @@
     "no-throw-literal": "error",
     "no-unused-expressions": "error",
     "no-useless-escape": "error",
-    "no-duplicate-imports": "off",
+    "no-duplicate-imports": "error",
+    "no-array-constructor": "error",
+    "no-new-object": "error",
+    "array-callback-return": "error",
     "prefer-const": "error",
     "prefer-arrow-callback": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "prefer-promise-reject-errors": "error",
     "arrow-spacing": "error",
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
     "guard-for-in": "error",
     "no-empty": ["error", { "allowEmptyCatch": true }],
-    "prefer-promise-reject-errors": "off",
-    "prefer-rest-params": "error",
-    "prefer-spread": "error",
     "radix": "error",
     "wrap-iife": ["error", "any"],
     "camelcase": ["error", { "properties": "never" }],
     "new-cap": "error",
 
-    // 复杂度限制
-    "complexity": "off",
-    "max-depth": "off",
-    "max-params": "off",
+    // ========== 复杂度限制（吸取 disabled 版 + 性能考虑） ==========
+    "complexity": ["warn", 15],
+    "max-depth": ["warn", 6],
+    "max-lines-per-function": ["warn", { "max": 300, "skipComments": true, "skipBlankLines": true }],
+    "max-params": ["warn", 6],
     "max-nested-callbacks": "off",
     "max-len": "off",
     "id-blacklist": "off",
     "require-await": "off",
 
-    // 格式规则
+    // ========== 格式规则（关闭：交给 Prettier） ==========
     "indent": "off",
     "quotes": "off",
     "semi": "off",
@@ -99,10 +115,34 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js", "*.spec.js", "**/*.mock.js", "**/*.fixture.js"],
+      "files": ["*.vue"],
+      "rules": {
+        "max-lines-per-function": "off"
+      }
+    },
+    {
+      "files": ["*.test.js", "*.spec.js", "*.test.ts", "*.spec.ts", "**/*.mock.js", "**/*.fixture.js"],
       "rules": {
         "no-console": "off",
-        "no-debugger": "off"
+        "no-debugger": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["scripts/**/*.js", "scripts/**/*.cjs"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["archive/legacy-src/**/*.vue", "archive/legacy-src/**/*.ts", "archive/legacy-src/**/*.js"],
+      "rules": {
+        "complexity": "off",
+        "max-lines-per-function": "off",
+        "max-params": "off",
+        "max-depth": "off",
+        "@typescript-eslint/no-explicit-any": "off"
       }
     }
   ]
